@@ -188,6 +188,22 @@ def observacao_cclasstrib(cfop: str) -> str:
     return ""
 
 
+def projetar_cfop_saida(cfop: str) -> str:
+    """
+    Quando não há saídas detalhadas (CFOP 5/6/7), usamos as ENTRADAS (1/2/3)
+    como proxy de mix de vendas. Aqui projetamos:
+      1xxx -> 5xxx
+      2xxx -> 6xxx
+      3xxx -> 7xxx
+    """
+    cfop = (cfop or "").strip()
+    if len(cfop) != 4 or not cfop.isdigit():
+        return cfop
+    mapa = {"1": "5", "2": "6", "3": "7"}
+    novo1 = mapa.get(cfop[0], cfop[0])
+    return novo1 + cfop[1:]
+
+
 # ==========================
 #   CONSULTA CNPJ / CNAE
 # ==========================
@@ -351,7 +367,7 @@ def processar_sped_icms(conteudo: str):
 
     df_itens = pd.DataFrame(itens)
 
-    # Classificações
+    # Classificações iniciais (com CFOP original)
     df_itens["TIPO_OPERACAO"] = df_itens["CFOP"].astype(str).apply(classificar_tipo_operacao_por_cfop)
     df_itens["cClassTrib_2026"] = df_itens["CFOP"].astype(str).apply(sugerir_cclasstrib_2026)
     df_itens["OBS_2026"] = df_itens["CFOP"].astype(str).apply(observacao_cclasstrib)
@@ -379,8 +395,35 @@ def processar_sped_icms(conteudo: str):
 
 
 def gerar_dataframes_relatorios(master_data: dict, df_itens: pd.DataFrame):
-    # Foco em CFOP de saída/prestação
+    """
+    Gera dataframes:
+      - df_saidas_base: pode ser saídas reais (CFOP 5/6/7) ou ENTRADAS projetadas
+      - df_rank_prod, df_perfil_2026, df_rank_cfop
+    Retorna também 'modo_base':
+      - "SAIDAS_REAIS"
+      - "ENTRADAS_PROJETADAS"
+      - "MISTO/OUTROS"
+    """
+    # 1) Tenta usar saídas reais (CFOP 5/6/7)
     df_saidas = df_itens[df_itens["CFOP"].astype(str).str[0].isin(["5", "6", "7"])].copy()
+    modo_base = "SAIDAS_REAIS"
+
+    if df_saidas.empty:
+        # 2) Se não houver saídas detalhadas, usar ENTRADAS como proxy
+        df_entradas = df_itens[df_itens["CFOP"].astype(str).str[0].isin(["1", "2", "3"])].copy()
+        if not df_entradas.empty:
+            modo_base = "ENTRADAS_PROJETADAS"
+            df_entradas["CFOP_ORIGEM"] = df_entradas["CFOP"]
+            df_entradas["CFOP"] = df_entradas["CFOP"].apply(projetar_cfop_saida)
+            # recalcula classificações com CFOP projetado
+            df_entradas["TIPO_OPERACAO"] = df_entradas["CFOP"].astype(str).apply(classificar_tipo_operacao_por_cfop)
+            df_entradas["cClassTrib_2026"] = df_entradas["CFOP"].astype(str).apply(sugerir_cclasstrib_2026)
+            df_entradas["OBS_2026"] = df_entradas["CFOP"].astype(str).apply(observacao_cclasstrib)
+            df_saidas = df_entradas
+        else:
+            # 3) Não tem nem saídas nem entradas padrão, usa tudo (situação exótica)
+            modo_base = "MISTO/OUTROS"
+            df_saidas = df_itens.copy()
 
     # Ranking produtos por NCM + CFOP
     df_rank_prod = (
@@ -414,7 +457,7 @@ def gerar_dataframes_relatorios(master_data: dict, df_itens: pd.DataFrame):
 
     df_empresa = pd.DataFrame([master_data])
 
-    return df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop
+    return df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop, modo_base
 
 
 def gerar_excel_bytes(df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop) -> bytes:
@@ -435,8 +478,10 @@ def gerar_excel_bytes(df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop) ->
 st.markdown("### 🧾 Diagnóstico SPED ICMS/IPI 2025 → 2026 (PriceTax)")
 st.write(
     "Faça o upload de um arquivo **SPED ICMS/IPI (.txt)**. "
-    "O app vai montar o **ranking de produtos por NCM/CFOP** (quando houver C170), "
-    "buscar o **CNPJ/CNAE** e sugerir o **cClassTrib para 2026**, com percentual da receita por operação."
+    "O app vai montar o **ranking de produtos por NCM/CFOP**, buscar o **CNPJ/CNAE** "
+    "e sugerir o **cClassTrib para 2026**, com percentual da receita por operação.\n\n"
+    "Se o SPED não tiver itens nas saídas, o diagnóstico será baseado nas **entradas projetadas** "
+    "(o que você compra tende a ser o que você vende)."
 )
 
 uploaded_file = st.file_uploader(
@@ -450,21 +495,31 @@ if uploaded_file is not None:
         content = uploaded_file.read().decode("latin-1", errors="ignore")
         with st.spinner("Processando SPED, montando ranking e consultando CNPJ..."):
             master_data, df_itens, origem_itens = processar_sped_icms(content)
-            df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop = gerar_dataframes_relatorios(
+            df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop, modo_base = gerar_dataframes_relatorios(
                 master_data, df_itens
             )
 
         st.success("Processamento concluído com sucesso. Veja o diagnóstico abaixo.")
 
-        # Aviso sobre origem dos dados de saída
+        # Aviso sobre origem dos dados
         if origem_itens == "C190":
             st.warning(
                 "Este SPED não possui detalhamento de itens (C170). "
-                "Os valores de saída foram apurados a partir do C190 (consolidado por CFOP). "
+                "Os valores foram apurados a partir do C190 (consolidado por CFOP). "
                 "Por isso, o ranking por NCM fica limitado."
             )
-        else:
-            st.info("Este SPED possui detalhamento de itens (C170). Ranking por NCM/CFOP baseado nos itens.")
+
+        if modo_base == "ENTRADAS_PROJETADAS":
+            st.warning(
+                "Não foram encontradas saídas detalhadas (CFOP 5/6/7) nos itens. "
+                "O perfil 2026 está sendo projetado com base nas **ENTRADAS (CFOP 1/2/3)**, "
+                "convertendo CFOP de entrada em CFOP de saída equivalente (ex.: 1102 → 5102, 2102 → 6102)."
+            )
+        elif modo_base == "MISTO/OUTROS":
+            st.info(
+                "Não foi possível separar claramente entradas e saídas. "
+                "O diagnóstico considera todas as linhas de itens como base."
+            )
 
         # ================== HEADER EMPRESA ==================
         st.markdown("----")
@@ -493,7 +548,7 @@ if uploaded_file is not None:
             qtd_cfops = df_itens["CFOP"].nunique()
 
             st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.markdown("<div class='metric-label'>Receita total CFOP 5/6/7</div>", unsafe_allow_html=True)
+            st.markdown("<div class='metric-label'>Receita base CFOP</div>", unsafe_allow_html=True)
             st.markdown(
                 f"<div class='metric-value'>R$ {total_receita:,.2f}</div>".replace(",", "X").replace(".", ",").replace(
                     "X", "."
@@ -508,13 +563,13 @@ if uploaded_file is not None:
 
         # ================== TABELAS ==================
         st.markdown("----")
-        st.markdown("#### 🧱 Ranking de Produtos por NCM x CFOP (Saídas 5/6/7)")
+        st.markdown("#### 🧱 Ranking de Produtos por NCM x CFOP (Base de Receita)")
         st.dataframe(df_rank_prod.head(100), use_container_width=True)
 
         st.markdown("#### 🧩 Perfil Tributário 2026 – por NCM / CFOP / cClassTrib")
         st.dataframe(df_perfil_2026.head(200), use_container_width=True)
 
-        st.markdown("#### 🔢 Ranking de CFOP (Receita 5/6/7)")
+        st.markdown("#### 🔢 Ranking de CFOP (Receita Base)")
         st.dataframe(df_rank_cfop, use_container_width=True)
 
         # ================== DOWNLOAD EXCEL ==================
