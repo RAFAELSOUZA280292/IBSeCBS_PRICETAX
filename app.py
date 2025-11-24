@@ -1,7 +1,6 @@
 import re
 import io
 import datetime
-from collections import defaultdict
 
 import pandas as pd
 import requests
@@ -144,9 +143,9 @@ def classificar_tipo_operacao_por_cfop(cfop: str) -> str:
 def sugerir_cclasstrib_2026(cfop: str) -> str:
     """
     Sugestão de cClassTrib para NF-e/NF-s em 2026.
-    Lógica simplificada baseada no que você vem usando:
+    Lógica simplificada:
       - CFOP de saída/prestação (5,6,7) grupos 1,3,4,5,6,7 => 000001 (onerosa)
-      - Devoluções (grupo 2) => 000001 (mas o ideal é replicar o da nota original)
+      - Devoluções (grupo 2) => 000001
       - Grupo 9 => 410999 (não onerosa genérica: garantia, teste, brinde etc.)
     """
     cfop = (cfop or "").strip()
@@ -156,11 +155,10 @@ def sugerir_cclasstrib_2026(cfop: str) -> str:
     primeiro = cfop[0]
     grupo = cfop[1]
 
-    # Só faz sentido cClassTrib pra saídas/prestações
     if primeiro not in {"5", "6", "7"}:
         return "000001"
 
-    # Casos clássicos que já alinhamos (entrega futura e remessa)
+    # Entrega futura / remessa – ambas onerosas
     if cfop in {"5922", "6922", "7922", "5923", "6923", "7923"}:
         return "000001"
     if cfop in {"5116", "6116", "7116", "5117", "6117", "7117"}:
@@ -248,11 +246,16 @@ def processar_sped_icms(conteudo: str):
     Extrai:
       - master_data (0000)
       - produtos_0200
-      - itens C170 (com NCM/CFOP)
+      - itens C170 (quando houver)
+      - consolidações C190 (sempre que houver)
+    Se não houver C170, cria itens sintéticos a partir do C190.
+    Retorna:
+      master_data_enriquecido, df_itens, origem_itens ("C170" ou "C190")
     """
     master_data = {}
     produtos_0200 = {}
     itens = []
+    c190_rows = []
 
     for linha in conteudo.splitlines():
         linha = linha.rstrip("\n")
@@ -315,9 +318,38 @@ def processar_sped_icms(conteudo: str):
 
             itens.append(item)
 
+        # C190 - consolidação por CFOP/CST
+        if registro == "C190":
+            # |C190|CST_ICMS|CFOP|ALIQ_ICMS|VL_OPR|VL_BC_ICMS|...
+            if len(partes) < 6:
+                continue
+            cfop = partes[3] if len(partes) > 3 else ""
+            try:
+                vl_opr = float((partes[5] or "0").replace(",", "."))
+            except ValueError:
+                vl_opr = 0.0
+
+            c190_rows.append({"CFOP": cfop, "VL_OPR": vl_opr})
+
+    origem_itens = "C170"
+    if not itens:
+        # Não há detalhe de item (C170), vamos usar C190 como base
+        if not c190_rows:
+            raise ValueError("Nenhum registro C170 ou C190 encontrado no arquivo SPED.")
+        origem_itens = "C190"
+        for row in c190_rows:
+            cfop = row["CFOP"]
+            vl = row["VL_OPR"]
+            itens.append({
+                "COD_ITEM": "",
+                "DESCR_COMPL": "",
+                "DESCR_ITEM": "",
+                "NCM": "",
+                "CFOP": cfop,
+                "VL_ITEM": vl,
+            })
+
     df_itens = pd.DataFrame(itens)
-    if df_itens.empty:
-        raise ValueError("Nenhum registro C170 encontrado no arquivo SPED.")
 
     # Classificações
     df_itens["TIPO_OPERACAO"] = df_itens["CFOP"].astype(str).apply(classificar_tipo_operacao_por_cfop)
@@ -338,12 +370,12 @@ def processar_sped_icms(conteudo: str):
             "CNAE_FISCAL_CODIGO": perfil_cnpj.get("CNAE_Fiscal_Codigo", ""),
             "CNAE_FISCAL_DESCRICAO": perfil_cnpj.get("CNAE_Fiscal_Descricao", ""),
             "PORTE": perfil_cnpj.get("Porte", ""),
-            "NATUREZA_JURIDICA": perfil_cnpj.get("Natureza_Jurídica", perfil_cnpj.get("Natureza_Juridica", "")),
+            "NATUREZA_JURIDICA": perfil_cnpj.get("Natureza_Juridica", ""),
             "DATA_INICIO_ATIVIDADE": perfil_cnpj.get("Data_Inicio_Atividade", ""),
         },
     }
 
-    return master_data_enriquecido, df_itens
+    return master_data_enriquecido, df_itens, origem_itens
 
 
 def gerar_dataframes_relatorios(master_data: dict, df_itens: pd.DataFrame):
@@ -403,8 +435,8 @@ def gerar_excel_bytes(df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop) ->
 st.markdown("### 🧾 Diagnóstico SPED ICMS/IPI 2025 → 2026 (PriceTax)")
 st.write(
     "Faça o upload de um arquivo **SPED ICMS/IPI (.txt)**. "
-    "O app vai montar o **ranking de produtos por NCM/CFOP**, buscar o **CNPJ/CNAE** e sugerir o "
-    "**cClassTrib para 2026**, com percentual da receita por operação."
+    "O app vai montar o **ranking de produtos por NCM/CFOP** (quando houver C170), "
+    "buscar o **CNPJ/CNAE** e sugerir o **cClassTrib para 2026**, com percentual da receita por operação."
 )
 
 uploaded_file = st.file_uploader(
@@ -417,12 +449,22 @@ if uploaded_file is not None:
     try:
         content = uploaded_file.read().decode("latin-1", errors="ignore")
         with st.spinner("Processando SPED, montando ranking e consultando CNPJ..."):
-            master_data, df_itens = processar_sped_icms(content)
+            master_data, df_itens, origem_itens = processar_sped_icms(content)
             df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop = gerar_dataframes_relatorios(
                 master_data, df_itens
             )
 
         st.success("Processamento concluído com sucesso. Veja o diagnóstico abaixo.")
+
+        # Aviso sobre origem dos dados de saída
+        if origem_itens == "C190":
+            st.warning(
+                "Este SPED não possui detalhamento de itens (C170). "
+                "Os valores de saída foram apurados a partir do C190 (consolidado por CFOP). "
+                "Por isso, o ranking por NCM fica limitado."
+            )
+        else:
+            st.info("Este SPED possui detalhamento de itens (C170). Ranking por NCM/CFOP baseado nos itens.")
 
         # ================== HEADER EMPRESA ==================
         st.markdown("----")
@@ -459,7 +501,7 @@ if uploaded_file is not None:
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<div class='metric-sub'>{qtd_ncms} NCMs • {qtd_cfops} CFOPs • {qtd_itens} linhas C170</div>",
+                f"<div class='metric-sub'>{qtd_ncms} NCMs • {qtd_cfops} CFOPs • {qtd_itens} linhas base</div>",
                 unsafe_allow_html=True,
             )
             st.markdown("</div>", unsafe_allow_html=True)
