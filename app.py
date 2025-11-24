@@ -1,47 +1,52 @@
-import re
 import io
-import datetime
+import os
+import tempfile
 
 import pandas as pd
-import requests
 import streamlit as st
 
-# ==========================
-#   CONFIG STREAMLIT / TEMA
-# ==========================
+# Importa o motor que você já confia
+# (o mesmo que gera a aba "Ranking Produtos" no Excel)
+from unified_auditor import (
+    parse_sped_file,
+    aggregate_records,
+)
+
+# =========================================
+# CONFIG STREAMLIT / VISUAL (PriceTax vibe)
+# =========================================
 
 st.set_page_config(
-    page_title="Diagnóstico SPED ICMS/IPI 2025-2026 – PriceTax",
+    page_title="Ranking Produtos SPED ICMS/IPI – PriceTax",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# CSS com paleta inspirada no site da PriceTax
 st.markdown("""
 <style>
 :root {
-    --bg-dark: #0B0B0B;
-    --bg-card: #151515;
+    --bg-dark: #050608;
+    --bg-card: #101219;
     --text-light: #F5F5F5;
     --muted: #9CA3AF;
-    --highlight: #FFC300;
-    --highlight-soft: #FFD54F;
-    --border-soft: #2D2D2D;
+    --accent: #FFC300;
+    --accent-soft: #FFD54F;
+    --border-soft: #20232F;
 }
 .stApp {
     background-color: var(--bg-dark);
     color: var(--text-light);
 }
+.block-container {
+    padding-top: 1.2rem;
+}
 h1, h2, h3, h4, h5, h6 {
-    color: var(--highlight);
+    color: var(--accent);
 }
 hr {
     border: none;
-    border-top: 1px solid #2D2D2D;
+    border-top: 1px solid #252836;
     margin: 1rem 0;
-}
-.block-container {
-    padding-top: 1.5rem;
 }
 .card {
     background-color: var(--bg-card);
@@ -51,522 +56,254 @@ hr {
     margin-bottom: 14px;
 }
 .metric-label {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: .12em;
 }
 .metric-value {
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--highlight-soft);
+    color: var(--accent-soft);
 }
 .metric-sub {
     font-size: 0.8rem;
     color: var(--muted);
 }
-.stTextInput label, .stFileUploader label {
-    color: var(--highlight-soft) !important;
+.stFileUploader label {
+    color: var(--accent-soft) !important;
     font-weight: 600;
 }
 .stFileUploader div[data-baseweb="file-uploader"] {
-    background-color: #111111;
+    background-color: #050608;
     border-radius: 12px;
-    border: 1px dashed #525252;
+    border: 1px dashed #3F3F46;
 }
 .stButton > button {
-    background-color: var(--highlight);
-    color: #111111;
+    background-color: var(--accent);
+    color: #050608;
     border: none;
-    padding: 0.6rem 1.4rem;
+    padding: 0.6rem 1.6rem;
     border-radius: 999px;
     font-weight: 700;
 }
 .stButton > button:hover {
-    background-color: var(--highlight-soft);
-    color: #111111;
+    background-color: var(--accent-soft);
+    color: #050608;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================
-#   CONFIG / URLs
+# FUNÇÕES AUXILIARES
 # ==========================
 
-URL_BRASILAPI_CNPJ = "https://brasilapi.com.br/api/cnpj/v1/"
-
-# ==========================
-#   FUNÇÕES AUXILIARES
-# ==========================
-
-def only_digits(s: str) -> str:
-    return re.sub(r"[^0-9]", "", s or "")
-
-
-def format_cnpj_mask(cnpj: str) -> str:
-    c = only_digits(cnpj)
-    if len(c) != 14:
-        return cnpj
-    return f"{c[0:2]}.{c[2:5]}.{c[5:8]}/{c[8:12]}-{c[12:14]}"
-
-
-def normalizar_situacao_cadastral(txt: str) -> str:
-    s = (txt or "").strip().upper()
-    if not s:
-        return "N/A"
-    if "ATIV" in s:
-        return "ATIVO"
-    if "INAPT" in s:
-        return "INAPTO"
-    if "SUSP" in s:
-        return "SUSPENSO"
-    if "BAIX" in s:
-        return "BAIXADO"
-    return s
-
-
-def classificar_tipo_operacao_por_cfop(cfop: str) -> str:
+def salvar_sped_temporario(uploaded_file) -> str:
     """
-    PRODUTO x SERVIÇO por CFOP:
-      - grupo 3 ou 4 => SERVIÇO (transporte/comunicação)
-      - demais => PRODUTO
+    Salva o arquivo enviado pelo usuário em um arquivo temporário .txt
+    e retorna o caminho. Isso é necessário porque o unified_auditor
+    trabalha com caminho de arquivo, não com bytes em memória.
     """
-    cfop = (cfop or "").strip()
-    if len(cfop) != 4 or not cfop.isdigit():
-        return "DESCONHECIDO"
-    grupo = cfop[1]
-    if grupo in {"3", "4"}:
-        return "SERVIÇO"
-    return "PRODUTO"
+    suffix = ".txt"
+    fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)  # fechamos o descritor; vamos escrever com open()
+    with open(tmp_path, "wb") as f:
+        f.write(uploaded_file.getvalue())
+    return tmp_path
 
 
-def sugerir_cclasstrib_2026(cfop: str) -> str:
+def gerar_excel_bytes(sheets: dict) -> bytes:
     """
-    Sugestão de cClassTrib 2026.
-    Mantemos a lógica básica que você já vem usando.
-    Obs.: quando estivermos em modo ENTRADAS, o CFOP aqui será de entrada (1/2/3),
-    mas não faremos simulação de saída – é um olhar mais de mix/volume.
+    Versão em memória da write_excel do unified_auditor:
+    escreve TODAS as abas de `sheets` em um Excel e devolve bytes.
     """
-    cfop = (cfop or "").strip()
-    if len(cfop) != 4 or not cfop.isdigit():
-        return "000001"
-
-    primeiro = cfop[0]
-    grupo = cfop[1]
-
-    # Pensado para saídas (5/6/7), mas mantemos fallback genérico
-    if primeiro not in {"5", "6", "7"}:
-        return "000001"
-
-    # Entrega futura / remessa – ambas onerosas
-    if cfop in {"5922", "6922", "7922", "5923", "6923", "7923"}:
-        return "000001"
-    if cfop in {"5116", "6116", "7116", "5117", "6117", "7117"}:
-        return "000001"
-
-    if grupo in {"1", "3", "4", "5", "6", "7"}:
-        return "000001"
-    if grupo == "2":
-        return "000001"
-    if grupo == "9":
-        return "410999"
-
-    return "000001"
-
-
-def observacao_cclasstrib(cfop: str) -> str:
-    cfop = (cfop or "").strip()
-    if len(cfop) != 4 or not cfop.isdigit():
-        return ""
-    primeiro = cfop[0]
-    grupo = cfop[1]
-
-    if primeiro in {"5", "6", "7"} and grupo == "2":
-        return "Devolução: ideal usar o mesmo cClassTrib da NF original."
-    if primeiro in {"5", "6", "7"} and grupo == "9":
-        return "Provável operação não onerosa (garantia/bonificação/teste). Revisar caso a caso."
-    return ""
-
-
-# ==========================
-#   CONSULTA CNPJ / CNAE
-# ==========================
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def consulta_brasilapi_cnpj(cnpj_limpo: str) -> dict:
-    try:
-        r = requests.get(f"{URL_BRASILAPI_CNPJ}{cnpj_limpo}", timeout=15)
-        if r.status_code in (400, 404):
-            return {"__error": "not_found"}
-        if r.status_code in (429, 500, 502, 503, 504):
-            return {"__error": "unavailable"}
-        r.raise_for_status()
-        return r.json()
-    except:
-        return {"__error": "unavailable"}
-
-
-def enriquecer_com_cnpj(cnpj_raw: str) -> dict:
-    cnpj_limpo = only_digits(cnpj_raw)
-    if len(cnpj_limpo) != 14:
-        return {"CNPJ": cnpj_raw, "__error": "cnpj_invalido"}
-
-    dados = consulta_brasilapi_cnpj(cnpj_limpo)
-    if dados.get("__error"):
-        return {"CNPJ": cnpj_limpo, "__error": dados["__error"]}
-
-    sit = normalizar_situacao_cadastral(dados.get("descricao_situacao_cadastral", ""))
-
-    perfil = {
-        "CNPJ": format_cnpj_mask(dados.get("cnpj", cnpj_limpo)),
-        "Razao_Social": dados.get("razao_social", ""),
-        "Nome_Fantasia": dados.get("nome_fantasia", ""),
-        "Situacao_Cadastral": sit,
-        "Data_Inicio_Atividade": dados.get("data_inicio_atividade", ""),
-        "CNAE_Fiscal_Codigo": dados.get("cnae_fiscal", ""),
-        "CNAE_Fiscal_Descricao": dados.get("cnae_fiscal_descricao", ""),
-        "Porte": dados.get("porte", ""),
-        "Natureza_Juridica": dados.get("natureza_juridica", ""),
-        "Email": dados.get("email", ""),
-        "Municipio": dados.get("municipio", ""),
-        "UF": dados.get("uf", ""),
-        "CEP": dados.get("cep", ""),
-        "Data_Consulta": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-    return perfil
-
-
-# ==========================
-#   PARSE DO SPED ICMS/IPI
-# ==========================
-
-def processar_sped_icms(conteudo: str):
-    """
-    Lê conteúdo de um SPED ICMS/IPI (.txt) como string.
-    Extrai:
-      - master_data (0000)
-      - produtos_0200
-      - itens C170 (quando houver)
-      - consolidações C190 (sempre que houver)
-    Se não houver C170, cria itens sintéticos a partir do C190 (com CFOP e valor).
-    """
-    master_data = {}
-    produtos_0200 = {}
-    itens = []
-    c190_rows = []
-
-    for linha in conteudo.splitlines():
-        linha = linha.rstrip("\n")
-        if not linha.startswith("|"):
-            continue
-
-        partes = linha.split("|")
-        if len(partes) < 2:
-            continue
-
-        registro = partes[1]
-
-        # 0000 - dados do contribuinte
-        if registro == "0000":
-            master_data["COD_VER"] = partes[2] if len(partes) > 2 else ""
-            master_data["COD_FIN"] = partes[3] if len(partes) > 3 else ""
-            master_data["DT_INI"] = partes[4] if len(partes) > 4 else ""
-            master_data["DT_FIN"] = partes[5] if len(partes) > 5 else ""
-            master_data["NOME"] = partes[6] if len(partes) > 6 else ""
-            master_data["CNPJ"] = partes[7] if len(partes) > 7 else ""
-            master_data["UF"] = partes[9] if len(partes) > 9 else ""
-            master_data["IE"] = partes[10] if len(partes) > 10 else ""
-
-        # 0200 - cadastro de produtos
-        if registro == "0200":
-            cod_item = partes[2] if len(partes) > 2 else ""
-            descr_item = partes[3] if len(partes) > 3 else ""
-            ncm = partes[6] if len(partes) > 6 else ""
-            produtos_0200[cod_item] = {
-                "COD_ITEM": cod_item,
-                "DESCR_ITEM": descr_item,
-                "NCM": ncm,
-            }
-
-        # C170 - itens de notas
-        if registro == "C170":
-            if len(partes) < 12:
-                continue
-            cod_item = partes[3]
-            descr_compl = partes[4]
-            try:
-                vl_item = float((partes[6] or "0").replace(",", "."))
-            except ValueError:
-                vl_item = 0.0
-            cfop = partes[11] if len(partes) > 11 else ""
-
-            item = {
-                "COD_ITEM": cod_item,
-                "DESCR_COMPL": descr_compl,
-                "VL_ITEM": vl_item,
-                "CFOP": cfop,
-            }
-
-            if cod_item in produtos_0200:
-                item["DESCR_ITEM"] = produtos_0200[cod_item]["DESCR_ITEM"]
-                item["NCM"] = produtos_0200[cod_item]["NCM"]
-            else:
-                item["DESCR_ITEM"] = ""
-                item["NCM"] = ""
-
-            itens.append(item)
-
-        # C190 - consolidação por CFOP/CST
-        if registro == "C190":
-            # |C190|CST_ICMS|CFOP|ALIQ_ICMS|VL_OPR|VL_BC_ICMS|...
-            if len(partes) < 6:
-                continue
-            cfop = partes[3] if len(partes) > 3 else ""
-            try:
-                vl_opr = float((partes[5] or "0").replace(",", "."))
-            except ValueError:
-                vl_opr = 0.0
-
-            c190_rows.append({"CFOP": cfop, "VL_OPR": vl_opr})
-
-    origem_itens = "C170"
-    if not itens:
-        # Sem detalhamento de item (C170), usa C190 como base
-        if not c190_rows:
-            raise ValueError("Nenhum registro C170 ou C190 encontrado no arquivo SPED.")
-        origem_itens = "C190"
-        for row in c190_rows:
-            cfop = row["CFOP"]
-            vl = row["VL_OPR"]
-            itens.append({
-                "COD_ITEM": "",
-                "DESCR_COMPL": "",
-                "DESCR_ITEM": "",
-                "NCM": "",
-                "CFOP": cfop,
-                "VL_ITEM": vl,
-            })
-
-    df_itens = pd.DataFrame(itens)
-
-    # Classificações iniciais
-    df_itens["TIPO_OPERACAO"] = df_itens["CFOP"].astype(str).apply(classificar_tipo_operacao_por_cfop)
-    df_itens["cClassTrib_2026"] = df_itens["CFOP"].astype(str).apply(sugerir_cclasstrib_2026)
-    df_itens["OBS_2026"] = df_itens["CFOP"].astype(str).apply(observacao_cclasstrib)
-
-    # Enriquecimento com CNPJ
-    cnpj_sped = master_data.get("CNPJ", "")
-    perfil_cnpj = enriquecer_com_cnpj(cnpj_sped)
-
-    master_data_enriquecido = {
-        **master_data,
-        **{
-            "CNPJ_FORMATADO": perfil_cnpj.get("CNPJ", format_cnpj_mask(cnpj_sped)),
-            "RAZAO_SOCIAL_CNPJ": perfil_cnpj.get("Razao_Social", ""),
-            "NOME_FANTASIA_CNPJ": perfil_cnpj.get("Nome_Fantasia", ""),
-            "SITUACAO_CADASTRAL_CNPJ": perfil_cnpj.get("Situacao_Cadastral", ""),
-            "CNAE_FISCAL_CODIGO": perfil_cnpj.get("CNAE_Fiscal_Codigo", ""),
-            "CNAE_FISCAL_DESCRICAO": perfil_cnpj.get("CNAE_Fiscal_Descricao", ""),
-            "PORTE": perfil_cnpj.get("Porte", ""),
-            "NATUREZA_JURIDICA": perfil_cnpj.get("Natureza_Juridica", ""),
-            "DATA_INICIO_ATIVIDADE": perfil_cnpj.get("Data_Inicio_Atividade", ""),
-        },
-    }
-
-    return master_data_enriquecido, df_itens, origem_itens
-
-
-def gerar_dataframes_relatorios(master_data: dict, df_itens: pd.DataFrame):
-    """
-    Regras:
-      - Tenta usar SAÍDAS (CFOP 5/6/7) como base.
-      - Se não encontrar SAÍDAS, usa ENTRADAS (CFOP 1/2/3) como base de ranking,
-        SEM projetar CFOP de entrada para saída.
-      - Se não tiver nem entradas nem saídas bem definidas, usa tudo (modo GERAL).
-    Retorna:
-      df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop, modo_base
-    """
-    df_saidas = df_itens[df_itens["CFOP"].astype(str).str[0].isin(["5", "6", "7"])].copy()
-    df_entradas = df_itens[df_itens["CFOP"].astype(str).str[0].isin(["1", "2", "3"])].copy()
-
-    if not df_saidas.empty:
-        df_base = df_saidas
-        modo_base = "SAIDAS"
-    elif not df_entradas.empty:
-        df_base = df_entradas
-        modo_base = "ENTRADAS"
-    else:
-        df_base = df_itens.copy()
-        modo_base = "GERAL"
-
-    # Ranking produtos por NCM + CFOP (base escolhida)
-    df_rank_prod = (
-        df_base.groupby(["NCM", "CFOP", "DESCR_ITEM"], dropna=False, as_index=False)["VL_ITEM"]
-        .sum()
-        .sort_values("VL_ITEM", ascending=False)
-    )
-
-    # Ranking CFOP (base escolhida)
-    df_rank_cfop = (
-        df_base.groupby("CFOP", as_index=False)["VL_ITEM"]
-        .sum()
-        .sort_values("VL_ITEM", ascending=False)
-    )
-
-    # Perfil trib 2026 (base escolhida)
-    df_perfil_2026 = (
-        df_base.groupby(
-            ["NCM", "CFOP", "DESCR_ITEM", "TIPO_OPERACAO", "cClassTrib_2026", "OBS_2026"],
-            dropna=False,
-            as_index=False,
-        )["VL_ITEM"]
-        .sum()
-        .sort_values("VL_ITEM", ascending=False)
-    )
-
-    total_receita = df_perfil_2026["VL_ITEM"].sum()
-    if total_receita == 0:
-        total_receita = 1
-    df_perfil_2026["PERCENTUAL_RECEITA"] = (df_perfil_2026["VL_ITEM"] / total_receita) * 100
-
-    df_empresa = pd.DataFrame([master_data])
-
-    return df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop, modo_base
-
-
-def gerar_excel_bytes(df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop) -> bytes:
     buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df_empresa.to_excel(writer, sheet_name="DADOS_EMPRESA_2025", index=False)
-        df_rank_prod.to_excel(writer, sheet_name="RANKING_PRODUTOS_NCM_CFOP", index=False)
-        df_perfil_2026.to_excel(writer, sheet_name="PERFIL_TRIB_2026", index=False)
-        df_rank_cfop.to_excel(writer, sheet_name="RANKING_CFOP", index=False)
+    with pd.ExcelWriter(buf, engine="xlsxwriter") as writer:
+        for sheet_name, df in sheets.items():
+            # Excel só aceita até 31 caracteres no nome da aba
+            name = str(sheet_name)[:31]
+            df.to_excel(writer, sheet_name=name, index=False)
+            worksheet = writer.sheets[name]
+            # Congela cabeçalho
+            worksheet.freeze_panes(1, 0)
+            worksheet.set_zoom(90)
+            # Auto-ajuste de largura de coluna (igual ao unified_auditor)
+            for i, col in enumerate(df.columns):
+                try:
+                    max_len = max(
+                        (len(str(x)) for x in [col] + df[col].astype(str).tolist()),
+                        default=0,
+                    )
+                except Exception:
+                    max_len = len(str(col))
+                width = min(max(max_len + 2, 12), 60)
+                worksheet.set_column(i, i, width)
     buf.seek(0)
     return buf.getvalue()
 
 
+def processar_sped(uploaded_file):
+    """
+    1) Salva o SPED em arquivo temporário
+    2) Usa parse_sped_file (unified_auditor) para ler
+    3) Usa aggregate_records (unified_auditor) para montar TODOS os DataFrames
+    4) Retorna (record, sheets)
+    """
+    tmp_path = salvar_sped_temporario(uploaded_file)
+
+    # Não vamos usar TIPI nem XML aqui => mapas vazios
+    tipi_map = {}
+    xml_map = {}
+
+    # Um arquivo → um SpedRecord
+    rec = parse_sped_file(tmp_path, xml_map, tipi_map)
+
+    # Aggregate_records espera lista de SpedRecord
+    sheets = aggregate_records([rec])
+
+    # Remove o arquivo temporário
+    try:
+        os.remove(tmp_path)
+    except Exception:
+        pass
+
+    return rec, sheets
+
+
 # ==========================
-#   UI STREAMLIT
+# UI
 # ==========================
 
-st.markdown("### 🧾 Diagnóstico SPED ICMS/IPI 2025 → 2026 (PriceTax)")
+st.markdown("### 🧾 Ranking de Produtos – SPED ICMS/IPI (motor unified_auditor)")
+
 st.write(
-    "Faça o upload de um arquivo **SPED ICMS/IPI (.txt)**. "
-    "O app monta o **ranking de itens por NCM/CFOP**, busca **CNPJ/CNAE** e sugere **cClassTrib para 2026**.\n\n"
-    "- Se houver **detalhamento de saídas** (CFOP 5/6/7), usamos essas saídas como base.\n"
-    "- Se **não houver saídas detalhadas**, te avisamos e usamos as **entradas (CFOP 1/2/3)** "
-    "para montar o ranking (sem simular CFOP de saída)."
+    "Este app lê um **SPED ICMS/IPI (.txt)**, usa o mesmo motor do "
+    "`unified_auditor.py` para gerar a aba **'Ranking Produtos'** e "
+    "exporta um Excel completo para BI / TI."
 )
 
-uploaded_file = st.file_uploader(
+uploaded = st.file_uploader(
     "Selecione o arquivo SPED ICMS/IPI (.txt)",
     type=["txt"],
-    help="Arquivo gerado pelo PVA da EFD ICMS/IPI (formato texto, delimitado por |).",
+    help="Arquivo texto gerado pela EFD ICMS/IPI (SPED Fiscal).",
 )
 
-if uploaded_file is not None:
+if uploaded is not None:
     try:
-        content = uploaded_file.read().decode("latin-1", errors="ignore")
-        with st.spinner("Processando SPED, montando ranking e consultando CNPJ..."):
-            master_data, df_itens, origem_itens = processar_sped_icms(content)
-            df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop, modo_base = gerar_dataframes_relatorios(
-                master_data, df_itens
-            )
+        with st.spinner("Processando SPED com unified_auditor..."):
+            rec, sheets = processar_sped(uploaded)
 
-        st.success("Processamento concluído com sucesso. Veja o diagnóstico abaixo.")
+        # ---------------- CABEÇALHO EMPRESA ----------------
+        md = rec.master_data or {}
 
-        # Avisos sobre origem dos dados
-        if origem_itens == "C190":
-            st.warning(
-                "Este SPED não possui detalhamento de itens (C170). "
-                "Os valores foram apurados a partir do C190 (consolidado por CFOP). "
-                "Isso limita o nível de detalhe por NCM/descrição."
-            )
+        st.success("SPED processado com sucesso. Ranking montado com os MESMOS campos do unified_auditor.")
 
-        if modo_base == "SAIDAS":
-            st.info(
-                "Base de análise: **saídas/prestações (CFOP 5/6/7)** com detalhamento de itens. "
-                "Ranking e perfil 2026 refletem o mix efetivo de vendas."
-            )
-        elif modo_base == "ENTRADAS":
-            st.warning(
-                "Não existem detalhes de itens de **saídas** (CFOP 5/6/7) neste SPED.\n\n"
-                "O ranking abaixo está baseado em **ENTRADAS (CFOP 1/2/3)**, "
-                "usando NCM e descrição das entradas, sem qualquer simulação de CFOP de saída."
-            )
-        else:  # GERAL
-            st.info(
-                "Não foi possível separar claramente entradas e saídas. "
-                "O diagnóstico considera todas as linhas de itens como base."
-            )
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.markdown("#### 🏢 Dados do Arquivo / Empresa (SPED)")
+            st.markdown(f"**Competência:** {md.get('competence', '')}")
+            st.markdown(f"**Razão Social:** {md.get('company_name', '')}")
+            st.markdown(f"**CNPJ:** {md.get('company_cnpj', '')}")
+            st.markdown(f"**IE:** {md.get('company_ie', '')}")
+            st.markdown(f"**Município (código):** {md.get('company_cod_mun', '')}")
+            st.markdown(f"**Perfil:** {md.get('company_profile', '')}")
 
-        # ================== HEADER EMPRESA ==================
-        st.markdown("----")
-        col_a, col_b = st.columns([2, 1])
-        with col_a:
-            st.markdown("#### 🏢 Dados da Empresa (SPED + BrasilAPI)")
-            st.markdown(f"**Razão Social (SPED):** {master_data.get('NOME','')}")
-            st.markdown(f"**CNPJ (SPED):** {format_cnpj_mask(master_data.get('CNPJ',''))}")
-            st.markdown(f"**CNPJ (Consulta):** {master_data.get('CNPJ_FORMATADO','')}")
-            st.markdown(f"**Período SPED:** {master_data.get('DT_INI','')} a {master_data.get('DT_FIN','')}")
-
-            st.markdown(
-                f"**CNAE Fiscal:** {master_data.get('CNAE_FISCAL_CODIGO','')} – "
-                f"{master_data.get('CNAE_FISCAL_DESCRICAO','')}"
-            )
-            st.markdown(
-                f"**Situação Cadastral (RFB):** {master_data.get('SITUACAO_CADASTRAL_CNPJ','')}"
-            )
-
-        with col_b:
-            st.markdown("#### 📊 Resumo Rápido")
-
-            total_receita = df_perfil_2026["VL_ITEM"].sum()
-            qtd_itens = df_itens.shape[0]
-            qtd_ncms = df_itens["NCM"].nunique()
-            qtd_cfops = df_itens["CFOP"].nunique()
+        with col2:
+            st.markdown("#### 📊 Visão Rápida")
+            df_items = sheets.get("Detalhes Itens")
+            total_valor = 0.0
+            q_itens = 0
+            q_ncm = 0
+            q_cfop = 0
+            if df_items is not None and not df_items.empty:
+                q_itens = len(df_items)
+                if "NCM Item" in df_items.columns:
+                    q_ncm = df_items["NCM Item"].nunique()
+                if "CFOP" in df_items.columns:
+                    q_cfop = df_items["CFOP"].nunique()
+                if "Valor Total Item" in df_items.columns:
+                    total_valor = float(
+                        pd.to_numeric(df_items["Valor Total Item"], errors="coerce")
+                        .fillna(0.0)
+                        .sum()
+                    )
 
             st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.markdown("<div class='metric-label'>Valor total base</div>", unsafe_allow_html=True)
+            st.markdown("<div class='metric-label'>Base de itens (Entradas + Saídas)</div>", unsafe_allow_html=True)
             st.markdown(
-                f"<div class='metric-value'>R$ {total_receita:,.2f}</div>"
+                f"<div class='metric-value'>R$ {total_valor:,.2f}</div>"
                 .replace(",", "X").replace(".", ",").replace("X", "."),
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<div class='metric-sub'>{qtd_ncms} NCMs • {qtd_cfops} CFOPs • {qtd_itens} linhas base</div>",
+                f"<div class='metric-sub'>{q_itens} linhas • {q_ncm} NCMs • {q_cfop} CFOPs</div>",
                 unsafe_allow_html=True,
             )
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # ================== TABELAS ==================
-        st.markdown("----")
-        st.markdown("#### 🧱 Ranking por NCM x CFOP (Base de análise)")
-        st.dataframe(df_rank_prod.head(100), use_container_width=True)
+        st.markdown("---")
 
-        st.markdown("#### 🧩 Perfil 2026 – NCM / CFOP / Tipo / cClassTrib (sobre a base atual)")
-        st.dataframe(df_perfil_2026.head(200), use_container_width=True)
+        # ---------------- RANKING PRODUTOS ----------------
+        df_ranking = sheets.get("Ranking Produtos")
 
-        st.markdown("#### 🔢 Ranking de CFOP (Base de análise)")
-        st.dataframe(df_rank_cfop, use_container_width=True)
+        if df_ranking is None or df_ranking.empty:
+            st.warning(
+                "O unified_auditor não conseguiu gerar a aba **'Ranking Produtos'** "
+                "(provavelmente não há itens C170 consistentes)."
+            )
+        else:
+            st.markdown("#### 🧱 Ranking Produtos (igual ao unified_auditor)")
+            st.caption(
+                "Agrupado por: Competência, CNPJ, Razão Social, Descrição do Produto, "
+                "NCM Item e CFOP, somando Valor Contábil, BC ICMS, ICMS e IPI."
+            )
+            st.dataframe(df_ranking.head(200), use_container_width=True)
 
-        # ================== DOWNLOAD EXCEL ==================
-        st.markdown("----")
-        st.markdown("### 📥 Download do Excel consolidado")
+        # ---------------- OUTRAS ABAS ÚTEIS (opcional, só exibir se existirem) ----------------
+        st.markdown("---")
+        st.markdown("#### 🔍 Outras abas geradas pelo unified_auditor (visualização rápida)")
 
-        excel_bytes = gerar_excel_bytes(df_empresa, df_rank_prod, df_perfil_2026, df_rank_cfop)
+        tabs_nomes = []
+        dfs_para_tabs = []
 
-        nome_base = uploaded_file.name.rsplit(".", 1)[0]
-        file_name = f"Diagnostico_Trib_2025_2026_{nome_base}.xlsx"
+        for nome in [
+            "Resumo Itens por NCM-CFOP",
+            "Resumo CFOP-NCM-CST",
+            "Resumo Entradas por CFOP",
+            "Resumo Entradas por NCM-CFOP",
+            "Resumo Saídas por CFOP-CST",
+        ]:
+            df = sheets.get(nome)
+            if df is not None and not df.empty:
+                tabs_nomes.append(nome)
+                dfs_para_tabs.append(df)
+
+        if tabs_nomes:
+            tabs = st.tabs(tabs_nomes)
+            for t, df in zip(tabs, dfs_para_tabs):
+                with t:
+                    st.dataframe(df.head(200), use_container_width=True)
+        else:
+            st.info("Nenhuma aba adicional relevante encontrada (de acordo com os dados deste SPED).")
+
+        # ---------------- DOWNLOAD EXCEL COMPLETO ----------------
+        st.markdown("---")
+        st.markdown("### 📥 Download do Excel (todas as abas do unified_auditor)")
+
+        excel_bytes = gerar_excel_bytes(sheets)
+
+        nome_base = uploaded.name.rsplit(".", 1)[0]
+        nome_arquivo = f"Auditor_SPED_{nome_base}_RankingProdutos.xlsx"
 
         st.download_button(
-            label="⬇️ Baixar Excel (DADOS + RANKINGS + PERFIL 2026)",
+            label="⬇️ Baixar Excel completo (inclui aba 'Ranking Produtos')",
             data=excel_bytes,
-            file_name=file_name,
+            file_name=nome_arquivo,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
     except Exception as e:
-        st.error(f"Ocorreu um erro ao processar o SPED: {e}")
+        st.error(f"Erro ao processar o arquivo: {e}")
+
 else:
-    st.info("Faça o upload de um arquivo SPED ICMS/IPI para iniciar o diagnóstico.")
+    st.info("Faça o upload de um SPED ICMS/IPI (.txt) para gerar o Ranking de Produtos.")
