@@ -15,33 +15,82 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS simples com cores PRICETAX
+# Paleta PRICETAX:
+# - Fundo: preto / quase preto
+# - Destaque principal: amarelo
+# - Detalhes: azul escuro
+PRIMARY_YELLOW = "#FFC107"
+DARK_BG = "#050608"
+DARK_BLUE = "#0A2342"
+
 st.markdown(
-    """
+    f"""
     <style>
-    :root {
-        --primary-color: #0eb8b3;
-    }
-    .stApp {
-        background-color: #050608;
+    .stApp {{
+        background-color: {DARK_BG};
         color: #f5f5f5;
-    }
-    h1, h2, h3, h4 {
+    }}
+
+    h1, h2, h3, h4 {{
         color: #ffffff;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-weight: 600;
-    }
-    .stButton>button {
-        background-color: #0eb8b3;
-        color: white;
+        font-weight: 700;
+    }}
+
+    /* Barra lateral */
+    section[data-testid="stSidebar"] {{
+        background-color: #000000;
+        border-right: 1px solid #222222;
+    }}
+
+    /* Botões padrão */
+    .stButton>button {{
+        background: linear-gradient(90deg, {PRIMARY_YELLOW}, #ffdd57);
+        color: #000000;
         border-radius: 6px;
         border: none;
-    }
-    .stButton>button:hover {
-        background-color: #0ca39f;
-        color: white;
-    }
+        font-weight: 600;
+    }}
+    .stButton>button:hover {{
+        background: linear-gradient(90deg, #ffdd57, {PRIMARY_YELLOW});
+        color: #000000;
+    }}
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 4px;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        background-color: #101218;
+        color: #e0e0e0;
+        border-radius: 4px 4px 0 0;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        font-weight: 600;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {DARK_BLUE} !important;
+        color: {PRIMARY_YELLOW} !important;
+        border-bottom: 3px solid {PRIMARY_YELLOW};
+    }}
+
+    /* Inputs */
+    .stTextInput>div>div>input {{
+        background-color: #14161e;
+        color: #ffffff;
+        border-radius: 6px;
+        border: 1px solid #333333;
+    }}
+
+    /* Dataframes */
+    .stDataFrame, .stTable {{
+        border-radius: 6px;
+        overflow: hidden;
+    }}
+
+    /* Mensagens de sucesso/erro/info */
+    .stAlert {{
+        border-radius: 6px;
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -87,9 +136,9 @@ def normalizar_ncm(ncm: str) -> str:
 # Banco TIPI → IBS/CBS
 # =========================
 
-# Nome oficial da planilha de base
-TIPI_DB_DEFAULT_PATH = Path("1 TIPI 2022 - Atualizada ADE 003-2025.xlsx")
-TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
+# Novo nome da planilha base
+TIPI_DB_DEFAULT_PATH = Path("TIPI_IBS_CBS.xlsx")
+TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"   # mantém o nome da aba que criamos antes
 
 @st.cache_data
 def load_tipi_db_from_file_bytes(file_bytes: bytes) -> pd.DataFrame:
@@ -119,7 +168,7 @@ def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
     if df_tipi is None or df_tipi.empty:
         return {
             "encontrado": False,
-            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo padrão no repositório ou faça upload na barra lateral.",
+            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo padrão 'TIPI_IBS_CBS.xlsx' na raiz do projeto ou envie uma base na barra lateral.",
             "NCM": ncm,
         }
     linha = df_tipi[df_tipi["NCM_DIGITOS"] == ncm_norm].head(1)
@@ -425,12 +474,12 @@ def processar_speds_streamlit(uploaded_files):
 # STREAMLIT APP
 # =========================
 
-st.sidebar.title("⚙️ Configurações")
+st.sidebar.title("⚙️ Configurações PRICETAX")
 
 tipi_upload = st.sidebar.file_uploader(
-    "Base TIPI PRICETAX (NCM x IBS/CBS)",
+    "Base TIPI IBS/CBS (NCM x Grupo)",
     type=["xlsx"],
-    help="Se não enviar, o sistema usa o arquivo padrão '1 TIPI 2022 - Atualizada ADE 003-2025.xlsx' na raiz do projeto."
+    help="Se não enviar, o sistema utiliza o arquivo padrão 'TIPI_IBS_CBS.xlsx' na raiz do projeto."
 )
 
 if tipi_upload is not None:
@@ -443,13 +492,11 @@ if df_tipi is None or df_tipi.empty:
 
 st.title("🧠 PRICETAX · Classificador IBS/CBS & SPED PIS/COFINS")
 st.markdown(
-    """
-    Ferramenta PRICETAX para apoio na **classificação tributária de bens (IBS/CBS)** e
-    análise do **SPED Contribuições (Bloco M – PIS/COFINS)**.
-
-    O modelo utiliza a TIPI oficial como referência de NCM, capítulos e grupos de produtos,
-    alinhado às regras da Reforma Tributária e da legislação vigente.
-    """
+    f"""
+    <span style="color:{PRIMARY_YELLOW}; font-weight:700;">Módulo de apoio tributário PRICETAX</span><br>
+    Classificação de bens para IBS/CBS baseada em TIPI + análise do SPED Contribuições (Bloco M – PIS/COFINS).
+    """,
+    unsafe_allow_html=True,
 )
 
 tab1, tab2 = st.tabs(["🔍 Consulta IBS/CBS por NCM", "📂 SPED PIS/COFINS → Excel"])
@@ -464,7 +511,7 @@ with tab1:
 
     with col_ncm:
         ncm_input = st.text_input(
-            "Informe o NCM (com ou sem pontos)",
+            "Informe o NCM (com ou sem pontos):",
             value="",
             placeholder="Ex.: 1905.90.90 ou 19059090"
         )
@@ -480,7 +527,10 @@ with tab1:
             st.success(f"NCM localizado: {info['NCM']}")
             st.write(f"**Descrição TIPI:** {info['DESCRICAO_TIPI']}")
             st.write(f"**Capítulo / Seção TIPI:** {info['Capitulo_TIPI']} / {info['Secao_TIPI']}")
-            st.write(f"**Grupo de produtos (modelo PRICETAX):** `{info['ID_Grupo']}` — {info['Nome_Grupo']}")
+            st.write(
+                f"**Grupo de produtos (modelo PRICETAX):** "
+                f"`{info['ID_Grupo']}` — {info['Nome_Grupo']}"
+            )
             st.write("**Tratamento IBS/CBS (visão geral):**")
             st.code(info["Tratamento_IBS_CBS_Geral"], language="text")
             st.write(f"**Indicação de Imposto Seletivo:** {info['Possivel_Imposto_Seletivo']}")
@@ -499,13 +549,13 @@ with tab2:
     st.subheader("Processar SPED Contribuições (Bloco M – PIS/COFINS)")
 
     uploaded_speds = st.file_uploader(
-        "Selecione os arquivos SPED (.txt ou .zip)",
+        "Selecione os arquivos SPED (.txt ou .zip):",
         type=["txt", "zip"],
         accept_multiple_files=True
     )
 
     if uploaded_speds:
-        if st.button("Executar processamento"):
+        if st.button("Executar processamento SPED"):
             (
                 df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis,
                 df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
@@ -552,7 +602,7 @@ with tab2:
             output.seek(0)
 
             st.download_button(
-                label="⬇️ Baixar Excel consolidado",
+                label="⬇️ Baixar Excel consolidado PRICETAX",
                 data=output,
                 file_name="SPED_PIS_COFINS_BLOCO_M_PRICETAX.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
