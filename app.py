@@ -38,6 +38,101 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
             return f"{dig[2:4]}/{dig[4:8]}"
     return ""
 
+def format_currency_brl(v) -> str:
+    try:
+        return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return ""
+
+def normalizar_ncm(s: str) -> str:
+    d = only_digits(str(s) if s is not None else "")
+    if not d:
+        return ""
+    # geralmente 8 dígitos; se vier maior, corta; se menor, mantém como está
+    if len(d) >= 8:
+        return d[:8]
+    return d
+
+# =========================
+# Carregamento da tabela de classificação IBS/CBS
+# =========================
+
+@st.cache_data(show_spinner=False)
+def carregar_classificacao_tributaria():
+    """
+    Lê a planilha classificacao_tributaria.xlsx na mesma pasta do script.
+    Espera a aba 'Classificação Tributária'.
+    """
+    base_dir = Path(__file__).resolve().parent
+    xlsx_path = base_dir / "classificacao_tributaria.xlsx"
+
+    if not xlsx_path.exists():
+        return None
+
+    df = pd.read_excel(xlsx_path, sheet_name="Classificação Tributária")
+
+    # Normaliza NCM para join
+    if "NCM" in df.columns:
+        df["NCM_NORM"] = df["NCM"].astype(str).apply(normalizar_ncm)
+    else:
+        df["NCM_NORM"] = ""
+
+    # Seleciona colunas principais para IBS/CBS/cClassTrib/Essencialidade
+    cols_interesse = [
+        "NCM_NORM",
+        "NCM",
+        "Especificação",
+        "Essencialidade",
+        "Grupo Mercadoria",
+        "Subgrupo Mercadoria",
+        "Código da Situação Tributária",
+        "Descrição da Situação Tributária",
+        "Class Trib IBS",
+        "Class Trib CBS",
+        "Alíquota de Referência",
+        "Alíquota de IBS",
+        "Alíquota de CBS",
+    ]
+    cols_interesse = [c for c in cols_interesse if c in df.columns]
+
+    df_class = df[cols_interesse].copy()
+
+    # remove duplicatas por NCM_NORM (deixa a primeira)
+    df_class = df_class.drop_duplicates(subset=["NCM_NORM"])
+
+    return df_class
+
+def mapear_ibs_cbs(df_ranking: pd.DataFrame, df_class: pd.DataFrame) -> pd.DataFrame:
+    """
+    Faz o join do ranking (CFOP+NCM+DESCR_ITEM+VL_TOTAL_ITEM) com a
+    classificação IBS/CBS/cClassTrib por NCM.
+    """
+    if df_ranking is None or df_ranking.empty or df_class is None:
+        return df_ranking
+
+    df_rank = df_ranking.copy()
+    df_rank["NCM_NORM"] = df_rank["NCM"].astype(str).apply(normalizar_ncm)
+
+    df_merged = df_rank.merge(
+        df_class,
+        on="NCM_NORM",
+        how="left",
+        suffixes=("", "_class"),
+    )
+
+    # Formata valores BRL para exibição
+    df_merged["VL_TOTAL_ITEM_BR"] = df_merged["VL_TOTAL_ITEM"].apply(format_currency_brl)
+    if "Alíquota de IBS" in df_merged.columns:
+        df_merged["Aliq_IBS_BR"] = df_merged["Alíquota de IBS"].apply(
+            lambda v: f"{v:.2f}%" if pd.notnull(v) else ""
+        )
+    if "Alíquota de CBS" in df_merged.columns:
+        df_merged["Aliq_CBS_BR"] = df_merged["Alíquota de CBS"].apply(
+            lambda v: f"{v:.2f}%" if pd.notnull(v) else ""
+        )
+
+    return df_merged
+
 # =========================
 # Parser EFD PIS/COFINS
 # =========================
@@ -117,7 +212,6 @@ def parse_efd_piscofins_text(text: str, origem: str):
 
         # C100 – cabeçalho do documento
         elif reg == "C100":
-            # layout EFD Contribuições (análogo ao Fiscal nos campos iniciais)
             # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|DT_DOC|DT_E_S|VL_DOC|...
             current_doc = {
                 "IND_OPER": (campos[2] if len(campos) > 2 else "").strip(),
@@ -133,7 +227,6 @@ def parse_efd_piscofins_text(text: str, origem: str):
 
         # C170 – itens do documento
         elif reg == "C170":
-            # layout EFD (ICMS/IPI) – usado também na EFD Contribuições:
             # |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|IND_MOV|
             #        2        3         4          5    6     7       8       9
             # |CST_ICMS|CFOP|COD_NAT|VL_BC_ICMS|ALIQ_ICMS|VL_ICMS|VL_BC_ICMS_ST|ALIQ_ST|VL_ICMS_ST|
@@ -220,7 +313,7 @@ def gerar_ranking(df_itens: pd.DataFrame) -> pd.DataFrame:
     df = df_itens.copy()
     df["VL_ITEM"] = pd.to_numeric(df["VL_ITEM"], errors="coerce").fillna(0.0)
 
-    group_cols = ["CFOP", "NCM", "DESCR_ITEM"]
+    group_cols = ["COMPETENCIA", "CNPJ", "CFOP", "NCM", "DESCR_ITEM"]
     df_rank = (
         df.groupby(group_cols, as_index=False)["VL_ITEM"]
         .sum()
@@ -230,18 +323,30 @@ def gerar_ranking(df_itens: pd.DataFrame) -> pd.DataFrame:
 
     return df_rank
 
-def gerar_excel_bytes(df_itens: pd.DataFrame, df_ranking: pd.DataFrame) -> bytes:
+def gerar_excel_bytes(df_itens: pd.DataFrame, df_ranking_mapeado: pd.DataFrame) -> bytes:
     """
-    Gera um Excel em memória com duas abas:
+    Gera um Excel em memória com:
       - Detalhe Itens Saída
-      - Ranking Produtos Saída
+      - Ranking Produtos Saída + IBS/CBS/cClassTrib
+      - Receita por Essencialidade
     """
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="xlsxwriter") as writer:
         if df_itens is not None and not df_itens.empty:
             df_itens.to_excel(writer, sheet_name="Detalhe Itens Saída", index=False)
-        if df_ranking is not None and not df_ranking.empty:
-            df_ranking.to_excel(writer, sheet_name="Ranking Produtos Saída", index=False)
+        if df_ranking_mapeado is not None and not df_ranking_mapeado.empty:
+            df_ranking_mapeado.to_excel(writer, sheet_name="Ranking IBS_CBS", index=False)
+
+            # Também gera um resumo por Essencialidade
+            if "Essencialidade" in df_ranking_mapeado.columns:
+                df_ess = (
+                    df_ranking_mapeado
+                    .groupby("Essencialidade", as_index=False)["VL_TOTAL_ITEM"]
+                    .sum()
+                    .sort_values("VL_TOTAL_ITEM", ascending=False)
+                )
+                df_ess.to_excel(writer, sheet_name="Receita x Essencialidade", index=False)
+
     buf.seek(0)
     return buf
 
@@ -255,14 +360,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.markdown("## 🧾 Ranking de Produtos – EFD PIS/COFINS (Saídas)")
+st.markdown("## 🧾 Ranking de Produtos – EFD PIS/COFINS (Saídas) + IBS/CBS 2026")
 st.write(
-    "Faça upload de um ou mais arquivos **EFD Contribuições (PIS/COFINS)** "
-    "em formato `.txt` ou `.zip`. O app vai:\n"
-    "- Ler **0000, 0200, C100 e C170**;\n"
-    "- Filtrar apenas itens com **CFOP iniciados em 5, 6 ou 7** (saídas);\n"
-    "- Cruzar cada item com o **cadastro do 0200** (descrição e NCM);\n"
-    "- Montar um **ranking de produtos por CFOP + NCM + descrição**, somando o valor do item."
+    "- Lê **0000, 0200, C100 e C170** da EFD Contribuições (PIS/COFINS);\n"
+    "- Filtra apenas itens com **CFOP iniciados em 5, 6 ou 7** (saídas);\n"
+    "- Cruza cada item com o **cadastro do 0200** (descrição e NCM);\n"
+    "- Monta um **ranking de produtos por CFOP + NCM + descrição**, somando o valor do item;\n"
+    "- Faz o **mapeamento automático IBS/CBS 2026 + cClassTrib** com base na planilha `classificacao_tributaria.xlsx`;\n"
+    "- Monta um **dashboard de Receita x Essencialidade**."
 )
 
 uploaded_files = st.file_uploader(
@@ -282,6 +387,13 @@ def salvar_uploads_temp(files):
         paths.append(temp_path)
     return paths
 
+df_class = carregar_classificacao_tributaria()
+if df_class is None:
+    st.warning(
+        "⚠️ Arquivo `classificacao_tributaria.xlsx` não encontrado na pasta do app. "
+        "O mapeamento IBS/CBS 2026 e cClassTrib ficará em branco até você subir essa planilha."
+    )
+
 if uploaded_files:
     if st.button("🚀 Processar EFD PIS/COFINS"):
         try:
@@ -290,6 +402,7 @@ if uploaded_files:
             with st.spinner("Lendo arquivos e montando ranking de saídas..."):
                 df_itens = parse_efd_piscofins_files(temp_paths)
                 df_ranking = gerar_ranking(df_itens)
+                df_ranking_mapeado = mapear_ibs_cbs(df_ranking, df_class)
 
             # limpa temporários
             for p in temp_paths:
@@ -303,27 +416,65 @@ if uploaded_files:
             else:
                 st.success("Processamento concluído com sucesso ✅")
 
-                # Visão geral dos itens
-                st.markdown("### 🔍 Detalhe dos Itens de Saída (C170)")
-                st.caption("Amostra das primeiras linhas (você pode baixar tudo em Excel abaixo).")
-                st.dataframe(df_itens.head(500), use_container_width=True)
+                # Tabs: Detalhe, Ranking IBS/CBS, Essencialidade
+                tab1, tab2, tab3 = st.tabs(
+                    ["🔍 Detalhe Itens Saída", "🧱 Ranking + IBS/CBS/cClassTrib", "📊 Receita x Essencialidade"]
+                )
 
-                st.markdown("---")
-                st.markdown("### 🧱 Ranking de Produtos por CFOP + NCM + Descrição (Saídas)")
-                if df_ranking is None or df_ranking.empty:
-                    st.info("Sem dados suficientes para montar o ranking.")
-                else:
-                    st.dataframe(df_ranking.head(500), use_container_width=True)
+                with tab1:
+                    st.caption("Amostra das primeiras linhas (você pode baixar tudo em Excel abaixo).")
+                    st.dataframe(df_itens.head(500), use_container_width=True)
+
+                with tab2:
+                    if df_ranking_mapeado is None or df_ranking_mapeado.empty:
+                        st.info("Sem dados suficientes para montar o ranking.")
+                    else:
+                        # monta um DataFrame só para exibição, com colunas mais relevantes
+                        cols_show = [
+                            "COMPETENCIA", "CNPJ", "CFOP", "NCM", "DESCR_ITEM",
+                            "VL_TOTAL_ITEM_BR",
+                            "Essencialidade",
+                            "Código da Situação Tributária",
+                            "Class Trib IBS", "Class Trib CBS",
+                            "Aliq_IBS_BR", "Aliq_CBS_BR",
+                        ]
+                        cols_show = [c for c in cols_show if c in df_ranking_mapeado.columns]
+                        df_display = df_ranking_mapeado[cols_show].copy()
+
+                        st.dataframe(df_display.head(500), use_container_width=True)
+
+                with tab3:
+                    if df_ranking_mapeado is None or df_ranking_mapeado.empty or "Essencialidade" not in df_ranking_mapeado.columns:
+                        st.info("Não foi possível montar o dashboard por Essencialidade (verifique se a planilha de classificação tem a coluna 'Essencialidade').")
+                    else:
+                        df_ess = (
+                            df_ranking_mapeado
+                            .groupby("Essencialidade", as_index=False)["VL_TOTAL_ITEM"]
+                            .sum()
+                            .sort_values("VL_TOTAL_ITEM", ascending=False)
+                        )
+                        df_ess["VL_TOTAL_ITEM_BR"] = df_ess["VL_TOTAL_ITEM"].apply(format_currency_brl)
+
+                        st.write("### Receita total por Essencialidade (R$)")
+                        st.dataframe(df_ess, use_container_width=True)
+
+                        # gráfico simples
+                        try:
+                            st.bar_chart(
+                                data=df_ess.set_index("Essencialidade")["VL_TOTAL_ITEM"]
+                            )
+                        except Exception:
+                            pass
 
                 # Download Excel
                 st.markdown("---")
                 st.markdown("### 📥 Download do Excel")
 
-                excel_bytes = gerar_excel_bytes(df_itens, df_ranking)
+                excel_bytes = gerar_excel_bytes(df_itens, df_ranking_mapeado)
                 st.download_button(
-                    "⬇️ Baixar Excel (Detalhe + Ranking de Saída)",
+                    "⬇️ Baixar Excel (Detalhe + Ranking IBS/CBS + Essencialidade)",
                     data=excel_bytes,
-                    file_name="Ranking_PIS_COFINS_Saidas.xlsx",
+                    file_name="Ranking_PIS_COFINS_Saidas_IBS_CBS.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
