@@ -1,4 +1,6 @@
+# app.py
 import io
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -6,93 +8,100 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# =========================
-# ESTILO / BRANDING PRICETAX
-# =========================
-
+# --------------------------------------------------
+# CONFIG GERAL / TEMA PRICETAX
+# --------------------------------------------------
 st.set_page_config(
-    page_title="PRICETAX · IBS/CBS & SPED PIS/COFINS",
-    layout="wide"
+    page_title="PRICETAX • IBS/CBS & SPED PIS/COFINS",
+    page_icon="💡",
+    layout="wide",
 )
 
-# Paleta PRICETAX:
-PRIMARY_YELLOW = "#FFC107"
-DARK_BG = "#050608"
-DARK_BLUE = "#0A2342"
+PRIMARY_YELLOW = "#FFC300"
+PRIMARY_BLACK = "#050608"
+DARK_BLUE = "#001B3A"
 
 st.markdown(
     f"""
     <style>
     .stApp {{
-        background-color: {DARK_BG};
-        color: #f5f5f5;
+        background-color: {PRIMARY_BLACK};
+        color: #F5F5F5;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }}
-
-    h1, h2, h3, h4 {{
-        color: #ffffff;
+    .pricetax-title {{
+        font-size: 2.2rem;
         font-weight: 700;
+        color: {PRIMARY_YELLOW};
     }}
-
-    section[data-testid="stSidebar"] {{
-        background-color: #000000;
-        border-right: 1px solid #222222;
+    .pricetax-subtitle {{
+        font-size: 0.98rem;
+        color: #E0E0E0;
     }}
-
-    .stButton>button {{
-        background: linear-gradient(90deg, {PRIMARY_YELLOW}, #ffdd57);
-        color: #000000;
-        border-radius: 6px;
-        border: none;
-        font-weight: 600;
-    }}
-    .stButton>button:hover {{
-        background: linear-gradient(90deg, #ffdd57, {PRIMARY_YELLOW});
-        color: #000000;
-    }}
-
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 4px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        background-color: #101218;
-        color: #e0e0e0;
-        border-radius: 4px 4px 0 0;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        font-weight: 600;
-    }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {DARK_BLUE} !important;
-        color: {PRIMARY_YELLOW} !important;
-        border-bottom: 3px solid {PRIMARY_YELLOW};
-    }}
-
-    .stTextInput>div>div>input {{
-        background-color: #14161e;
-        color: #ffffff;
-        border-radius: 6px;
+    .pricetax-card {{
+        border-radius: 0.9rem;
+        padding: 1.1rem 1.3rem;
+        background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
-
-    .stDataFrame, .stTable {{
-        border-radius: 6px;
-        overflow: hidden;
+    .pricetax-card-erro {{
+        border-radius: 0.9rem;
+        padding: 1.1rem 1.3rem;
+        background: #3b1111;
+        border: 1px solid #ff4d4d;
     }}
-
-    .stAlert {{
-        border-radius: 6px;
+    .pricetax-badge {{
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: {PRIMARY_YELLOW};
+        color: {PRIMARY_BLACK};
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }}
+    .pricetax-metric-label {{
+        font-size: 0.78rem;
+        color: #BBBBBB;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }}
+    .pricetax-metric-value {{
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: {PRIMARY_YELLOW};
+    }}
+    .stTabs [data-baseweb="tab-list"] {{
+        border-bottom: 1px solid #333333;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        color: #EEEEEE;
+    }}
+    .stTabs [aria-selected="true"] p {{
+        color: {PRIMARY_YELLOW} !important;
+        font-weight: 600;
+    }}
+    .stTextInput > div > div > input {{
+        background-color: #111318;
+        color: #FFFFFF;
+        border-radius: 0.6rem;
+        border: 1px solid #333333;
+    }}
+    .stFileUploader > label div {{
+        color: #DDDDDD;
     }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# =========================
-# Utils básicos
-# =========================
-
+# --------------------------------------------------
+# FUNÇÕES UTILITÁRIAS
+# --------------------------------------------------
 def only_digits(s: str) -> str:
     return re.sub(r"\D+", "", s or "")
+
 
 def to_float_br(s) -> float:
     if s is None:
@@ -109,6 +118,7 @@ def to_float_br(s) -> float:
     except Exception:
         return 0.0
 
+
 def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
     for raw in (dt_ini or "", dt_fin or ""):
         dig = only_digits(raw)
@@ -116,77 +126,85 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
             return f"{dig[2:4]}/{dig[4:8]}"
     return ""
 
-def normalizar_ncm(ncm: str) -> str:
-    """Normaliza NCM para 8 dígitos (somente números)."""
-    dig = only_digits(ncm)
-    if not dig:
-        return ""
-    return dig.zfill(8)
 
-# =========================
-# Banco TIPI → IBS/CBS
-# =========================
+# --------------------------------------------------
+# BASE TIPI → IBS/CBS
+# --------------------------------------------------
+@st.cache_data(show_spinner=False)
+def load_tipi_base() -> pd.DataFrame:
+    """
+    Carrega a base TIPI/IBS-CBS da PRICETAX.
+    Espera o arquivo 'TIPI_IBS_CBS.xlsx' na raiz do projeto.
+    """
+    base_path = Path(__file__).parent / "TIPI_IBS_CBS.xlsx"
 
-TIPI_DB_PATH = Path("TIPI_IBS_CBS.xlsx")
-TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
-
-@st.cache_data
-def load_tipi_db() -> pd.DataFrame:
-    try:
-        df = pd.read_excel(TIPI_DB_PATH, sheet_name=TIPI_DB_SHEET, dtype=str)
-        df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
-        return df
-    except Exception:
-        # Se der qualquer erro (arquivo ausente, aba errada, etc.), devolve DF vazio
+    if not base_path.exists():
+        st.session_state["tipi_base_ok"] = False
         return pd.DataFrame()
 
-def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
-    ncm_norm = normalizar_ncm(ncm)
-    if not ncm_norm:
-        return {
-            "encontrado": False,
-            "mensagem": "NCM vazio ou inválido.",
-            "NCM": ncm,
-        }
-    if df_tipi is None or df_tipi.empty:
-        return {
-            "encontrado": False,
-            "mensagem": "Base TIPI_IBS_CBS.xlsx não foi carregada no servidor. Contate o suporte PRICETAX.",
-            "NCM": ncm,
-        }
+    df = pd.read_excel(base_path, dtype=str)
+    df.columns = [c.strip().upper() for c in df.columns]
 
-    linha = df_tipi[df_tipi["NCM_DIGITOS"] == ncm_norm].head(1)
-    if linha.empty:
-        return {
-            "encontrado": False,
-            "mensagem": "NCM não localizado na base TIPI/PRICETAX.",
-            "NCM": ncm,
-        }
+    # --- AJUSTE OS NOMES DAS COLUNAS AQUI, SE PRECISAR ---
+    col_ncm = "NCM"
+    col_desc = "DESCRICAO" if "DESCRICAO" in df.columns else "DESCRIÇÃO"
 
-    row = linha.iloc[0]
+    # Tratamento IBS/CBS pode ter variações de nome
+    candidato_trat = None
+    for nome in [
+        "TRATAMENTO_IBS_CBS",
+        "TRATAMENTO",
+        "TRATAMENTO GERAL",
+        "TRATAMENTO_IBS",
+    ]:
+        if nome in df.columns:
+            candidato_trat = nome
+            break
 
-    def _get(col):
-        return str(row.get(col, "")).strip()
+    if candidato_trat is None:
+        df["TRATAMENTO_IBS_CBS"] = ""
+    else:
+        df["TRATAMENTO_IBS_CBS"] = df[candidato_trat].fillna("").astype(str)
 
-    return {
-        "encontrado": True,
-        "mensagem": "",
-        "NCM": _get("NCM"),
-        "DESCRICAO_TIPI": _get("DESCRICAO_TIPI"),
-        "ALIQUOTA_IPI": _get("ALIQUOTA_IPI"),
-        "Capitulo_TIPI": _get("Capitulo_TIPI"),
-        "Secao_TIPI": _get("Secao_TIPI"),
-        "ID_Grupo": _get("ID_Grupo"),
-        "Nome_Grupo": _get("Nome_Grupo"),
-        "Tratamento_IBS_CBS_Geral": _get("Tratamento_IBS_CBS_Geral"),
-        "Possivel_Imposto_Seletivo": _get("Possivel_Imposto_Seletivo"),
-        "Observacoes_IBS_CBS": _get("Observacoes_IBS_CBS"),
+    # cClassTrib
+    if "CCLASSTRIB" not in df.columns:
+        df["CCLASSTRIB"] = ""
+
+    # Alíquotas – use os nomes da sua planilha
+    if "ALIQ_IBS" not in df.columns:
+        df["ALIQ_IBS"] = ""
+    if "ALIQ_CBS" not in df.columns:
+        df["ALIQ_CBS"] = ""
+
+    # NCM normalizado (só dígitos, 8 posições) para facilitar busca
+    df[col_ncm] = df[col_ncm].fillna("").astype(str)
+    df["NCM_DIG"] = (
+        df[col_ncm].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
+    )
+
+    # guarda nome das colunas importantes no session_state (para eventual debug)
+    st.session_state["tipi_base_ok"] = True
+    st.session_state["tipi_cols"] = {
+        "NCM": col_ncm,
+        "DESCR": col_desc,
     }
+    return df
 
-# =========================
-# Cabeçalhos (PVA)
-# =========================
 
+def buscar_ncm(df: pd.DataFrame, ncm_str: str):
+    norm = only_digits(ncm_str)
+    if len(norm) != 8 or df.empty:
+        return None
+
+    row = df.loc[df["NCM_DIG"] == norm]
+    if row.empty:
+        return None
+    return row.iloc[0]
+
+
+# --------------------------------------------------
+# PARSER SPED PIS/COFINS (BLOCO M) – VERSÃO STREAMLIT
+# --------------------------------------------------
 M200_HEADERS = [
     "Valor Total da Contribuição Não-cumulativa do Período",
     "Valor do Crédito Descontado, Apurado no Próprio Período da Escrituração",
@@ -203,10 +221,7 @@ M200_HEADERS = [
 ]
 M600_HEADERS = M200_HEADERS[:]
 
-# =========================
-# Tabelas de códigos
-# =========================
-
+# Tabelas curtas (pode expandir via CSV, se quiser)
 COD_CONT_DESC = {
     "01": "Contribuição não-cumulativa apurada à alíquota básica",
     "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
@@ -221,62 +236,46 @@ COD_CONT_DESC = {
     "13": "Contribuição cumulativa – alíquota diferenciada",
     "14": "Contribuição cumulativa – alíquota zero",
     "15": "Contribuição cumulativa – outras hipóteses legais",
-    "51": "Contribuição apurada – código 51 (ajuste conforme tabela interna/guia)",
 }
 
 NAT_REC_DESC = {
-    "403": "Venda de óleo combustível bunker destinado à navegação de cabotagem e apoio marítimo/portuário",
-    "309": "Operações com benefícios da Zona Franca de Manaus",
     "401": "Exportação de mercadorias para o exterior",
-    "405": "Desperdícios, resíduos ou aparas de plásticos, papéis, vidros e metais (Cap. 81 TIPI)",
+    "405": "Desperdícios, resíduos ou aparas de plástico, papel, vidro e metais",
     "908": "Vendas de mercadorias destinadas ao consumo",
     "911": "Receitas financeiras, inclusive variação cambial ativa tributável",
-    "999": "Código genérico – operações tributáveis à alíquota zero/isenção/suspensão (especificar)",
+    "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão",
 }
 
 NAT_BC_CRED_DESC = {
     "01": "Aquisição de bens para revenda",
     "02": "Aquisição de bens e serviços utilizados como insumo",
-    "03": "Energia elétrica e térmica, inclusive sob forma de vapor",
+    "03": "Energia elétrica e térmica",
     "04": "Aluguéis de prédios",
     "05": "Aluguéis de máquinas e equipamentos",
-    "06": "Armazenagem de mercadoria e frete na operação de venda",
-    "07": "Contraprestações de arrendamento mercantil",
-    "08": "Máquinas, equipamentos e outros bens incorporados ao ativo imobilizado (depreciação)",
-    "09": "Edificações e benfeitorias em imóveis próprios ou de terceiros (depreciação/amortização)",
-    "10": "Devolução de vendas sujeitas à incidência não-cumulativa",
+    "06": "Armazenagem de mercadoria e frete na venda",
+    "07": "Arrendamento mercantil",
+    "08": "Ativo imobilizado (depreciação)",
+    "09": "Edificações e benfeitorias",
+    "10": "Devolução de vendas",
     "11": "Ativos intangíveis (amortização)",
-    "12": "Encargos de depreciação, amortização e arrendamento no custo",
+    "12": "Encargos de depreciação/amortização no custo",
     "13": "Outras operações geradoras de crédito",
     "18": "Crédito presumido",
-    "19": "Fretes na aquisição de insumos e bens para revenda",
+    "19": "Fretes na aquisição",
     "20": "Armazenagem, seguros e vigilância na aquisição",
     "21": "Outros créditos vinculados à atividade",
 }
 
-def carregar_csv_mapa(csv_path: Path) -> dict:
-    try:
-        df = pd.read_csv(csv_path, dtype=str, sep=",")
-        df = df.rename(columns={c: c.strip().lower() for c in df.columns})
-        if not {"codigo", "descricao"}.issubset(set(df.columns)):
-            return {}
-        df["codigo"] = df["codigo"].astype(str).str.strip()
-        df["descricao"] = df["descricao"].astype(str).str.strip()
-        return {row["codigo"]: row["descricao"] for _, row in df.iterrows() if row["codigo"]}
-    except Exception:
-        return {}
-
-COD_CONT_DESC.update(carregar_csv_mapa(Path("map_cod_cont.csv")))
-NAT_REC_DESC.update(carregar_csv_mapa(Path("map_nat_rec.csv")))
-NAT_BC_CRED_DESC.update(carregar_csv_mapa(Path("map_nat_bc_cred.csv")))
 
 def desc_cod_cont(codigo: str) -> str:
     c = (codigo or "").strip()
     return COD_CONT_DESC.get(c, f"(Descrição não cadastrada: {c})")
 
+
 def desc_nat_rec(codigo: str) -> str:
     c = (codigo or "").strip()
     return NAT_REC_DESC.get(c, f"(Descrição não cadastrada: {c})")
+
 
 def norm_nat_bc(codigo: str) -> str:
     d = only_digits((codigo or "").strip())
@@ -284,20 +283,28 @@ def norm_nat_bc(codigo: str) -> str:
         return (codigo or "").strip()
     return d.zfill(2) if len(d) == 1 else d
 
+
 def desc_nat_bc(codigo: str) -> str:
     c = norm_nat_bc(codigo)
     return NAT_BC_CRED_DESC.get(c, f"(Descrição não cadastrada: {c})") if c else ""
 
-# =========================
-# Parser SPED (Bloco M)
-# =========================
 
-def parse_sped_txt(nome_arquivo: str, linhas):
-    empresa_cnpj = ""; dt_ini = ""; dt_fin = ""; competencia = ""
-    ap_pis = []; credito_pis = []; receitas_pis = []; rec_isentas_pis = []
-    ap_cofins = []; credito_cofins = []; receitas_cofins = []; rec_isentas_cofins = []
+def parse_sped_conteudo(nome_arquivo: str, conteudo: str):
+    empresa_cnpj = ""
+    dt_ini = ""
+    dt_fin = ""
+    competencia = ""
 
-    for raw in linhas:
+    ap_pis = []
+    credito_pis = []
+    receitas_pis = []
+    rec_isentas_pis = []
+    ap_cofins = []
+    credito_cofins = []
+    receitas_cofins = []
+    rec_isentas_cofins = []
+
+    for raw in conteudo.splitlines():
         if not raw or raw == "|":
             continue
         campos = raw.rstrip("\n").split("|")
@@ -319,275 +326,355 @@ def parse_sped_txt(nome_arquivo: str, linhas):
 
         elif reg == "M200":
             row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-            vals = campos[2:2+len(M200_HEADERS)]
+            vals = campos[2 : 2 + len(M200_HEADERS)]
             for titulo, val in zip(M200_HEADERS, vals):
                 row[titulo] = to_float_br(val)
             ap_pis.append(row)
 
         elif reg == "M105":
             nat = (campos[2] if len(campos) > 2 else "").strip()
-            credito_pis.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "NAT_BC_CRED": nat,
-                "NAT_BC_CRED_DESC": desc_nat_bc(nat),
-                "CST_PIS": (campos[3] if len(campos) > 3 else "").strip(),
-                "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
-                "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
-            })
+            credito_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "NAT_BC_CRED": nat,
+                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                    "CST_PIS": (campos[3] if len(campos) > 3 else "").strip(),
+                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+                }
+            )
 
         elif reg == "M210":
             cod = (campos[2] if len(campos) > 2 else "").strip()
-            receitas_pis.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "COD_CONT": cod,
-                "DESCR_COD_CONT": desc_cod_cont(cod),
-                "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
-                "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
-                "VL_BC_PIS": to_float_br(campos[7] if len(campos) > 7 else 0),
-                "ALIQ_PIS": to_float_br(campos[8] if len(campos) > 8 else 0),
-                "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
-                "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
-            })
+            receitas_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "COD_CONT": cod,
+                    "DESCR_COD_CONT": desc_cod_cont(cod),
+                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "VL_BC_PIS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                    "ALIQ_PIS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+                }
+            )
 
         elif reg == "M410":
             nat = (campos[2] if len(campos) > 2 else "").strip()
-            rec_isentas_pis.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "CODIGO_DET": nat,
-                "DESCR_CODIGO_DET": desc_nat_rec(nat),
-                "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
-            })
+            rec_isentas_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "CODIGO_DET": nat,
+                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+                }
+            )
 
         elif reg == "M600":
             row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-            vals = campos[2:2+len(M600_HEADERS)]
+            vals = campos[2 : 2 + len(M600_HEADERS)]
             for titulo, val in zip(M600_HEADERS, vals):
                 row[titulo] = to_float_br(val)
             ap_cofins.append(row)
 
         elif reg == "M505":
             nat = (campos[2] if len(campos) > 2 else "").strip()
-            credito_cofins.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "NAT_BC_CRED": nat,
-                "NAT_BC_CRED_DESC": desc_nat_bc(nat),
-                "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
-                "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
-                "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
-            })
+            credito_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "NAT_BC_CRED": nat,
+                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                    "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
+                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+                }
+            )
 
         elif reg == "M610":
             cod = (campos[2] if len(campos) > 2 else "").strip()
-            receitas_cofins.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "COD_CONT": cod,
-                "DESCR_COD_CONT": desc_cod_cont(cod),
-                "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
-                "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
-                "VL_BC_COFINS": to_float_br(campos[7] if len(campos) > 7 else 0),
-                "ALIQ_COFINS": to_float_br(campos[8] if len(campos) > 8 else 0),
-                "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
-                "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
-            })
+            receitas_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "COD_CONT": cod,
+                    "DESCR_COD_CONT": desc_cod_cont(cod),
+                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "VL_BC_COFINS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                    "ALIQ_COFINS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+                }
+            )
 
         elif reg == "M810":
             nat = (campos[2] if len(campos) > 2 else "").strip()
-            rec_isentas_cofins.append({
-                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                "CODIGO_DET": nat,
-                "DESCR_CODIGO_DET": desc_nat_rec(nat),
-                "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
-            })
+            rec_isentas_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "CODIGO_DET": nat,
+                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+                }
+            )
 
     return {
-        "ap_pis": ap_pis, "credito_pis": credito_pis, "receitas_pis": receitas_pis, "rec_isentas_pis": rec_isentas_pis,
-        "ap_cofins": ap_cofins, "credito_cofins": credito_cofins, "receitas_cofins": receitas_cofins, "rec_isentas_cofins": rec_isentas_cofins
+        "ap_pis": ap_pis,
+        "credito_pis": credito_pis,
+        "receitas_pis": receitas_pis,
+        "rec_isentas_pis": rec_isentas_pis,
+        "ap_cofins": ap_cofins,
+        "credito_cofins": credito_cofins,
+        "receitas_cofins": receitas_cofins,
+        "rec_isentas_cofins": rec_isentas_cofins,
     }
 
-def processar_speds_streamlit(uploaded_files):
+
+def processar_speds_uploaded(files):
     ap_pis_all, cred_pis_all, rec_pis_all, rec_is_pis_all = [], [], [], []
     ap_cof_all, cred_cof_all, rec_cof_all, rec_is_cof_all = [], [], [], []
 
-    for up in uploaded_files:
+    for up in files:
         nome = up.name
-        data = up.getvalue()
 
-        if nome.lower().endswith(".txt"):
-            texto = data.decode("utf-8", errors="replace")
-            linhas = texto.splitlines()
-            d = parse_sped_txt(nome, linhas)
-
-        elif nome.lower().endswith(".zip"):
-            d = {
-                "ap_pis": [], "credito_pis": [], "receitas_pis": [], "rec_isentas_pis": [],
-                "ap_cofins": [], "credito_cofins": [], "receitas_cofins": [], "rec_isentas_cofins": []
-            }
-            with zipfile.ZipFile(io.BytesIO(data), "r") as z:
+        if nome.lower().endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(up.read()), "r") as z:
                 for info in z.infolist():
-                    if not info.filename.lower().endswith(".txt"):
-                        continue
-                    txt_data = z.read(info.filename)
-                    texto = txt_data.decode("utf-8", errors="replace")
-                    linhas = texto.splitlines()
-                    parcial = parse_sped_txt(info.filename, linhas)
-                    for k in d.keys():
-                        d[k].extend(parcial[k])
+                    if info.filename.lower().endswith(".txt"):
+                        with z.open(info, "r") as ftxt:
+                            conteudo = ftxt.read().decode("utf-8", errors="replace")
+                            d = parse_sped_conteudo(info.filename, conteudo)
+                            ap_pis_all.extend(d["ap_pis"])
+                            cred_pis_all.extend(d["credito_pis"])
+                            rec_pis_all.extend(d["receitas_pis"])
+                            rec_is_pis_all.extend(d["rec_isentas_pis"])
+                            ap_cof_all.extend(d["ap_cofins"])
+                            cred_cof_all.extend(d["credito_cofins"])
+                            rec_cof_all.extend(d["receitas_cofins"])
+                            rec_is_cof_all.extend(d["rec_isentas_cofins"])
         else:
-            continue
+            conteudo = up.read().decode("utf-8", errors="replace")
+            d = parse_sped_conteudo(nome, conteudo)
+            ap_pis_all.extend(d["ap_pis"])
+            cred_pis_all.extend(d["credito_pis"])
+            rec_pis_all.extend(d["receitas_pis"])
+            rec_is_pis_all.extend(d["rec_isentas_pis"])
+            ap_cof_all.extend(d["ap_cofins"])
+            cred_cof_all.extend(d["credito_cofins"])
+            rec_cof_all.extend(d["receitas_cofins"])
+            rec_is_cof_all.extend(d["rec_isentas_cofins"])
 
-        ap_pis_all.extend(d["ap_pis"]);         cred_pis_all.extend(d["credito_pis"])
-        rec_pis_all.extend(d["receitas_pis"]);  rec_is_pis_all.extend(d["rec_isentas_pis"])
-        ap_cof_all.extend(d["ap_cofins"]);      cred_cof_all.extend(d["credito_cofins"])
-        rec_cof_all.extend(d["receitas_cofins"]); rec_is_cof_all.extend(d["rec_isentas_cofins"])
-
-    df_ap_pis   = pd.DataFrame(ap_pis_all)
+    df_ap_pis = pd.DataFrame(ap_pis_all)
     df_cred_pis = pd.DataFrame(cred_pis_all)
-    df_rec_pis  = pd.DataFrame(rec_pis_all)
-    df_ri_pis   = pd.DataFrame(rec_is_pis_all)
-
-    df_ap_cof   = pd.DataFrame(ap_cof_all)
+    df_rec_pis = pd.DataFrame(rec_pis_all)
+    df_ri_pis = pd.DataFrame(rec_is_pis_all)
+    df_ap_cof = pd.DataFrame(ap_cof_all)
     df_cred_cof = pd.DataFrame(cred_cof_all)
-    df_rec_cof  = pd.DataFrame(rec_cof_all)
-    df_ri_cof   = pd.DataFrame(rec_is_cof_all)
+    df_rec_cof = pd.DataFrame(rec_cof_all)
+    df_ri_cof = pd.DataFrame(rec_is_cof_all)
 
-    return df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis, df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as w:
+        if not df_ap_pis.empty:
+            df_ap_pis.to_excel(w, "AP PIS", index=False)
+        if not df_cred_pis.empty:
+            df_cred_pis.to_excel(w, "CREDITO PIS", index=False)
+        if not df_rec_pis.empty:
+            df_rec_pis.to_excel(w, "RECEITAS PIS", index=False)
+        if not df_ri_pis.empty:
+            df_ri_pis.to_excel(w, "RECEITAS ISENTAS PIS", index=False)
 
-# =========================
-# STREAMLIT APP
-# =========================
+        if not df_ap_cof.empty:
+            df_ap_cof.to_excel(w, "AP COFINS", index=False)
+        if not df_cred_cof.empty:
+            df_cred_cof.to_excel(w, "CREDITO COFINS", index=False)
+        if not df_rec_cof.empty:
+            df_rec_cof.to_excel(w, "RECEITAS COFINS", index=False)
+        if not df_ri_cof.empty:
+            df_ri_cof.to_excel(w, "RECEITAS ISENTAS COFINS", index=False)
 
-st.sidebar.title("⚙️ Configurações PRICETAX")
-st.sidebar.markdown(
-    "Esta instância utiliza a base padrão **TIPI_IBS_CBS.xlsx** "
-    "disponibilizada pela PRICETAX."
-)
+    output.seek(0)
+    return output
 
-df_tipi = load_tipi_db()
-if df_tipi is None or df_tipi.empty:
-    st.error(
-        "A base TIPI_IBS_CBS.xlsx não foi encontrada ou não pôde ser carregada no servidor.\n\n"
-        "Verifique se o arquivo está na raiz do projeto com esse nome exato e se a aba "
-        "`TIPI_NCM_IBS_CBS` existe na planilha."
-    )
-    st.stop()
 
-st.title("🧠 PRICETAX · Classificador IBS/CBS & SPED PIS/COFINS")
+# --------------------------------------------------
+# CABEÇALHO
+# --------------------------------------------------
 st.markdown(
-    f"""
-    <span style="color:{PRIMARY_YELLOW}; font-weight:700;">Módulo de apoio tributário PRICETAX</span><br>
-    Classificação de bens para IBS/CBS baseada em TIPI + análise do SPED Contribuições (Bloco M – PIS/COFINS).
+    """
+    <div class="pricetax-title">PRICETAX • Classificador IBS/CBS & SPED PIS/COFINS</div>
+    <div class="pricetax-subtitle">
+        Classificação de bens para IBS/CBS baseada em TIPI + cClassTrib, e análise do SPED Contribuições (Bloco M – PIS/COFINS).
+    </div>
     """,
     unsafe_allow_html=True,
 )
 
-tab1, tab2 = st.tabs(["🔍 Consulta IBS/CBS por NCM", "📂 SPED PIS/COFINS → Excel"])
+st.markdown("")
+tabs = st.tabs(["🔍 Consulta TIPI → Tratamento IBS/CBS", "📁 SPED PIS/COFINS → Excel"])
 
-# -------------------------
-# TAB 1: Consulta IBS/CBS por NCM
-# -------------------------
-with tab1:
-    st.subheader("Consulta TIPI → Tratamento IBS/CBS")
 
-    col_ncm, col_btn = st.columns([2, 1])
+# --------------------------------------------------
+# ABA 1 – CONSULTA TIPI → IBS/CBS
+# --------------------------------------------------
+with tabs[0]:
+    df_tipi = load_tipi_base()
 
-    with col_ncm:
-        ncm_input = st.text_input(
-            "Informe o NCM (com ou sem pontos):",
-            value="",
-            placeholder="Ex.: 1905.90.90 ou 19059090"
-        )
-
-    with col_btn:
-        consultar = st.button("Consultar NCM")
-
-    if consultar and ncm_input.strip():
-        info = consultar_ibscbs_por_ncm(ncm_input, df_tipi)
-        if not info.get("encontrado"):
-            st.error(f"NCM: {info.get('NCM')}\n\n{info.get('mensagem')}")
-        else:
-            st.success(f"NCM localizado: {info['NCM']}")
-            st.write(f"**Descrição TIPI:** {info['DESCRICAO_TIPI']}")
-            st.write(f"**Capítulo / Seção TIPI:** {info['Capitulo_TIPI']} / {info['Secao_TIPI']}")
-            st.write(
-                f"**Grupo de produtos (modelo PRICETAX):** "
-                f"`{info['ID_Grupo']}` — {info['Nome_Grupo']}"
-            )
-            st.write("**Tratamento IBS/CBS (visão geral):**")
-            st.code(info["Tratamento_IBS_CBS_Geral"], language="text")
-            st.write(f"**Indicação de Imposto Seletivo:** {info['Possivel_Imposto_Seletivo']}")
-            if info["Observacoes_IBS_CBS"]:
-                st.write("**Observações adicionais:**")
-                st.info(info["Observacoes_IBS_CBS"])
-
-    with st.expander("Visualizar amostra da base TIPI PRICETAX carregada"):
-        st.dataframe(df_tipi.head(20))
-
-# -------------------------
-# TAB 2: SPED PIS/COFINS → Excel
-# -------------------------
-with tab2:
-    st.subheader("Processar SPED Contribuições (Bloco M – PIS/COFINS)")
-
-    uploaded_speds = st.file_uploader(
-        "Selecione os arquivos SPED (.txt ou .zip):",
-        type=["txt", "zip"],
-        accept_multiple_files=True
+    st.markdown(
+        f"""
+        <div class="pricetax-card">
+            <span class="pricetax-badge">Módulo PRICETAX</span>
+            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+                Informe um NCM e veja, na prática, o tratamento sugerido de IBS/CBS:
+                descrição TIPI, cClassTrib e alíquotas de IBS/CBS (quando preenchidas na base).
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    if uploaded_speds:
-        if st.button("Executar processamento SPED"):
-            (
-                df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis,
-                df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
-            ) = processar_speds_streamlit(uploaded_speds)
+    st.markdown("")
 
-            st.success("Processamento concluído. Visualize abaixo e baixe o relatório em Excel.")
+    if df_tipi.empty or not st.session_state.get("tipi_base_ok", False):
+        st.markdown(
+            """
+            <div class="pricetax-card-erro">
+                <b>Base TIPI/IBS-CBS não carregada.</b><br>
+                Garanta que o arquivo <code>TIPI_IBS_CBS.xlsx</code> está na raiz do projeto (mesmo nível do <code>app.py</code>).
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            ncm_input = st.text_input(
+                "Informe o NCM (com ou sem pontos)",
+                placeholder="Ex.: 8471.90.14 ou 84719014",
+            )
+        with col2:
+            st.write("")  # alinhamento
+            consultar = st.button("Consultar NCM", type="primary")
 
-            if not df_ap_pis.empty:
-                st.write("**Apuração PIS (M200):**")
-                st.dataframe(df_ap_pis.head(10))
-            if not df_ap_cof.empty:
-                st.write("**Apuração COFINS (M600):**")
-                st.dataframe(df_ap_cof.head(10))
-
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine="openpyxl") as w:
-                if not df_ap_pis.empty:    df_ap_pis.to_excel(w, sheet_name="AP PIS", index=False)
-                if not df_cred_pis.empty:  df_cred_pis.to_excel(w, sheet_name="CREDITO PIS", index=False)
-                if not df_rec_pis.empty:   df_rec_pis.to_excel(w, sheet_name="RECEITAS PIS", index=False)
-                if not df_ri_pis.empty:    df_ri_pis.to_excel(w, sheet_name="RECEITAS ISENTAS PIS", index=False)
-
-                if not df_ap_cof.empty:    df_ap_cof.to_excel(w, sheet_name="AP COFINS", index=False)
-                if not df_cred_cof.empty:  df_cred_cof.to_excel(w, sheet_name="CREDITO COFINS", index=False)
-                if not df_rec_cof.empty:   df_rec_cof.to_excel(w, sheet_name="RECEITAS COFINS", index=False)
-                if not df_ri_cof.empty:    df_ri_cof.to_excel(w, sheet_name="RECEITAS ISENTAS COFINS", index=False)
-
-                df_idx_cod_cont = pd.DataFrame(
-                    [{"COD_CONT": k, "DESCRICAO": v} for k, v in sorted(COD_CONT_DESC.items(), key=lambda x: x[0])]
+        if consultar and ncm_input.strip():
+            row = buscar_ncm(df_tipi, ncm_input)
+            if row is None:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-erro">
+                        NCM: <b>{ncm_input}</b><br>
+                        Não encontramos esse NCM na base <code>TIPI_IBS_CBS.xlsx</code>.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
-                df_idx_nat_rec = pd.DataFrame(
-                    [{"CODIGO_DET": k, "DESCRICAO": v} for k, v in sorted(NAT_REC_DESC.items(), key=lambda x: x[0])]
+            else:
+                ncm_fmt = str(row.get("NCM", "")).strip()
+                desc = str(row.get("DESCRICAO", row.get("DESCRIÇÃO", ""))).strip()
+                trat = str(row.get("TRATAMENTO_IBS_CBS", "")).strip()
+                cct = str(row.get("CCLASSTRIB", "")).strip()
+
+                aliq_ibs = str(row.get("ALIQ_IBS", "")).replace(",", ".").strip()
+                aliq_cbs = str(row.get("ALIQ_CBS", "")).replace(",", ".").strip()
+
+                # tenta calcular total (se conseguir converter)
+                try:
+                    total_efetivo = ""
+                    if aliq_ibs and aliq_cbs:
+                        total_val = float(aliq_ibs) + float(aliq_cbs)
+                        total_efetivo = f"{total_val:.2f}"
+                except Exception:
+                    total_efetivo = ""
+
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:0.8rem;">
+                        <div style="font-size:1.05rem;font-weight:600;color:{PRIMARY_YELLOW};">
+                            NCM {ncm_fmt} – {desc}
+                        </div>
+                        <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
+                            <b>Tratamento IBS/CBS sugerido:</b><br>
+                            {trat if trat else "Não informado na base."}
+                        </div>
+                        <div style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
+                            <div>
+                                <div class="pricetax-metric-label">cClassTrib sugerido</div>
+                                <div class="pricetax-metric-value">{cct if cct else "—"}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">Alíquota IBS (%)</div>
+                                <div class="pricetax-metric-value">{aliq_ibs if aliq_ibs else "—"}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">Alíquota CBS (%)</div>
+                                <div class="pricetax-metric-value">{aliq_cbs if aliq_cbs else "—"}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">Total IBS + CBS (%)</div>
+                                <div class="pricetax-metric-value">{total_efetivo if total_efetivo else "—"}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:0.8rem;font-size:0.85rem;color:#B0B0B0;border-top:1px dashed #333;padding-top:0.5rem;">
+                            Para operações regulares, esse NCM tende a seguir a
+                            <b>tributação padrão com crédito integral</b>, desde que não haja regra específica
+                            de redução, isenção ou hipótese de Imposto Seletivo aplicável ao cClassTrib definido
+                            (tabela oficial de classificação tributária IBS/CBS do Portal DF-e).:contentReference[oaicite:0]{index=0}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
-                df_idx_nat_bc = pd.DataFrame(
-                    [{"NAT_BC_CRED": k, "DESCRICAO": v} for k, v in sorted(NAT_BC_CRED_DESC.items(), key=lambda x: x[0])]
-                )
 
-                if not df_idx_cod_cont.empty:
-                    df_idx_cod_cont.to_excel(w, sheet_name="ÍNDICE COD_CONT", index=False)
-                if not df_idx_nat_rec.empty:
-                    df_idx_nat_rec.to_excel(w, sheet_name="ÍNDICE NAT_REC", index=False)
-                if not df_idx_nat_bc.empty:
-                    df_idx_nat_bc.to_excel(w, sheet_name="ÍNDICE NAT_BC_CRED", index=False)
+# --------------------------------------------------
+# ABA 2 – SPED PIS/COFINS → EXCEL
+# --------------------------------------------------
+with tabs[1]:
+    st.markdown(
+        """
+        <div class="pricetax-card">
+            <span class="pricetax-badge">Bloco M – PIS/COFINS</span>
+            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+                Faça o upload de um ou mais arquivos SPED Contribuições (<code>.txt</code> ou <code>.zip</code>).
+                O módulo consolida os registros do Bloco M (M200, M600, M105, M505, M210, M610, M410, M810)
+                e gera um Excel com abas analíticas.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-            output.seek(0)
+    st.markdown("")
+    uploaded = st.file_uploader(
+        "Selecione arquivos SPED Contribuições (.txt ou .zip)",
+        type=["txt", "zip"],
+        accept_multiple_files=True,
+    )
 
+    if uploaded:
+        if st.button("Processar SPED PIS/COFINS → Excel"):
+            with st.spinner("Processando arquivos SPED e montando planilha de auditoria..."):
+                output_xlsx = processar_speds_uploaded(uploaded)
+
+            st.success("Processamento concluído. Faça o download da planilha abaixo.")
             st.download_button(
-                label="⬇️ Baixar Excel consolidado PRICETAX",
-                data=output,
-                file_name="SPED_PIS_COFINS_BLOCO_M_PRICETAX.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                "Baixar Excel do Bloco M",
+                data=output_xlsx,
+                file_name="Auditoria_SPED_PIS_COFINS_BlocoM.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
     else:
-        st.info("Envie pelo menos um arquivo .txt ou .zip de SPED Contribuições para iniciar o processamento.")
+        st.info("Nenhum arquivo selecionado ainda. Anexe um ou mais SPEDs para habilitar o processamento.")
