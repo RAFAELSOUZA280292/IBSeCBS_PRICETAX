@@ -164,65 +164,190 @@ def sugerir_perfil_ibs_cbs(essencialidade):
         return "Padrão / Supérfluo / Avaliar IS (Imposto Seletivo)"
     return "Padrão (sem indicativo especial pela TIPI)"
 
-def mapear_tipi_e_ibs_cbs(df_ranking: pd.DataFrame, df_tipi: pd.DataFrame) -> pd.DataFrame:
-    """
-    Faz o join do ranking (CFOP+NCM+DESCR_ITEM+VL_TOTAL_ITEM+PART)
-    com TIPI por NCM. Acrescenta:
+# ============================================================
+#  MATRIZ CBN – treino IBS/CBS 2026 por NCM
+# ============================================================
 
-      - DESCRICAO_TIPI
-      - CAPITULO
-      - ALIQ_IPI
-      - ESSENCIALIDADE (heurística)
-      - PERFIL_IBS_CBS_2026 (texto explicativo)
-      - IBS_CBS_STATUS ('A CLASSIFICAR' por padrão)
-      - colunas vazias para cClassTrib, Class_Trib_IBS, Class_Trib_CBS, etc.
+@st.cache_data(show_spinner=False)
+def carregar_matriz_cbn():
     """
-    if df_ranking is None or df_ranking.empty or df_tipi is None:
-        # mesmo sem TIPI, já devolve com colunas “de estrutura”
-        df = df_ranking.copy()
-        if df is None or df.empty:
-            return df
+    Carrega o arquivo de treino da CBN:
+        GRADE_Reforma_Tributaria_2026_CBN.xlsx
 
+    Usa a aba 'VENDAS_2026' e gera um mapa por NCM:
+
+      NCM_NORM, GRUPO_MACRO, SUBGRUPO, cClassTrib,
+      ESSENCIALIDADE_IBS, ESSENCIALIDADE_CBS,
+      CST_IBS_CBS_VENDA,
+      ALIQ_IBS_UF_VENDA_2026, ALIQ_IBS_MUN_VENDA_2026,
+      ALIQ_CBS_VENDA_2026,
+      ALIQ_EFETIVA_IBS_VENDA_2026, ALIQ_EFETIVA_CBS_VENDA_2026
+
+    OBS: é um "treino" – serve como semente para outros clientes.
+    """
+    base_dir = Path(__file__).resolve().parent
+    xlsx_path = base_dir / "GRADE_Reforma_Tributaria_2026_CBN.xlsx"
+
+    if not xlsx_path.exists():
+        return None
+
+    try:
+        df_vendas = pd.read_excel(xlsx_path, sheet_name="VENDAS_2026")
+    except Exception:
+        return None
+
+    df_vendas = df_vendas.rename(columns={c: c.strip() for c in df_vendas.columns})
+
+    if "NCM" not in df_vendas.columns:
+        return None
+
+    df_vendas["NCM_NORM"] = df_vendas["NCM"].apply(normalizar_ncm)
+
+    # elimina NCM em branco
+    df_vendas = df_vendas[df_vendas["NCM_NORM"] != ""]
+
+    cols_exist = df_vendas.columns
+
+    def col(name):
+        return name if name in cols_exist else None
+
+    agg_dict = {}
+    for c in [
+        "GRUPO_MACRO",
+        "SUBGRUPO",
+        "cClassTrib",
+        "ESSENCIALIDADE_IBS",
+        "ESSENCIALIDADE_CBS",
+        "CST_IBS_CBS_VENDA",
+        "ALIQ_IBS_UF_VENDA_2026",
+        "ALIQ_IBS_MUN_VENDA_2026",
+        "ALIQ_CBS_VENDA_2026",
+        "ALIQ_EFETIVA_IBS_VENDA_2026",
+        "ALIQ_EFETIVA_CBS_VENDA_2026",
+    ]:
+        if col(c):
+            agg_dict[c] = "first"
+
+    if not agg_dict:
+        return None
+
+    df_map = (
+        df_vendas.groupby("NCM_NORM", as_index=False)
+        .agg(agg_dict)
+    )
+
+    return df_map
+
+def enriquecer_com_tipi_e_cbn(df_ranking: pd.DataFrame,
+                              df_tipi: pd.DataFrame,
+                              df_cbn: pd.DataFrame) -> pd.DataFrame:
+    """
+    Pipeline de enriquecimento:
+
+      1) TIPI (se houver): CAPITULO, ALIQ_IPI, DESCRICAO_TIPI,
+         ESSENCIALIDADE (heurística), PERFIL_IBS_CBS_2026.
+      2) MATRIZ CBN (se houver): força cClassTrib, essenc. IBS/CBS,
+         CST_IBS_CBS, alíquotas 2026 etc. por NCM.
+
+    Onde não houver match com CBN, os campos IBS/CBS ficam "A CLASSIFICAR".
+    """
+    if df_ranking is None or df_ranking.empty:
+        return df_ranking
+
+    df = df_ranking.copy()
+    df["NCM_NORM"] = df["NCM"].astype(str).apply(normalizar_ncm)
+
+    # 1) Join com TIPI (opcional)
+    if df_tipi is not None and not df_tipi.empty:
+        df = df.merge(
+            df_tipi[["NCM_NORM", "DESCRICAO", "CAPITULO", "ALIQ_IPI"]],
+            on="NCM_NORM",
+            how="left",
+            suffixes=("", "_TIPI"),
+        )
+        df["ESSENCIALIDADE"] = df.apply(
+            lambda row: classificar_essencialidade(row.get("CAPITULO"), row.get("ALIQ_IPI")),
+            axis=1,
+        )
+        df["PERFIL_IBS_CBS_2026"] = df["ESSENCIALIDADE"].apply(sugerir_perfil_ibs_cbs)
+    else:
+        df["DESCRICAO"] = ""
+        df["CAPITULO"] = pd.NA
+        df["ALIQ_IPI"] = pd.NA
         df["ESSENCIALIDADE"] = ""
         df["PERFIL_IBS_CBS_2026"] = "A CLASSIFICAR (sem TIPI carregada)"
-        df["IBS_CBS_STATUS"] = "A CLASSIFICAR"
-        df["cClassTrib"] = ""
-        df["Class_Trib_IBS"] = ""
-        df["Class_Trib_CBS"] = ""
-        df["OBS_IBS_CBS_2026"] = "Definir tratamento IBS/CBS com base em matriz interna e legislação vigente."
-        return df
 
-    df_rank = df_ranking.copy()
-    df_rank["NCM_NORM"] = df_rank["NCM"].astype(str).apply(normalizar_ncm)
+    # Campos IBS/CBS default
+    df["IBS_CBS_STATUS"] = "A CLASSIFICAR"
+    df["cClassTrib"] = ""
+    df["Class_Trib_IBS"] = ""
+    df["Class_Trib_CBS"] = ""
+    df["GRUPO_MACRO"] = ""
+    df["SUBGRUPO"] = ""
+    df["ESSENCIALIDADE_IBS"] = ""
+    df["ESSENCIALIDADE_CBS"] = ""
+    df["CST_IBS_CBS_VENDA"] = pd.NA
+    df["ALIQ_IBS_UF_VENDA_2026"] = pd.NA
+    df["ALIQ_IBS_MUN_VENDA_2026"] = pd.NA
+    df["ALIQ_CBS_VENDA_2026"] = pd.NA
+    df["ALIQ_EFETIVA_IBS_VENDA_2026"] = pd.NA
+    df["ALIQ_EFETIVA_CBS_VENDA_2026"] = pd.NA
 
-    df_merged = df_rank.merge(
-        df_tipi[["NCM_NORM", "DESCRICAO", "CAPITULO", "ALIQ_IPI"]],
-        on="NCM_NORM",
-        how="left",
-        suffixes=("", "_TIPI"),
-    )
+    # 2) Join com MATRIZ CBN (treino) – por NCM_NORM
+    if df_cbn is not None and not df_cbn.empty:
+        df = df.merge(
+            df_cbn.add_prefix("CBN_"),
+            left_on="NCM_NORM",
+            right_on="CBN_NCM_NORM",
+            how="left",
+        )
 
-    df_merged["ESSENCIALIDADE"] = df_merged.apply(
-        lambda row: classificar_essencialidade(row.get("CAPITULO"), row.get("ALIQ_IPI")),
-        axis=1,
-    )
+        # Para NCM com treino CBN, preencher campos IBS/CBS
+        mascaracbn = df["CBN_NCM_NORM"].notna()
 
-    df_merged["PERFIL_IBS_CBS_2026"] = df_merged["ESSENCIALIDADE"].apply(sugerir_perfil_ibs_cbs)
+        # grupo/subgrupo
+        for col_ranking, col_cbn in [
+            ("GRUPO_MACRO", "CBN_GRUPO_MACRO"),
+            ("SUBGRUPO", "CBN_SUBGRUPO"),
+            ("cClassTrib", "CBN_cClassTrib"),
+            ("ESSENCIALIDADE_IBS", "CBN_ESSENCIALIDADE_IBS"),
+            ("ESSENCIALIDADE_CBS", "CBN_ESSENCIALIDADE_CBS"),
+        ]:
+            if col_cbn in df.columns:
+                df.loc[mascaracbn, col_ranking] = df.loc[mascaracbn, col_cbn]
 
-    # Campos estruturais para IBS/CBS 2026 (para matriz PriceTax abastecer)
-    df_merged["IBS_CBS_STATUS"] = "A CLASSIFICAR"
-    df_merged["cClassTrib"] = ""
-    df_merged["Class_Trib_IBS"] = ""
-    df_merged["Class_Trib_CBS"] = ""
-    df_merged["OBS_IBS_CBS_2026"] = (
-        "Sugestão baseada na TIPI e essenc. heurística. "
-        "Validar na matriz PriceTax e na legislação do IBS/CBS 2026."
-    )
+        # CST / alíquotas IBS/CBS 2026
+        for col_ranking, col_cbn in [
+            ("CST_IBS_CBS_VENDA", "CBN_CST_IBS_CBS_VENDA"),
+            ("ALIQ_IBS_UF_VENDA_2026", "CBN_ALIQ_IBS_UF_VENDA_2026"),
+            ("ALIQ_IBS_MUN_VENDA_2026", "CBN_ALIQ_IBS_MUN_VENDA_2026"),
+            ("ALIQ_CBS_VENDA_2026", "CBN_ALIQ_CBS_VENDA_2026"),
+            ("ALIQ_EFETIVA_IBS_VENDA_2026", "CBN_ALIQ_EFETIVA_IBS_VENDA_2026"),
+            ("ALIQ_EFETIVA_CBS_VENDA_2026", "CBN_ALIQ_EFETIVA_CBS_VENDA_2026"),
+        ]:
+            if col_cbn in df.columns:
+                df.loc[mascaracbn, col_ranking] = df.loc[mascaracbn, col_cbn]
+
+        # Para NCM com treino CBN, considera que já há um "rótulo" IBS/CBS
+        df.loc[mascaracbn, "IBS_CBS_STATUS"] = "CLASSIFICADO_POR_TREINO_CBN"
+
+        # Poderíamos, se quiser, usar CST como Class_Trib_IBS/CBS inicial:
+        df.loc[mascaracbn, "Class_Trib_IBS"] = df.loc[mascaracbn, "CST_IBS_CBS_VENDA"].astype(str)
+        df.loc[mascaracbn, "Class_Trib_CBS"] = df.loc[mascaracbn, "CST_IBS_CBS_VENDA"].astype(str)
 
     # Valor em BRL formatado
-    df_merged["VL_TOTAL_ITEM_BR"] = df_merged["VL_TOTAL_ITEM"].apply(format_currency_brl)
+    df["VL_TOTAL_ITEM_BR"] = df["VL_TOTAL_ITEM"].apply(format_currency_brl)
 
-    return df_merged
+    # Observação padrão
+    df["OBS_IBS_CBS_2026"] = (
+        "Sugestão estruturada a partir da TIPI e do treino CBN quando disponível. "
+        "Validar na matriz PriceTax/LavoraTax e na legislação do IBS/CBS 2026."
+    )
+
+    # limpa colunas auxiliares de merge CBN
+    df = df[[c for c in df.columns if not c.startswith("CBN_")]]
+
+    return df
 
 # ============================================================
 #  Parser EFD PIS/COFINS (0000, 0200, C100, C170)
@@ -284,10 +409,7 @@ def parse_efd_piscofins_text(text: str, origem: str):
 
         # 0200 – cadastro de itens
         elif reg == "0200":
-            # |0200|COD_ITEM|DESCR_ITEM|COD_BARRA|COD_ANT_ITEM|UNID_INV|
-            #        2        3           4         5            6
-            # |TIPO_ITEM|COD_NCM|EX_IPI|COD_GEN|COD_LST|ALIQ_ICMS|
-            #    7        8      9      10      11       12
+            # |0200|COD_ITEM|DESCR_ITEM|...|TIPO_ITEM|COD_NCM|...
             cod_item = (campos[2] if len(campos) > 2 else "").strip()
             descr_item = (campos[3] if len(campos) > 3 else "").strip()
             cod_ncm = (campos[8] if len(campos) > 8 else "").strip()
@@ -299,7 +421,7 @@ def parse_efd_piscofins_text(text: str, origem: str):
 
         # C100 – cabeçalho NF
         elif reg == "C100":
-            # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|DT_DOC|DT_E_S|VL_DOC|...
+            # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|...|DT_DOC|DT_E_S|VL_DOC|...
             current_doc = {
                 "IND_OPER": (campos[2] if len(campos) > 2 else "").strip(),
                 "IND_EMIT": (campos[3] if len(campos) > 3 else "").strip(),
@@ -314,10 +436,7 @@ def parse_efd_piscofins_text(text: str, origem: str):
 
         # C170 – itens da NF
         elif reg == "C170":
-            # |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|IND_MOV|
-            #        2        3         4          5    6     7       8       9
-            # |CST_ICMS|CFOP|COD_NAT|VL_BC_ICMS|ALIQ_ICMS|VL_ICMS|VL_BC_ICMS_ST|ALIQ_ST|VL_ICMS_ST|
-            #    10      11    12        13        14       15        16          17      18
+            # |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|IND_MOV|...|CST_ICMS|CFOP|...
             cod_item = (campos[3] if len(campos) > 3 else "").strip()
             descr_compl = (campos[4] if len(campos) > 4 else "").strip()
             qtd = to_float_br(campos[5] if len(campos) > 5 else 0)
@@ -421,12 +540,14 @@ def gerar_ranking(df_itens: pd.DataFrame) -> pd.DataFrame:
 
     return df_rank
 
-def gerar_excel_bytes(df_itens: pd.DataFrame, df_ranking: pd.DataFrame, df_ranking_ibs_cbs: pd.DataFrame) -> bytes:
+def gerar_excel_bytes(df_itens: pd.DataFrame,
+                      df_ranking: pd.DataFrame,
+                      df_ranking_ibs_cbs: pd.DataFrame) -> bytes:
     """
     Gera um Excel em memória com:
       - Itens de Saída (C170)
       - Ranking Produtos
-      - Ranking + TIPI/IBS/CBS
+      - Ranking + TIPI/IBS/CBS (com treino CBN)
       - Receita x Essencialidade
     """
     buf = io.BytesIO()
@@ -460,7 +581,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Estilo PriceTax-like (verde água + escuro)
+# Estilo PriceTax-like
 st.markdown(
     """
     <style>
@@ -484,8 +605,8 @@ st.markdown("## 🧾 IBS/CBS 2026 – Ranking de Produtos a partir da EFD PIS/CO
 st.write(
     "Este app lê a **EFD PIS/COFINS**, identifica as **notas de saída** (CFOP 5/6/7), "
     "faz o ranking de **produtos por NCM/CFOP/Descrição** e, em seguida, "
-    "estrutura uma visão de **IBS/CBS 2026** com campos prontos para classificação "
-    "(cClassTrib, perfil de essencialidade, etc.)."
+    "enriquece com **TIPI** e com o **treino da CBN** (GRADE_Reforma_Tributaria_2026_CBN.xlsx) "
+    "para estruturar a visão de IBS/CBS 2026 (cClassTrib, essenc., alíquotas)."
 )
 
 uploaded_files = st.file_uploader(
@@ -509,11 +630,20 @@ df_tipi = carregar_tipi()
 if df_tipi is None:
     st.warning(
         "⚠️ Arquivo `tipi_ncm.csv` não encontrado na pasta do app. "
-        "O cruzamento com a TIPI e a Essencialidade heurística funcionará "
-        "apenas depois que você criar/importar esse CSV."
+        "A Essencialidade heurística baseada na TIPI funcionará somente depois "
+        "que você criar/importar esse CSV."
     )
 else:
     st.success("TIPI carregada (tipi_ncm.csv). O ranking será enriquecido com CAPÍTULO/ALIQ_IPI/Essencialidade.")
+
+df_cbn = carregar_matriz_cbn()
+if df_cbn is None:
+    st.warning(
+        "⚠️ Arquivo `GRADE_Reforma_Tributaria_2026_CBN.xlsx` não encontrado ou sem aba VENDAS_2026. "
+        "O treino IBS/CBS 2026 da CBN só será aplicado quando esse arquivo estiver na pasta do app."
+    )
+else:
+    st.success("Matriz CBN carregada. NCMs contemplados serão marcados como `CLASSIFICADO_POR_TREINO_CBN`.")
 
 if uploaded_files:
     if st.button("🚀 Processar EFD PIS/COFINS"):
@@ -523,7 +653,7 @@ if uploaded_files:
             with st.spinner("Lendo arquivos e montando ranking de saídas..."):
                 df_itens = parse_efd_piscofins_files(temp_paths)
                 df_ranking = gerar_ranking(df_itens)
-                df_ranking_ibs_cbs = mapear_tipi_e_ibs_cbs(df_ranking, df_tipi)
+                df_ranking_ibs_cbs = enriquecer_com_tipi_e_cbn(df_ranking, df_tipi, df_cbn)
 
             for p in temp_paths:
                 try:
@@ -540,7 +670,7 @@ if uploaded_files:
                     [
                         "🔍 Itens de Saída (C170)",
                         "🏆 Ranking Produtos (NCM/CFOP/Descrição)",
-                        "🧱 Visão IBS/CBS 2026 (Estrutura)",
+                        "🧱 Visão IBS/CBS 2026 (com treino CBN)",
                         "📜 Regras Estruturais 2026 (Resumo)",
                     ]
                 )
@@ -574,7 +704,7 @@ if uploaded_files:
                         st.dataframe(df_ranking[cols_show].head(500), use_container_width=True)
 
                 # -----------------------------------------
-                # Tab 3 – Visão IBS/CBS 2026
+                # Tab 3 – Visão IBS/CBS 2026 (treino CBN)
                 # -----------------------------------------
                 with tab3:
                     if df_ranking_ibs_cbs is None or df_ranking_ibs_cbs.empty:
@@ -582,9 +712,9 @@ if uploaded_files:
                     else:
                         st.write("### Estrutura para IBS/CBS 2026 por NCM/CFOP/Produto")
                         st.caption(
-                            "Essas colunas estruturam a visão para 2026. "
-                            "Os campos de classificação (cClassTrib, Class_Trib_IBS/CBS) "
-                            "devem ser preenchidos pela matriz tributária (PriceTax/LavoraTax)."
+                            "Campos IBS/CBS 2026 preenchidos automaticamente quando o NCM foi treinado na CBN "
+                            "(IBS_CBS_STATUS = CLASSIFICADO_POR_TREINO_CBN). "
+                            "Demais NCMs permanecem 'A CLASSIFICAR'."
                         )
                         cols_show = [
                             "COMPETENCIA",
@@ -598,9 +728,19 @@ if uploaded_files:
                             "CAPITULO",
                             "ALIQ_IPI",
                             "ESSENCIALIDADE",
+                            "GRUPO_MACRO",
+                            "SUBGRUPO",
+                            "ESSENCIALIDADE_IBS",
+                            "ESSENCIALIDADE_CBS",
                             "PERFIL_IBS_CBS_2026",
                             "IBS_CBS_STATUS",
                             "cClassTrib",
+                            "CST_IBS_CBS_VENDA",
+                            "ALIQ_IBS_UF_VENDA_2026",
+                            "ALIQ_IBS_MUN_VENDA_2026",
+                            "ALIQ_CBS_VENDA_2026",
+                            "ALIQ_EFETIVA_IBS_VENDA_2026",
+                            "ALIQ_EFETIVA_CBS_VENDA_2026",
                             "Class_Trib_IBS",
                             "Class_Trib_CBS",
                             "OBS_IBS_CBS_2026",
@@ -634,48 +774,37 @@ if uploaded_files:
                     st.markdown(
                         """
                         **1) Ano de teste / alíquotas-teste**  
-                        - Haverá um período de transição em que IBS e CBS passam a ser **calculados e informados**,  
-                          inicialmente com alíquotas reduzidas (fase de testes), convivendo com o sistema atual.  
-                        - Mesmo que o efeito financeiro seja reduzido/informativo, **a obrigação de destacar IBS/CBS no documento fiscal é real**.
+                        - IBS e CBS passam a ser calculados e informados, inicialmente com alíquotas reduzidas, "
+                        "convivendo com o sistema atual.  
+                        - Mesmo que o efeito financeiro seja reduzido/informativo, a obrigação de destacar IBS/CBS "
+                        "no documento fiscal é real.
 
                         **2) Obrigatoriedade de destacar IBS/CBS na NF-e**  
-                        - Campos novos no XML (NT específica) para identificar:  
-                          - IBS (estadual/municipal)  
-                          - CBS (federal)  
-                          - Situação tributária (códigos próprios)  
-                          - Base de cálculo e valores.  
-                        - Sem esses campos preenchidos corretamente, a NF tende a ser **rejeitada** a partir do início da obrigatoriedade.
+                        - Novos campos no XML (NT específica) para IBS e CBS: identificação, base, valor e "
+                        "códigos de situação tributária.  
+                        - Sem esses campos preenchidos corretamente, a NF tende a ser rejeitada a partir da "
+                        "data de obrigatoriedade.
 
                         **3) cClassTrib e classificação da operação**  
-                        - Assim como hoje existe CST/CSOSN, o novo modelo prevê códigos de situação tributária **específicos para IBS/CBS**,  
-                          incluindo faixas como:  
-                          - Operação tributada integralmente  
-                          - Operação com redução de base/alíquota  
-                          - Operação com alíquota zero/isenta/suspensa  
-                          - Operações não onerosas (demonstração, garantia, bonificação sem preço, consumo interno etc.).  
-                        - Essa classificação combina **CFOP + NCM + natureza da operação**, daí a importância do ranking.
+                        - Haverá códigos específicos para IBS/CBS, combinando:  
+                          - Operação onerosa x não onerosa;  
+                          - Redução, isenção, suspensão;  
+                          - Cadeias específicas, regimes especiais.  
+                        - A combinação **CFOP + NCM + natureza da operação** é o núcleo dessa decisão – e é isso "
+                        "que o ranking entrega.
 
                         **4) O que este app entrega para 2026**  
-                        - Ranking consolidado por **NCM + CFOP + Descrição** com valor e participação.  
-                        - Enriquecimento opcional com **TIPI** (capítulo, IPI) para montar uma régua de **Essencialidade**.  
-                        - Estrutura de saída com campos prontos para:  
-                          - `cClassTrib`  
-                          - `Class_Trib_IBS`  
-                          - `Class_Trib_CBS`  
-                          - `Essencialidade`  
-                          - `Perfil_IBS_CBS_2026` (texto)  
-                          - `IBS_CBS_STATUS`  
+                        - Ranking consolidado por **NCM + CFOP + Descrição**.  
+                        - Essencialidade heurística por TIPI (quando carregada).  
+                        - Enriquecimento automático com o treino da CBN para os NCM já classificados:  
+                          - `cClassTrib`, essenc. IBS/CBS, alíquotas IBS/CBS 2026, CST etc.  
+                        - Estrutura pronta para plugar a Matriz PriceTax e gerar a grade final de parametrização de ERP.
 
-                        **5) Como encaixar isso na prática (PriceTax / LavoraTax)**  
-                        - Este app faz o papel de **motor de leitura do SPED** e geração do **mix de produtos/receitas**.  
-                        - Sobre esse ranking, vocês aplicam a **matriz tributária (por NCM/segmento)** para definir:  
-                          - Qual a situação IBS/CBS em 2026 (alíquota cheia/reduzida/zero)  
-                          - Qual o `cClassTrib` correto (onerosa x não onerosa, regimes especiais)  
-                          - Como cada produto entra na parametrização do ERP (IBS/CBS).
-
-                        Em resumo: o Python aqui entrega **o mapa da mina** (receita por NCM/CFOP/Produto) e a
-                        **estrutura de IBS/CBS 2026**, e a matriz tributária oficial entra completando os códigos
-                        e alíquotas conforme a Reforma Tributária e a governança PriceTax.
+                        **5) Como evoluir a partir daqui**  
+                        - Você pode replicar o modelo da CBN para outros clientes:  
+                          - Consolidar uma **Matriz PriceTax por NCM**, independente do cliente.  
+                          - Usar este app como motor de leitura de SPED, e a matriz como "oráculo" de IBS/CBS.  
+                        - Sempre com validação jurídica em cima das Leis Complementares e normas do IBS/CBS.
                         """
                     )
 
