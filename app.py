@@ -1,6 +1,5 @@
 # app.py
 import io
-import os
 import re
 import zipfile
 from pathlib import Path
@@ -170,7 +169,7 @@ def load_tipi_base() -> pd.DataFrame:
     if "CCLASSTRIB" not in df.columns:
         df["CCLASSTRIB"] = ""
 
-    # Alíquotas – use os nomes da sua planilha
+    # Alíquotas – vindas do gerador de alíquotas
     if "ALIQ_IBS" not in df.columns:
         df["ALIQ_IBS"] = ""
     if "ALIQ_CBS" not in df.columns:
@@ -182,7 +181,6 @@ def load_tipi_base() -> pd.DataFrame:
         df[col_ncm].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
     )
 
-    # guarda nome das colunas importantes no session_state (para eventual debug)
     st.session_state["tipi_base_ok"] = True
     st.session_state["tipi_cols"] = {
         "NCM": col_ncm,
@@ -221,7 +219,6 @@ M200_HEADERS = [
 ]
 M600_HEADERS = M200_HEADERS[:]
 
-# Tabelas curtas (pode expandir via CSV, se quiser)
 COD_CONT_DESC = {
     "01": "Contribuição não-cumulativa apurada à alíquota básica",
     "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
@@ -591,7 +588,6 @@ with tabs[0]:
                 aliq_ibs = str(row.get("ALIQ_IBS", "")).replace(",", ".").strip()
                 aliq_cbs = str(row.get("ALIQ_CBS", "")).replace(",", ".").strip()
 
-                # tenta calcular total (se conseguir converter)
                 try:
                     total_efetivo = ""
                     if aliq_ibs and aliq_cbs:
