@@ -631,8 +631,7 @@ with tabs[0]:
                         <div style="margin-top:0.8rem;font-size:0.85rem;color:#B0B0B0;border-top:1px dashed #333;padding-top:0.5rem;">
                             Para operações regulares, esse NCM tende a seguir a
                             <b>tributação padrão com crédito integral</b>, desde que não haja regra específica
-                            de redução, isenção ou hipótese de Imposto Seletivo aplicável ao cClassTrib definido
-                            (tabela oficial de classificação tributária IBS/CBS do Portal DF-e).:contentReference[oaicite:0]{index=0}
+                            de redução, isenção ou hipótese de Imposto Seletivo aplicável ao cClassTrib definido.
                         </div>
                     </div>
                     """,
