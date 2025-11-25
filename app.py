@@ -16,9 +16,6 @@ st.set_page_config(
 )
 
 # Paleta PRICETAX:
-# - Fundo: preto / quase preto
-# - Destaque principal: amarelo
-# - Detalhes: azul escuro
 PRIMARY_YELLOW = "#FFC107"
 DARK_BG = "#050608"
 DARK_BLUE = "#0A2342"
@@ -36,13 +33,11 @@ st.markdown(
         font-weight: 700;
     }}
 
-    /* Barra lateral */
     section[data-testid="stSidebar"] {{
         background-color: #000000;
         border-right: 1px solid #222222;
     }}
 
-    /* Botões padrão */
     .stButton>button {{
         background: linear-gradient(90deg, {PRIMARY_YELLOW}, #ffdd57);
         color: #000000;
@@ -55,7 +50,6 @@ st.markdown(
         color: #000000;
     }}
 
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 4px;
     }}
@@ -73,7 +67,6 @@ st.markdown(
         border-bottom: 3px solid {PRIMARY_YELLOW};
     }}
 
-    /* Inputs */
     .stTextInput>div>div>input {{
         background-color: #14161e;
         color: #ffffff;
@@ -81,13 +74,11 @@ st.markdown(
         border: 1px solid #333333;
     }}
 
-    /* Dataframes */
     .stDataFrame, .stTable {{
         border-radius: 6px;
         overflow: hidden;
     }}
 
-    /* Mensagens de sucesso/erro/info */
     .stAlert {{
         border-radius: 6px;
     }}
@@ -136,28 +127,20 @@ def normalizar_ncm(ncm: str) -> str:
 # Banco TIPI → IBS/CBS
 # =========================
 
-# Novo nome da planilha base
-TIPI_DB_DEFAULT_PATH = Path("TIPI_IBS_CBS.xlsx")
-TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"   # mantém o nome da aba que criamos antes
+TIPI_DB_PATH = Path("TIPI_IBS_CBS.xlsx")
+TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
 
 @st.cache_data
-def load_tipi_db_from_file_bytes(file_bytes: bytes) -> pd.DataFrame:
-    df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=TIPI_DB_SHEET, dtype=str)
-    df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
-    return df
-
-@st.cache_data
-def load_tipi_db_default() -> pd.DataFrame:
-    if not TIPI_DB_DEFAULT_PATH.exists():
+def load_tipi_db() -> pd.DataFrame:
+    try:
+        df = pd.read_excel(TIPI_DB_PATH, sheet_name=TIPI_DB_SHEET, dtype=str)
+        df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
+        return df
+    except Exception:
+        # Se der qualquer erro (arquivo ausente, aba errada, etc.), devolve DF vazio
         return pd.DataFrame()
-    df = pd.read_excel(TIPI_DB_DEFAULT_PATH, sheet_name=TIPI_DB_SHEET, dtype=str)
-    df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
-    return df
 
 def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
-    """
-    Consulta na base TIPI/PRICETAX o tratamento tributário de um NCM.
-    """
     ncm_norm = normalizar_ncm(ncm)
     if not ncm_norm:
         return {
@@ -168,9 +151,10 @@ def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
     if df_tipi is None or df_tipi.empty:
         return {
             "encontrado": False,
-            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo padrão 'TIPI_IBS_CBS.xlsx' na raiz do projeto ou envie uma base na barra lateral.",
+            "mensagem": "Base TIPI_IBS_CBS.xlsx não foi carregada no servidor. Contate o suporte PRICETAX.",
             "NCM": ncm,
         }
+
     linha = df_tipi[df_tipi["NCM_DIGITOS"] == ncm_norm].head(1)
     if linha.empty:
         return {
@@ -475,20 +459,19 @@ def processar_speds_streamlit(uploaded_files):
 # =========================
 
 st.sidebar.title("⚙️ Configurações PRICETAX")
-
-tipi_upload = st.sidebar.file_uploader(
-    "Base TIPI IBS/CBS (NCM x Grupo)",
-    type=["xlsx"],
-    help="Se não enviar, o sistema utiliza o arquivo padrão 'TIPI_IBS_CBS.xlsx' na raiz do projeto."
+st.sidebar.markdown(
+    "Esta instância utiliza a base padrão **TIPI_IBS_CBS.xlsx** "
+    "disponibilizada pela PRICETAX."
 )
 
-if tipi_upload is not None:
-    df_tipi = load_tipi_db_from_file_bytes(tipi_upload.getvalue())
-else:
-    df_tipi = load_tipi_db_default()
-
+df_tipi = load_tipi_db()
 if df_tipi is None or df_tipi.empty:
-    st.sidebar.error("Nenhuma base TIPI/IBS-CBS foi carregada.")
+    st.error(
+        "A base TIPI_IBS_CBS.xlsx não foi encontrada ou não pôde ser carregada no servidor.\n\n"
+        "Verifique se o arquivo está na raiz do projeto com esse nome exato e se a aba "
+        "`TIPI_NCM_IBS_CBS` existe na planilha."
+    )
+    st.stop()
 
 st.title("🧠 PRICETAX · Classificador IBS/CBS & SPED PIS/COFINS")
 st.markdown(
@@ -538,9 +521,8 @@ with tab1:
                 st.write("**Observações adicionais:**")
                 st.info(info["Observacoes_IBS_CBS"])
 
-    if df_tipi is not None and not df_tipi.empty:
-        with st.expander("Visualizar amostra da base TIPI PRICETAX carregada"):
-            st.dataframe(df_tipi.head(20))
+    with st.expander("Visualizar amostra da base TIPI PRICETAX carregada"):
+        st.dataframe(df_tipi.head(20))
 
 # -------------------------
 # TAB 2: SPED PIS/COFINS → Excel
