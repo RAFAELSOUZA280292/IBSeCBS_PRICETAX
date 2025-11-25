@@ -7,6 +7,47 @@ import pandas as pd
 import streamlit as st
 
 # =========================
+# ESTILO / BRANDING PRICETAX
+# =========================
+
+st.set_page_config(
+    page_title="PRICETAX · IBS/CBS & SPED PIS/COFINS",
+    layout="wide"
+)
+
+# CSS simples com cores PRICETAX
+st.markdown(
+    """
+    <style>
+    :root {
+        --primary-color: #0eb8b3;
+    }
+    .stApp {
+        background-color: #050608;
+        color: #f5f5f5;
+    }
+    h1, h2, h3, h4 {
+        color: #ffffff;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 600;
+    }
+    .stButton>button {
+        background-color: #0eb8b3;
+        color: white;
+        border-radius: 6px;
+        border: none;
+    }
+    .stButton>button:hover {
+        background-color: #0ca39f;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# =========================
 # Utils básicos
 # =========================
 
@@ -19,7 +60,6 @@ def to_float_br(s) -> float:
     s = str(s).strip()
     if s == "":
         return 0.0
-    # Caso "1.234,56"
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -37,10 +77,7 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
     return ""
 
 def normalizar_ncm(ncm: str) -> str:
-    """
-    Normaliza NCM para 8 dígitos (somente números).
-    Aceita formatos: '0101.21.00', '01012100', '1012100' etc.
-    """
+    """Normaliza NCM para 8 dígitos (somente números)."""
     dig = only_digits(ncm)
     if not dig:
         return ""
@@ -50,7 +87,8 @@ def normalizar_ncm(ncm: str) -> str:
 # Banco TIPI → IBS/CBS
 # =========================
 
-TIPI_DB_DEFAULT_PATH = Path("TIPI_2022_ATUALIZADA_MAPEAMENTO_IBS_CBS_80porcento.xlsx")
+# Nome oficial da planilha de base
+TIPI_DB_DEFAULT_PATH = Path("1 TIPI 2022 - Atualizada ADE 003-2025.xlsx")
 TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
 
 @st.cache_data
@@ -69,8 +107,7 @@ def load_tipi_db_default() -> pd.DataFrame:
 
 def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
     """
-    Consulta na base TIPI → IBS/CBS um NCM específico.
-    Retorna dict com campos principais.
+    Consulta na base TIPI/PRICETAX o tratamento tributário de um NCM.
     """
     ncm_norm = normalizar_ncm(ncm)
     if not ncm_norm:
@@ -82,17 +119,19 @@ def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
     if df_tipi is None or df_tipi.empty:
         return {
             "encontrado": False,
-            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo no repositório ou faça upload na barra lateral.",
+            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo padrão no repositório ou faça upload na barra lateral.",
             "NCM": ncm,
         }
     linha = df_tipi[df_tipi["NCM_DIGITOS"] == ncm_norm].head(1)
     if linha.empty:
         return {
             "encontrado": False,
-            "mensagem": "NCM não localizado na TIPI mapeada.",
+            "mensagem": "NCM não localizado na base TIPI/PRICETAX.",
             "NCM": ncm,
         }
+
     row = linha.iloc[0]
+
     def _get(col):
         return str(row.get(col, "")).strip()
 
@@ -129,10 +168,10 @@ M200_HEADERS = [
     "Valor da Contribuição Cumulativa a Recolher/Pagar",
     "Valor Total da Contribuição a Recolher/Pagar no Período",
 ]
-M600_HEADERS = M200_HEADERS[:]  # mesma estrutura visual no PVA
+M600_HEADERS = M200_HEADERS[:]
 
 # =========================
-# Tabelas de códigos (sementes) + loaders de CSV (opcional)
+# Tabelas de códigos
 # =========================
 
 COD_CONT_DESC = {
@@ -153,18 +192,13 @@ COD_CONT_DESC = {
 }
 
 NAT_REC_DESC = {
-    "403": "Venda de óleo combustível, tipo bunker, MF – Marine Fuel (2710.19.22), "
-           "óleo combustível, tipo bunker, MGO – Marine Gás Oil (2710.19.21) e "
-           "óleo combustível, tipo bunker, ODM – Óleo Diesel Marítimo (2710.19.21), "
-           "quando destinados à navegação de cabotagem e de apoio portuário e marítimo",
-    "309": "ZFM – Zona Franca de Manaus",
+    "403": "Venda de óleo combustível bunker destinado à navegação de cabotagem e apoio marítimo/portuário",
+    "309": "Operações com benefícios da Zona Franca de Manaus",
     "401": "Exportação de mercadorias para o exterior",
-    "405": "Desperdícios, resíduos ou aparas de plástico, de papel ou cartão, de vidro, "
-           "de ferro ou aço, de cobre, de níquel, de alumínio, de chumbo, de zinco e de estanho, "
-           "e demais desperdícios e resíduos metálicos do Capítulo 81 da Tipi",
+    "405": "Desperdícios, resíduos ou aparas de plásticos, papéis, vidros e metais (Cap. 81 TIPI)",
     "908": "Vendas de mercadorias destinadas ao consumo",
     "911": "Receitas financeiras, inclusive variação cambial ativa tributável",
-    "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão (especificar)",
+    "999": "Código genérico – operações tributáveis à alíquota zero/isenção/suspensão (especificar)",
 }
 
 NAT_BC_CRED_DESC = {
@@ -177,9 +211,9 @@ NAT_BC_CRED_DESC = {
     "07": "Contraprestações de arrendamento mercantil",
     "08": "Máquinas, equipamentos e outros bens incorporados ao ativo imobilizado (depreciação)",
     "09": "Edificações e benfeitorias em imóveis próprios ou de terceiros (depreciação/amortização)",
-    "10": "Devolução de vendas sujeito à incidência não-cumulativa",
+    "10": "Devolução de vendas sujeitas à incidência não-cumulativa",
     "11": "Ativos intangíveis (amortização)",
-    "12": "Encargos de depreciação, amortização e contraprestações de arrendamento no custo",
+    "12": "Encargos de depreciação, amortização e arrendamento no custo",
     "13": "Outras operações geradoras de crédito",
     "18": "Crédito presumido",
     "19": "Fretes na aquisição de insumos e bens para revenda",
@@ -188,7 +222,6 @@ NAT_BC_CRED_DESC = {
 }
 
 def carregar_csv_mapa(csv_path: Path) -> dict:
-    """Carrega CSV opcional com colunas: codigo,descricao."""
     try:
         df = pd.read_csv(csv_path, dtype=str, sep=",")
         df = df.rename(columns={c: c.strip().lower() for c in df.columns})
@@ -200,7 +233,6 @@ def carregar_csv_mapa(csv_path: Path) -> dict:
     except Exception:
         return {}
 
-# Permite sobrescrever via arquivos externos (se existirem na pasta do app)
 COD_CONT_DESC.update(carregar_csv_mapa(Path("map_cod_cont.csv")))
 NAT_REC_DESC.update(carregar_csv_mapa(Path("map_nat_rec.csv")))
 NAT_BC_CRED_DESC.update(carregar_csv_mapa(Path("map_nat_bc_cred.csv")))
@@ -224,13 +256,10 @@ def desc_nat_bc(codigo: str) -> str:
     return NAT_BC_CRED_DESC.get(c, f"(Descrição não cadastrada: {c})") if c else ""
 
 # =========================
-# Parser SPED (versão Streamlit, sem Path)
+# Parser SPED (Bloco M)
 # =========================
 
 def parse_sped_txt(nome_arquivo: str, linhas):
-    """
-    linhas: iterável de strings (cada linha do arquivo txt).
-    """
     empresa_cnpj = ""; dt_ini = ""; dt_fin = ""; competencia = ""
     ap_pis = []; credito_pis = []; receitas_pis = []; rec_isentas_pis = []
     ap_cofins = []; credito_cofins = []; receitas_cofins = []; rec_isentas_cofins = []
@@ -356,6 +385,7 @@ def processar_speds_streamlit(uploaded_files):
             texto = data.decode("utf-8", errors="replace")
             linhas = texto.splitlines()
             d = parse_sped_txt(nome, linhas)
+
         elif nome.lower().endswith(".zip"):
             d = {
                 "ap_pis": [], "credito_pis": [], "receitas_pis": [], "rec_isentas_pis": [],
@@ -395,17 +425,12 @@ def processar_speds_streamlit(uploaded_files):
 # STREAMLIT APP
 # =========================
 
-st.set_page_config(
-    page_title="IBS/CBS + SPED PIS/COFINS — PriceTax/Lavoratory",
-    layout="wide"
-)
-
 st.sidebar.title("⚙️ Configurações")
 
 tipi_upload = st.sidebar.file_uploader(
-    "TIPI mapeada (opcional — IBS/CBS)",
+    "Base TIPI PRICETAX (NCM x IBS/CBS)",
     type=["xlsx"],
-    help="Se não enviar, o app tentará carregar o arquivo TIPI_2022_ATUALIZADA_MAPEAMENTO_IBS_CBS_80porcento.xlsx da pasta do app."
+    help="Se não enviar, o sistema usa o arquivo padrão '1 TIPI 2022 - Atualizada ADE 003-2025.xlsx' na raiz do projeto."
 )
 
 if tipi_upload is not None:
@@ -414,13 +439,17 @@ else:
     df_tipi = load_tipi_db_default()
 
 if df_tipi is None or df_tipi.empty:
-    st.sidebar.warning("Base TIPI/IBS-CBS não carregada. Upload recomendado.")
+    st.sidebar.error("Nenhuma base TIPI/IBS-CBS foi carregada.")
 
-st.title("🧠 LAVO · IBS/CBS & SPED PIS/COFINS")
+st.title("🧠 PRICETAX · Classificador IBS/CBS & SPED PIS/COFINS")
 st.markdown(
-    "App web da **Lavoratory / PriceTax** para:\n"
-    "- Consultar **tratamento IBS/CBS** por NCM (TIPI)\n"
-    "- Processar **SPED PIS/COFINS** (Bloco M) e exportar para Excel"
+    """
+    Ferramenta PRICETAX para apoio na **classificação tributária de bens (IBS/CBS)** e
+    análise do **SPED Contribuições (Bloco M – PIS/COFINS)**.
+
+    O modelo utiliza a TIPI oficial como referência de NCM, capítulos e grupos de produtos,
+    alinhado às regras da Reforma Tributária e da legislação vigente.
+    """
 )
 
 tab1, tab2 = st.tabs(["🔍 Consulta IBS/CBS por NCM", "📂 SPED PIS/COFINS → Excel"])
@@ -429,7 +458,7 @@ tab1, tab2 = st.tabs(["🔍 Consulta IBS/CBS por NCM", "📂 SPED PIS/COFINS →
 # TAB 1: Consulta IBS/CBS por NCM
 # -------------------------
 with tab1:
-    st.subheader("Consulta TIPI → IBS/CBS (macro 80%)")
+    st.subheader("Consulta TIPI → Tratamento IBS/CBS")
 
     col_ncm, col_btn = st.columns([2, 1])
 
@@ -448,51 +477,49 @@ with tab1:
         if not info.get("encontrado"):
             st.error(f"NCM: {info.get('NCM')}\n\n{info.get('mensagem')}")
         else:
-            st.success(f"NCM encontrado: {info['NCM']}")
+            st.success(f"NCM localizado: {info['NCM']}")
             st.write(f"**Descrição TIPI:** {info['DESCRICAO_TIPI']}")
             st.write(f"**Capítulo / Seção TIPI:** {info['Capitulo_TIPI']} / {info['Secao_TIPI']}")
-            st.write(f"**Grupo IBS/CBS:** `{info['ID_Grupo']}` — {info['Nome_Grupo']}")
-            st.write("**Tratamento IBS/CBS (geral):**")
+            st.write(f"**Grupo de produtos (modelo PRICETAX):** `{info['ID_Grupo']}` — {info['Nome_Grupo']}")
+            st.write("**Tratamento IBS/CBS (visão geral):**")
             st.code(info["Tratamento_IBS_CBS_Geral"], language="text")
-            st.write(f"**Possível Imposto Seletivo:** {info['Possivel_Imposto_Seletivo']}")
+            st.write(f"**Indicação de Imposto Seletivo:** {info['Possivel_Imposto_Seletivo']}")
             if info["Observacoes_IBS_CBS"]:
-                st.write("**Observações:**")
+                st.write("**Observações adicionais:**")
                 st.info(info["Observacoes_IBS_CBS"])
 
     if df_tipi is not None and not df_tipi.empty:
-        with st.expander("Ver amostra da base TIPI/IBS-CBS carregada"):
+        with st.expander("Visualizar amostra da base TIPI PRICETAX carregada"):
             st.dataframe(df_tipi.head(20))
 
 # -------------------------
 # TAB 2: SPED PIS/COFINS → Excel
 # -------------------------
 with tab2:
-    st.subheader("Processar SPED PIS/COFINS (Bloco M)")
+    st.subheader("Processar SPED Contribuições (Bloco M – PIS/COFINS)")
 
     uploaded_speds = st.file_uploader(
-        "Selecione arquivos SPED (.txt ou .zip)",
+        "Selecione os arquivos SPED (.txt ou .zip)",
         type=["txt", "zip"],
         accept_multiple_files=True
     )
 
     if uploaded_speds:
-        if st.button("Processar SPEDs"):
+        if st.button("Executar processamento"):
             (
                 df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis,
                 df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
             ) = processar_speds_streamlit(uploaded_speds)
 
-            st.success("Processamento concluído. Visualize e baixe o Excel gerado.")
+            st.success("Processamento concluído. Visualize abaixo e baixe o relatório em Excel.")
 
-            # Mostrar pequenas amostras
             if not df_ap_pis.empty:
-                st.write("**AP PIS (M200):**")
+                st.write("**Apuração PIS (M200):**")
                 st.dataframe(df_ap_pis.head(10))
             if not df_ap_cof.empty:
-                st.write("**AP COFINS (M600):**")
+                st.write("**Apuração COFINS (M600):**")
                 st.dataframe(df_ap_cof.head(10))
 
-            # Montar Excel em memória para download
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine="openpyxl") as w:
                 if not df_ap_pis.empty:    df_ap_pis.to_excel(w, sheet_name="AP PIS", index=False)
@@ -505,7 +532,6 @@ with tab2:
                 if not df_rec_cof.empty:   df_rec_cof.to_excel(w, sheet_name="RECEITAS COFINS", index=False)
                 if not df_ri_cof.empty:    df_ri_cof.to_excel(w, sheet_name="RECEITAS ISENTAS COFINS", index=False)
 
-                # Índices auxiliares
                 df_idx_cod_cont = pd.DataFrame(
                     [{"COD_CONT": k, "DESCRICAO": v} for k, v in sorted(COD_CONT_DESC.items(), key=lambda x: x[0])]
                 )
@@ -526,10 +552,10 @@ with tab2:
             output.seek(0)
 
             st.download_button(
-                label="⬇️ Baixar Excel (SPED PIS/COFINS)",
+                label="⬇️ Baixar Excel consolidado",
                 data=output,
-                file_name="SPED_PIS_COFINS_BLOCO_M.xlsx",
+                file_name="SPED_PIS_COFINS_BLOCO_M_PRICETAX.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     else:
-        st.info("Envie um ou mais arquivos SPED (.txt ou .zip) para habilitar o processamento.")
+        st.info("Envie pelo menos um arquivo .txt ou .zip de SPED Contribuições para iniciar o processamento.")
