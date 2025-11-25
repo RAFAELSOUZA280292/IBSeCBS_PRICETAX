@@ -1,12 +1,13 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
-import pandas as pd
-import zipfile, os, re
+import io
+import re
+import zipfile
 from pathlib import Path
-from functools import lru_cache
+
+import pandas as pd
+import streamlit as st
 
 # =========================
-# Utils
+# Utils básicos
 # =========================
 
 def only_digits(s: str) -> str:
@@ -35,28 +36,6 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
             return f"{dig[2:4]}/{dig[4:8]}"
     return ""
 
-def coletar_txts(paths):
-    txts = []
-    for p in paths:
-        p = Path(p)
-        if p.is_file() and p.suffix.lower() == ".zip":
-            tmp = p.parent / (p.stem + "_unzipped")
-            tmp.mkdir(exist_ok=True)
-            with zipfile.ZipFile(p, "r") as z:
-                z.extractall(tmp)
-            txts.extend(list(tmp.rglob("*.txt")))
-        elif p.is_file() and p.suffix.lower() == ".txt":
-            txts.append(p)
-    return txts
-
-# =========================
-# TIPI / IBS-CBS DATABASE
-# =========================
-
-# Caminho padrão da base TIPI mapeada (ajuste se necessário)
-TIPI_DB_PATH = Path("TIPI_2022_ATUALIZADA_MAPEAMENTO_IBS_CBS_80porcento.xlsx")
-TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
-
 def normalizar_ncm(ncm: str) -> str:
     """
     Normaliza NCM para 8 dígitos (somente números).
@@ -65,39 +44,33 @@ def normalizar_ncm(ncm: str) -> str:
     dig = only_digits(ncm)
     if not dig:
         return ""
-    # TIPI é 8 dígitos
     return dig.zfill(8)
 
-@lru_cache(maxsize=1)
-def carregar_tipi_db() -> pd.DataFrame:
-    """
-    Carrega a base TIPI mapeada (NCM x IBS/CBS) como 'banco de dados'.
-    Espera a aba TIPI_NCM_IBS_CBS com as colunas criadas na etapa anterior.
-    """
-    if not TIPI_DB_PATH.exists():
-        # Não quebra o programa, só avisa e deixa a consulta em fallback
-        print(f"[AVISO] Arquivo TIPI não encontrado em: {TIPI_DB_PATH}")
-        return pd.DataFrame()
+# =========================
+# Banco TIPI → IBS/CBS
+# =========================
 
-    df = pd.read_excel(TIPI_DB_PATH, sheet_name=TIPI_DB_SHEET, dtype=str)
-    # Garante colunas mínimas
-    col_obrig = ["NCM", "DESCRICAO_TIPI", "ALIQUOTA_IPI",
-                 "Capitulo_TIPI", "Secao_TIPI",
-                 "ID_Grupo", "Nome_Grupo",
-                 "Tratamento_IBS_CBS_Geral", "Possivel_Imposto_Seletivo",
-                 "Observacoes_IBS_CBS"]
-    for c in col_obrig:
-        if c not in df.columns:
-            df[c] = ""
+TIPI_DB_DEFAULT_PATH = Path("TIPI_2022_ATUALIZADA_MAPEAMENTO_IBS_CBS_80porcento.xlsx")
+TIPI_DB_SHEET = "TIPI_NCM_IBS_CBS"
 
-    # Normaliza NCM para chave de busca
+@st.cache_data
+def load_tipi_db_from_file_bytes(file_bytes: bytes) -> pd.DataFrame:
+    df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=TIPI_DB_SHEET, dtype=str)
     df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
     return df
 
-def consultar_ibscbs_por_ncm(ncm: str) -> dict:
+@st.cache_data
+def load_tipi_db_default() -> pd.DataFrame:
+    if not TIPI_DB_DEFAULT_PATH.exists():
+        return pd.DataFrame()
+    df = pd.read_excel(TIPI_DB_DEFAULT_PATH, sheet_name=TIPI_DB_SHEET, dtype=str)
+    df["NCM_DIGITOS"] = df["NCM"].astype(str).apply(normalizar_ncm)
+    return df
+
+def consultar_ibscbs_por_ncm(ncm: str, df_tipi: pd.DataFrame) -> dict:
     """
     Consulta na base TIPI → IBS/CBS um NCM específico.
-    Retorna dict com campos principais ou mensagem de não encontrado.
+    Retorna dict com campos principais.
     """
     ncm_norm = normalizar_ncm(ncm)
     if not ncm_norm:
@@ -106,37 +79,36 @@ def consultar_ibscbs_por_ncm(ncm: str) -> dict:
             "mensagem": "NCM vazio ou inválido.",
             "NCM": ncm,
         }
-
-    df = carregar_tipi_db()
-    if df.empty:
+    if df_tipi is None or df_tipi.empty:
         return {
             "encontrado": False,
-            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o caminho do arquivo.",
+            "mensagem": "Base TIPI/IBS-CBS não carregada. Verifique o arquivo no repositório ou faça upload na barra lateral.",
             "NCM": ncm,
         }
-
-    linha = df[df["NCM_DIGITOS"] == ncm_norm].head(1)
+    linha = df_tipi[df_tipi["NCM_DIGITOS"] == ncm_norm].head(1)
     if linha.empty:
         return {
             "encontrado": False,
             "mensagem": "NCM não localizado na TIPI mapeada.",
             "NCM": ncm,
         }
-
     row = linha.iloc[0]
+    def _get(col):
+        return str(row.get(col, "")).strip()
+
     return {
         "encontrado": True,
         "mensagem": "",
-        "NCM": str(row.get("NCM", "")).strip(),
-        "DESCRICAO_TIPI": str(row.get("DESCRICAO_TIPI", "")).strip(),
-        "ALIQUOTA_IPI": str(row.get("ALIQUOTA_IPI", "")).strip(),
-        "Capitulo_TIPI": str(row.get("Capitulo_TIPI", "")).strip(),
-        "Secao_TIPI": str(row.get("Secao_TIPI", "")).strip(),
-        "ID_Grupo": str(row.get("ID_Grupo", "")).strip(),
-        "Nome_Grupo": str(row.get("Nome_Grupo", "")).strip(),
-        "Tratamento_IBS_CBS_Geral": str(row.get("Tratamento_IBS_CBS_Geral", "")).strip(),
-        "Possivel_Imposto_Seletivo": str(row.get("Possivel_Imposto_Seletivo", "")).strip(),
-        "Observacoes_IBS_CBS": str(row.get("Observacoes_IBS_CBS", "")).strip(),
+        "NCM": _get("NCM"),
+        "DESCRICAO_TIPI": _get("DESCRICAO_TIPI"),
+        "ALIQUOTA_IPI": _get("ALIQUOTA_IPI"),
+        "Capitulo_TIPI": _get("Capitulo_TIPI"),
+        "Secao_TIPI": _get("Secao_TIPI"),
+        "ID_Grupo": _get("ID_Grupo"),
+        "Nome_Grupo": _get("Nome_Grupo"),
+        "Tratamento_IBS_CBS_Geral": _get("Tratamento_IBS_CBS_Geral"),
+        "Possivel_Imposto_Seletivo": _get("Possivel_Imposto_Seletivo"),
+        "Observacoes_IBS_CBS": _get("Observacoes_IBS_CBS"),
     }
 
 # =========================
@@ -163,7 +135,6 @@ M600_HEADERS = M200_HEADERS[:]  # mesma estrutura visual no PVA
 # Tabelas de códigos (sementes) + loaders de CSV (opcional)
 # =========================
 
-# Tabela 4.3.5 – Código da Contribuição Social Apurada (para COD_CONT)
 COD_CONT_DESC = {
     "01": "Contribuição não-cumulativa apurada à alíquota básica",
     "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
@@ -181,7 +152,6 @@ COD_CONT_DESC = {
     "51": "Contribuição apurada – código 51 (ajuste conforme tabela interna/guia)",
 }
 
-# Natureza da receita / CODIGO_DET (usado em M410/M810)
 NAT_REC_DESC = {
     "403": "Venda de óleo combustível, tipo bunker, MF – Marine Fuel (2710.19.22), "
            "óleo combustível, tipo bunker, MGO – Marine Gás Oil (2710.19.21) e "
@@ -197,7 +167,6 @@ NAT_REC_DESC = {
     "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão (especificar)",
 }
 
-# NAT_BC_CRED (M105/M505) – 01..21
 NAT_BC_CRED_DESC = {
     "01": "Aquisição de bens para revenda",
     "02": "Aquisição de bens e serviços utilizados como insumo",
@@ -231,12 +200,11 @@ def carregar_csv_mapa(csv_path: Path) -> dict:
     except Exception:
         return {}
 
-# Sobrescreve/expande por CSVs se existirem:
+# Permite sobrescrever via arquivos externos (se existirem na pasta do app)
 COD_CONT_DESC.update(carregar_csv_mapa(Path("map_cod_cont.csv")))
 NAT_REC_DESC.update(carregar_csv_mapa(Path("map_nat_rec.csv")))
 NAT_BC_CRED_DESC.update(carregar_csv_mapa(Path("map_nat_bc_cred.csv")))
 
-# Helpers de descrição/normalização
 def desc_cod_cont(codigo: str) -> str:
     c = (codigo or "").strip()
     return COD_CONT_DESC.get(c, f"(Descrição não cadastrada: {c})")
@@ -256,279 +224,312 @@ def desc_nat_bc(codigo: str) -> str:
     return NAT_BC_CRED_DESC.get(c, f"(Descrição não cadastrada: {c})") if c else ""
 
 # =========================
-# Parser focado nas 8 abas
+# Parser SPED (versão Streamlit, sem Path)
 # =========================
 
-def parse_sped_txt(path: Path):
+def parse_sped_txt(nome_arquivo: str, linhas):
+    """
+    linhas: iterável de strings (cada linha do arquivo txt).
+    """
     empresa_cnpj = ""; dt_ini = ""; dt_fin = ""; competencia = ""
     ap_pis = []; credito_pis = []; receitas_pis = []; rec_isentas_pis = []
     ap_cofins = []; credito_cofins = []; receitas_cofins = []; rec_isentas_cofins = []
 
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for raw in f:
-            if not raw or raw == "|":
-                continue
-            campos = raw.rstrip("\n").split("|")
-            if len(campos) < 3:
-                continue
-            reg = (campos[1] or "").upper()
+    for raw in linhas:
+        if not raw or raw == "|":
+            continue
+        campos = raw.rstrip("\n").split("|")
+        if len(campos) < 3:
+            continue
+        reg = (campos[1] or "").upper()
 
-            if reg == "0000":
-                datas = [c for c in campos if re.fullmatch(r"\d{8}", c or "")]
-                if len(datas) >= 2:
-                    dt_ini, dt_fin = datas[0], datas[1]
-                else:
-                    dt_ini = campos[4] if len(campos) > 4 else ""
-                    dt_fin = campos[5] if len(campos) > 5 else ""
-                competencia = competencia_from_dt(dt_ini, dt_fin)
-                cand = [only_digits(c) for c in campos if len(only_digits(c)) == 14]
-                if cand:
-                    empresa_cnpj = cand[0]
+        if reg == "0000":
+            datas = [c for c in campos if re.fullmatch(r"\d{8}", c or "")]
+            if len(datas) >= 2:
+                dt_ini, dt_fin = datas[0], datas[1]
+            else:
+                dt_ini = campos[4] if len(campos) > 4 else ""
+                dt_fin = campos[5] if len(campos) > 5 else ""
+            competencia = competencia_from_dt(dt_ini, dt_fin)
+            cand = [only_digits(c) for c in campos if len(only_digits(c)) == 14]
+            if cand:
+                empresa_cnpj = cand[0]
 
-            # AP PIS (M200) com cabeçalhos do PVA
-            elif reg == "M200":
-                row = {"ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-                vals = campos[2:2+len(M200_HEADERS)]
-                for titulo, val in zip(M200_HEADERS, vals):
-                    row[titulo] = to_float_br(val)
-                ap_pis.append(row)
+        elif reg == "M200":
+            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            vals = campos[2:2+len(M200_HEADERS)]
+            for titulo, val in zip(M200_HEADERS, vals):
+                row[titulo] = to_float_br(val)
+            ap_pis.append(row)
 
-            # CREDITO PIS (M105)
-            elif reg == "M105":
-                nat = (campos[2] if len(campos) > 2 else "").strip()
-                credito_pis.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "NAT_BC_CRED": nat,
-                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
-                    "CST_PIS": (campos[3] if len(campos) > 3 else "").strip(),
-                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
-                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
-                })
+        elif reg == "M105":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            credito_pis.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "NAT_BC_CRED": nat,
+                "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                "CST_PIS": (campos[3] if len(campos) > 3 else "").strip(),
+                "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+            })
 
-            # RECEITAS PIS (M210)
-            elif reg == "M210":
-                cod = (campos[2] if len(campos) > 2 else "").strip()
-                receitas_pis.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "COD_CONT": cod,
-                    "DESCR_COD_CONT": desc_cod_cont(cod),
-                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
-                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
-                    "VL_BC_PIS": to_float_br(campos[7] if len(campos) > 7 else 0),
-                    "ALIQ_PIS": to_float_br(campos[8] if len(campos) > 8 else 0),
-                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
-                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
-                })
+        elif reg == "M210":
+            cod = (campos[2] if len(campos) > 2 else "").strip()
+            receitas_pis.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "COD_CONT": cod,
+                "DESCR_COD_CONT": desc_cod_cont(cod),
+                "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                "VL_BC_PIS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                "ALIQ_PIS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+            })
 
-            # RECEITAS ISENTAS PIS (M410)
-            elif reg == "M410":
-                nat = (campos[2] if len(campos) > 2 else "").strip()
-                rec_isentas_pis.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "CODIGO_DET": nat,
-                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
-                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
-                })
+        elif reg == "M410":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            rec_isentas_pis.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "CODIGO_DET": nat,
+                "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+            })
 
-            # AP COFINS (M600) com cabeçalhos do PVA
-            elif reg == "M600":
-                row = {"ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-                vals = campos[2:2+len(M600_HEADERS)]
-                for titulo, val in zip(M600_HEADERS, vals):
-                    row[titulo] = to_float_br(val)
-                ap_cofins.append(row)
+        elif reg == "M600":
+            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            vals = campos[2:2+len(M600_HEADERS)]
+            for titulo, val in zip(M600_HEADERS, vals):
+                row[titulo] = to_float_br(val)
+            ap_cofins.append(row)
 
-            # CREDITO COFINS (M505)
-            elif reg == "M505":
-                nat = (campos[2] if len(campos) > 2 else "").strip()
-                credito_cofins.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "NAT_BC_CRED": nat,
-                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
-                    "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
-                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
-                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
-                })
+        elif reg == "M505":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            credito_cofins.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "NAT_BC_CRED": nat,
+                "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
+                "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+            })
 
-            # RECEITAS COFINS (M610)
-            elif reg == "M610":
-                cod = (campos[2] if len(campos) > 2 else "").strip()
-                receitas_cofins.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "COD_CONT": cod,
-                    "DESCR_COD_CONT": desc_cod_cont(cod),
-                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
-                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
-                    "VL_BC_COFINS": to_float_br(campos[7] if len(campos) > 7 else 0),
-                    "ALIQ_COFINS": to_float_br(campos[8] if len(campos) > 8 else 0),
-                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
-                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
-                })
+        elif reg == "M610":
+            cod = (campos[2] if len(campos) > 2 else "").strip()
+            receitas_cofins.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "COD_CONT": cod,
+                "DESCR_COD_CONT": desc_cod_cont(cod),
+                "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                "VL_BC_COFINS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                "ALIQ_COFINS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+            })
 
-            # RECEITAS ISENTAS COFINS (M810)
-            elif reg == "M810":
-                nat = (campos[2] if len(campos) > 2 else "").strip()
-                rec_isentas_cofins.append({
-                    "ARQUIVO": str(path), "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
-                    "CODIGO_DET": nat,
-                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
-                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
-                })
+        elif reg == "M810":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            rec_isentas_cofins.append({
+                "ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj,
+                "CODIGO_DET": nat,
+                "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+            })
 
     return {
         "ap_pis": ap_pis, "credito_pis": credito_pis, "receitas_pis": receitas_pis, "rec_isentas_pis": rec_isentas_pis,
         "ap_cofins": ap_cofins, "credito_cofins": credito_cofins, "receitas_cofins": receitas_cofins, "rec_isentas_cofins": rec_isentas_cofins
     }
 
-# =========================
-# Processamento + Excel
-# =========================
-
-def processar_speds(caminhos, saida_excel):
-    txts = coletar_txts(caminhos)
-    if not txts:
-        messagebox.showerror("Erro", "Nenhum arquivo .txt encontrado.")
-        return
-
+def processar_speds_streamlit(uploaded_files):
     ap_pis_all, cred_pis_all, rec_pis_all, rec_is_pis_all = [], [], [], []
     ap_cof_all, cred_cof_all, rec_cof_all, rec_is_cof_all = [], [], [], []
 
-    for t in txts:
-        d = parse_sped_txt(t)
+    for up in uploaded_files:
+        nome = up.name
+        data = up.getvalue()
+
+        if nome.lower().endswith(".txt"):
+            texto = data.decode("utf-8", errors="replace")
+            linhas = texto.splitlines()
+            d = parse_sped_txt(nome, linhas)
+        elif nome.lower().endswith(".zip"):
+            d = {
+                "ap_pis": [], "credito_pis": [], "receitas_pis": [], "rec_isentas_pis": [],
+                "ap_cofins": [], "credito_cofins": [], "receitas_cofins": [], "rec_isentas_cofins": []
+            }
+            with zipfile.ZipFile(io.BytesIO(data), "r") as z:
+                for info in z.infolist():
+                    if not info.filename.lower().endswith(".txt"):
+                        continue
+                    txt_data = z.read(info.filename)
+                    texto = txt_data.decode("utf-8", errors="replace")
+                    linhas = texto.splitlines()
+                    parcial = parse_sped_txt(info.filename, linhas)
+                    for k in d.keys():
+                        d[k].extend(parcial[k])
+        else:
+            continue
+
         ap_pis_all.extend(d["ap_pis"]);         cred_pis_all.extend(d["credito_pis"])
         rec_pis_all.extend(d["receitas_pis"]);  rec_is_pis_all.extend(d["rec_isentas_pis"])
         ap_cof_all.extend(d["ap_cofins"]);      cred_cof_all.extend(d["credito_cofins"])
         rec_cof_all.extend(d["receitas_cofins"]); rec_is_cof_all.extend(d["rec_isentas_cofins"])
 
-    # DataFrames
     df_ap_pis   = pd.DataFrame(ap_pis_all)
     df_cred_pis = pd.DataFrame(cred_pis_all)
     df_rec_pis  = pd.DataFrame(rec_pis_all)
     df_ri_pis   = pd.DataFrame(rec_is_pis_all)
+
     df_ap_cof   = pd.DataFrame(ap_cof_all)
     df_cred_cof = pd.DataFrame(cred_cof_all)
     df_rec_cof  = pd.DataFrame(rec_cof_all)
     df_ri_cof   = pd.DataFrame(rec_is_cof_all)
 
-    # Índices auxiliares (para consulta no Excel)
-    df_idx_cod_cont = pd.DataFrame(
-        [{"COD_CONT": k, "DESCRICAO": v} for k, v in sorted(COD_CONT_DESC.items(), key=lambda x: x[0])]
-    )
-    df_idx_nat_rec = pd.DataFrame(
-        [{"CODIGO_DET": k, "DESCRICAO": v} for k, v in sorted(NAT_REC_DESC.items(), key=lambda x: x[0])]
-    )
-    df_idx_nat_bc = pd.DataFrame(
-        [{"NAT_BC_CRED": k, "DESCRICAO": v} for k, v in sorted(NAT_BC_CRED_DESC.items(), key=lambda x: x[0])]
-    )
-
-    # Também exporta o "banco de dados TIPI/IBS-CBS" como aba de apoio, se existir
-    df_tipi = carregar_tipi_db()
-
-    with pd.ExcelWriter(saida_excel, engine="openpyxl") as w:
-        if not df_ap_pis.empty:    df_ap_pis.to_excel(w, sheet_name="AP PIS", index=False)
-        if not df_cred_pis.empty:  df_cred_pis.to_excel(w, sheet_name="CREDITO PIS", index=False)
-        if not df_rec_pis.empty:   df_rec_pis.to_excel(w, sheet_name="RECEITAS PIS", index=False)
-        if not df_ri_pis.empty:    df_ri_pis.to_excel(w, sheet_name="RECEITAS ISENTAS PIS", index=False)
-
-        if not df_ap_cof.empty:    df_ap_cof.to_excel(w, sheet_name="AP COFINS", index=False)
-        if not df_cred_cof.empty:  df_cred_cof.to_excel(w, sheet_name="CREDITO COFINS", index=False)
-        if not df_rec_cof.empty:   df_rec_cof.to_excel(w, sheet_name="RECEITAS COFINS", index=False)
-        if not df_ri_cof.empty:    df_ri_cof.to_excel(w, sheet_name="RECEITAS ISENTAS COFINS", index=False)
-
-        # índices de apoio
-        if not df_idx_cod_cont.empty: df_idx_cod_cont.to_excel(w, sheet_name="ÍNDICE COD_CONT", index=False)
-        if not df_idx_nat_rec.empty:  df_idx_nat_rec.to_excel(w, sheet_name="ÍNDICE NAT_REC", index=False)
-        if not df_idx_nat_bc.empty:   df_idx_nat_bc.to_excel(w, sheet_name="ÍNDICE NAT_BC_CRED", index=False)
-
-        # banco de dados TIPI/IBS-CBS (apoio para IBS/CBS)
-        if not df_tipi.empty:
-            # removo a coluna auxiliar de chave interna, se existir
-            cols_tipi = [c for c in df_tipi.columns if c != "NCM_DIGITOS"]
-            df_tipi[cols_tipi].to_excel(w, sheet_name="TIPI_IBS_CBS_DB", index=False)
-
-    try:
-        os.startfile(saida_excel)  # Windows
-    except Exception:
-        pass
-    messagebox.showinfo("Concluído", f"Arquivo gerado:\n{saida_excel}")
+    return df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis, df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
 
 # =========================
-# GUI
+# STREAMLIT APP
 # =========================
 
-def selecionar_arquivos():
-    arqs = filedialog.askopenfilenames(
-        title="Selecione SPED (.txt/.zip)",
-        filetypes=[("SPED EFD", "*.txt *.zip")]
+st.set_page_config(
+    page_title="IBS/CBS + SPED PIS/COFINS — PriceTax/Lavoratory",
+    layout="wide"
+)
+
+st.sidebar.title("⚙️ Configurações")
+
+tipi_upload = st.sidebar.file_uploader(
+    "TIPI mapeada (opcional — IBS/CBS)",
+    type=["xlsx"],
+    help="Se não enviar, o app tentará carregar o arquivo TIPI_2022_ATUALIZADA_MAPEAMENTO_IBS_CBS_80porcento.xlsx da pasta do app."
+)
+
+if tipi_upload is not None:
+    df_tipi = load_tipi_db_from_file_bytes(tipi_upload.getvalue())
+else:
+    df_tipi = load_tipi_db_default()
+
+if df_tipi is None or df_tipi.empty:
+    st.sidebar.warning("Base TIPI/IBS-CBS não carregada. Upload recomendado.")
+
+st.title("🧠 LAVO · IBS/CBS & SPED PIS/COFINS")
+st.markdown(
+    "App web da **Lavoratory / PriceTax** para:\n"
+    "- Consultar **tratamento IBS/CBS** por NCM (TIPI)\n"
+    "- Processar **SPED PIS/COFINS** (Bloco M) e exportar para Excel"
+)
+
+tab1, tab2 = st.tabs(["🔍 Consulta IBS/CBS por NCM", "📂 SPED PIS/COFINS → Excel"])
+
+# -------------------------
+# TAB 1: Consulta IBS/CBS por NCM
+# -------------------------
+with tab1:
+    st.subheader("Consulta TIPI → IBS/CBS (macro 80%)")
+
+    col_ncm, col_btn = st.columns([2, 1])
+
+    with col_ncm:
+        ncm_input = st.text_input(
+            "Informe o NCM (com ou sem pontos)",
+            value="",
+            placeholder="Ex.: 1905.90.90 ou 19059090"
+        )
+
+    with col_btn:
+        consultar = st.button("Consultar NCM")
+
+    if consultar and ncm_input.strip():
+        info = consultar_ibscbs_por_ncm(ncm_input, df_tipi)
+        if not info.get("encontrado"):
+            st.error(f"NCM: {info.get('NCM')}\n\n{info.get('mensagem')}")
+        else:
+            st.success(f"NCM encontrado: {info['NCM']}")
+            st.write(f"**Descrição TIPI:** {info['DESCRICAO_TIPI']}")
+            st.write(f"**Capítulo / Seção TIPI:** {info['Capitulo_TIPI']} / {info['Secao_TIPI']}")
+            st.write(f"**Grupo IBS/CBS:** `{info['ID_Grupo']}` — {info['Nome_Grupo']}")
+            st.write("**Tratamento IBS/CBS (geral):**")
+            st.code(info["Tratamento_IBS_CBS_Geral"], language="text")
+            st.write(f"**Possível Imposto Seletivo:** {info['Possivel_Imposto_Seletivo']}")
+            if info["Observacoes_IBS_CBS"]:
+                st.write("**Observações:**")
+                st.info(info["Observacoes_IBS_CBS"])
+
+    if df_tipi is not None and not df_tipi.empty:
+        with st.expander("Ver amostra da base TIPI/IBS-CBS carregada"):
+            st.dataframe(df_tipi.head(20))
+
+# -------------------------
+# TAB 2: SPED PIS/COFINS → Excel
+# -------------------------
+with tab2:
+    st.subheader("Processar SPED PIS/COFINS (Bloco M)")
+
+    uploaded_speds = st.file_uploader(
+        "Selecione arquivos SPED (.txt ou .zip)",
+        type=["txt", "zip"],
+        accept_multiple_files=True
     )
-    if arqs:
-        entrada_var.set(";".join(arqs))
 
-def selecionar_saida():
-    saida = filedialog.asksaveasfilename(
-        defaultextension=".xlsx",
-        filetypes=[("Planilha Excel", "*.xlsx")],
-        title="Salvar como"
-    )
-    if saida:
-        saida_var.set(saida)
+    if uploaded_speds:
+        if st.button("Processar SPEDs"):
+            (
+                df_ap_pis, df_cred_pis, df_rec_pis, df_ri_pis,
+                df_ap_cof, df_cred_cof, df_rec_cof, df_ri_cof
+            ) = processar_speds_streamlit(uploaded_speds)
 
-def executar():
-    entradas = [p for p in entrada_var.get().split(";") if p.strip()]
-    saida = saida_var.get().strip()
-    if not entradas:
-        return messagebox.showerror("Erro", "Selecione pelo menos um arquivo.")
-    if not saida:
-        return messagebox.showerror("Erro", "Selecione o local de salvamento.")
-    processar_speds(entradas, saida)
+            st.success("Processamento concluído. Visualize e baixe o Excel gerado.")
 
-def consultar_ncm_gui():
-    """
-    Pequena função para testar o 'banco de dados' da TIPI/IBS-CBS via GUI.
-    Pergunta um NCM e mostra o tratamento IBS/CBS mapeado.
-    """
-    ncm = simpledialog.askstring("Consulta NCM", "Informe o NCM (com ou sem pontos):")
-    if not ncm:
-        return
-    info = consultar_ibscbs_por_ncm(ncm)
-    if not info.get("encontrado"):
-        return messagebox.showinfo("Consulta IBS/CBS", f"NCM: {info.get('NCM')}\n\n{info.get('mensagem')}")
-    msg = (
-        f"NCM: {info['NCM']}\n"
-        f"Descrição TIPI: {info['DESCRICAO_TIPI']}\n"
-        f"Capítulo/Seção: {info['Capitulo_TIPI']} / {info['Secao_TIPI']}\n\n"
-        f"Grupo IBS/CBS: {info['ID_Grupo']} - {info['Nome_Grupo']}\n"
-        f"Tratamento IBS/CBS (geral):\n{info['Tratamento_IBS_CBS_Geral']}\n\n"
-        f"Possível Imposto Seletivo: {info['Possivel_Imposto_Seletivo']}\n"
-        f"Obs.: {info['Observacoes_IBS_CBS']}"
-    )
-    messagebox.showinfo("Consulta IBS/CBS", msg)
+            # Mostrar pequenas amostras
+            if not df_ap_pis.empty:
+                st.write("**AP PIS (M200):**")
+                st.dataframe(df_ap_pis.head(10))
+            if not df_ap_cof.empty:
+                st.write("**AP COFINS (M600):**")
+                st.dataframe(df_ap_cof.head(10))
 
-janela = tk.Tk()
-janela.title("SPED PIS/COFINS + Banco TIPI → IBS/CBS")
-janela.geometry("780x380")
-janela.resizable(False, False)
+            # Montar Excel em memória para download
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as w:
+                if not df_ap_pis.empty:    df_ap_pis.to_excel(w, sheet_name="AP PIS", index=False)
+                if not df_cred_pis.empty:  df_cred_pis.to_excel(w, sheet_name="CREDITO PIS", index=False)
+                if not df_rec_pis.empty:   df_rec_pis.to_excel(w, sheet_name="RECEITAS PIS", index=False)
+                if not df_ri_pis.empty:    df_ri_pis.to_excel(w, sheet_name="RECEITAS ISENTAS PIS", index=False)
 
-entrada_var = tk.StringVar(); saida_var = tk.StringVar()
+                if not df_ap_cof.empty:    df_ap_cof.to_excel(w, sheet_name="AP COFINS", index=False)
+                if not df_cred_cof.empty:  df_cred_cof.to_excel(w, sheet_name="CREDITO COFINS", index=False)
+                if not df_rec_cof.empty:   df_rec_cof.to_excel(w, sheet_name="RECEITAS COFINS", index=False)
+                if not df_ri_cof.empty:    df_ri_cof.to_excel(w, sheet_name="RECEITAS ISENTAS COFINS", index=False)
 
-tk.Label(janela, text="Arquivos SPED (.txt / .zip):").pack(pady=5)
-tk.Entry(janela, textvariable=entrada_var, width=95).pack()
-tk.Button(janela, text="Selecionar Arquivos", command=selecionar_arquivos).pack(pady=3)
+                # Índices auxiliares
+                df_idx_cod_cont = pd.DataFrame(
+                    [{"COD_CONT": k, "DESCRICAO": v} for k, v in sorted(COD_CONT_DESC.items(), key=lambda x: x[0])]
+                )
+                df_idx_nat_rec = pd.DataFrame(
+                    [{"CODIGO_DET": k, "DESCRICAO": v} for k, v in sorted(NAT_REC_DESC.items(), key=lambda x: x[0])]
+                )
+                df_idx_nat_bc = pd.DataFrame(
+                    [{"NAT_BC_CRED": k, "DESCRICAO": v} for k, v in sorted(NAT_BC_CRED_DESC.items(), key=lambda x: x[0])]
+                )
 
-tk.Label(janela, text="Salvar resultado como:").pack(pady=5)
-tk.Entry(janela, textvariable=saida_var, width=95).pack()
-tk.Button(janela, text="Escolher Local", command=selecionar_saida).pack(pady=3)
+                if not df_idx_cod_cont.empty:
+                    df_idx_cod_cont.to_excel(w, sheet_name="ÍNDICE COD_CONT", index=False)
+                if not df_idx_nat_rec.empty:
+                    df_idx_nat_rec.to_excel(w, sheet_name="ÍNDICE NAT_REC", index=False)
+                if not df_idx_nat_bc.empty:
+                    df_idx_nat_bc.to_excel(w, sheet_name="ÍNDICE NAT_BC_CRED", index=False)
 
-tk.Button(
-    janela, text="🔍 Executar (SPED PIS/COFINS)", command=executar,
-    bg="#0eb8b3", fg="white", width=32, height=2
-).pack(pady=10)
+            output.seek(0)
 
-tk.Button(
-    janela, text="📘 Consultar IBS/CBS por NCM (TIPI)", command=consultar_ncm_gui,
-    bg="#444444", fg="white", width=32, height=1
-).pack(pady=5)
-
-janela.mainloop()
+            st.download_button(
+                label="⬇️ Baixar Excel (SPED PIS/COFINS)",
+                data=output,
+                file_name="SPED_PIS_COFINS_BLOCO_M.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+    else:
+        st.info("Envie um ou mais arquivos SPED (.txt ou .zip) para habilitar o processamento.")
