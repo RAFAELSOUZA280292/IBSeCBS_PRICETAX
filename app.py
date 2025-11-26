@@ -623,7 +623,7 @@ with tabs[0]:
 
                 trat_sintetico = f"{tipo_red or 'ALIQ_CHEIA'} • Redução {perc_red or '0'}% • Essencialidade IBS {ess_ibs or 'N/D'}"
 
-                # Card de cabeçalho (simples, sem HTML aninhado complicando)
+                # Card de cabeçalho
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.8rem;">
@@ -639,41 +639,89 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
+                # BIG NUMBERS – ALÍQUOTAS EFETIVAS 2026
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">ALÍQUOTA IBS 2026 (EFETIVA)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_ibs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                                Aplicada sobre a base da operação, considerando redução e essencialidade desse NCM.
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">ALÍQUOTA CBS 2026 (EFETIVA)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_cbs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                                Baseada na alíquota de teste de 0,9% com os mesmos critérios de redução.
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">TOTAL IBS + CBS 2026 (EFETIVO)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_ibs_efet + aliq_cbs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                                Carga efetiva do IVA Dual para esse NCM no ano teste 2026.
+                            </div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
                 st.markdown("")  # espaçamento
 
-                # Linha 1 – Essencialidade, tipo de redução, CST, IS
+                # Linha 1 – parâmetros de classificação
                 st.subheader("Parâmetros de classificação", divider="gray")
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
                     st.markdown("**Essencialidade IBS**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_ibs or '—'}</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_ibs or '—'}</span>",
+                        unsafe_allow_html=True,
+                    )
                 with c2:
                     st.markdown("**Essencialidade CBS**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_cbs or '—'}</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_cbs or '—'}</span>",
+                        unsafe_allow_html=True,
+                    )
                 with c3:
                     st.markdown("**Tipo de redução**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tipo_red or 'ALIQ_CHEIA'}</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tipo_red or 'ALIQ_CHEIA'}</span>",
+                        unsafe_allow_html=True,
+                    )
                 with c4:
                     st.markdown("**% Redução (pRedAliq)**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{perc_red or '0'}%</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{perc_red or '0'}%</span>",
+                        unsafe_allow_html=True,
+                    )
 
                 c5, c6 = st.columns(2)
                 with c5:
                     st.markdown("**CST IBS/CBS (venda)**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{cst_ibs_cbs or '—'}</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{cst_ibs_cbs or '—'}</span>",
+                        unsafe_allow_html=True,
+                    )
                 with c6:
                     st.markdown("**Imposto Seletivo (IS)**")
-                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tem_is}</span>",
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tem_is}</span>",
+                        unsafe_allow_html=True,
+                    )
 
-                st.markdown("")  # espaçamento
+                st.markdown("")
 
-                # Linha 2 – Painel de alíquotas
+                # Linha 2 – painel de alíquotas padrão x efetivas
                 st.subheader("Alíquotas 2026 para este NCM", divider="gray")
                 a1, a2, a3 = st.columns(3)
 
