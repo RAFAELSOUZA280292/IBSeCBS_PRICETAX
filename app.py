@@ -138,14 +138,17 @@ def pct_str(v: float) -> str:
 
 
 # --------------------------------------------------
-# BASE TIPI → IBS/CBS (2026)
+# BASE TIPI → IBS/CBS (2026) – NOVA PLANILHA REFINADA
 # --------------------------------------------------
-TIPI_DEFAULT_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
+TIPI_DEFAULT_NAME = "PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx"
 
 
 @st.cache_data(show_spinner=False)
 def load_tipi_base() -> pd.DataFrame:
-    """Carrega a base padrão de classificação IBS/CBS por NCM."""
+    """
+    Carrega a base PRICETAX refinada de classificação IBS/CBS por NCM,
+    com aplicação das regras da EC 132/2023 e LC 214/2025.
+    """
     try:
         candidatos = [
             Path(TIPI_DEFAULT_NAME),
@@ -173,30 +176,50 @@ def load_tipi_base() -> pd.DataFrame:
 
     required_cols = [
         "NCM",
-        "NCM_FORMATADO_TIPI",
-        "DESCRICAO_TIPI",
-        "ESSENCIALIDADE_IBS",
-        "ESSENCIALIDADE_CBS",
-        "TIPO_REDUCAO",
-        "PERC_REDUCAO_VENDA",
-        "CST_IBS_CBS_VENDA",
-        "ALIQ_IBS_UF_VENDA_2026",
-        "ALIQ_IBS_MUN_VENDA_2026",
-        "ALIQ_CBS_VENDA_2026",
-        "ALIQ_EFETIVA_IBS_VENDA_2026",
-        "ALIQ_EFETIVA_CBS_VENDA_2026",
-        "IND_IS",
-        "MOTIVO",
-        "BASE_LEGAL",
+        "NCM_DESCRICAO",
+        "CAPITULO_TIPI",
+        "TIPO_ITEM",
+        "SEGMENTO_PRICETAX",
+        "SUBSEGMENTO",
+        "CEST",
+        "CST_IBSCBS",
+        "CLASSTRIB_IBS_CBS",
+        "DESCR_CLASSTRIB",
+        "REGIME_IVA_2026",
+        "FONTE_LEGAL_IVA",
+        "NIVEL_CONFIANCA_PRICETAX",
+        "FLAG_ALIMENTO",
+        "FLAG_CESTA_BASICA",
+        "FLAG_HORTIFRUTI_OVOS",
+        "FLAG_RED_60",
+        "FLAG_DEPENDE_DESTINACAO",
+        "IBS_UF_TESTE_2026",
+        "IBS_MUN_TESTE_2026",
+        "CBS_TESTE_2026",
+        "OBS_ALIMENTO",
+        "OBS_DESTINACAO",
+        "ALERTA_APP",
+        "FLAG_MONOFASICO_CBS",
+        "FLAG_IMPOSTO_SELETIVO",
+        "FLAG_CASHBACK_SOCIAL",
+        "OBS_REGIME_ESPECIAL",
+        "REGIME_IVA_2026_FINAL",
+        "FONTE_LEGAL_FINAL",
+        "NIVEL_CONFIANCA_FINAL",
+        "IBS_UF_TESTE_2026_FINAL",
+        "IBS_MUN_TESTE_2026_FINAL",
+        "CBS_TESTE_2026_FINAL",
     ]
     for c in required_cols:
         if c not in df.columns:
             df[c] = ""
 
+    # Normaliza NCM para 8 dígitos numéricos
     df["NCM"] = df["NCM"].fillna("").astype(str)
     df["NCM_DIG"] = (
         df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
     )
+
     return df
 
 
@@ -532,7 +555,7 @@ tabs = st.tabs([
 ])
 
 # --------------------------------------------------
-# ABA 1 – CONSULTA TIPI → IBS/CBS
+# ABA 1 – CONSULTA TIPI → IBS/CBS (ano teste 2026)
 # --------------------------------------------------
 with tabs[0]:
     st.markdown(
@@ -541,7 +564,7 @@ with tabs[0]:
             <span class="pricetax-badge">Consulta de produtos</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
                 Informe o código NCM do seu produto e veja a tributação de IBS e CBS simulada para o ano de teste de 2026,
-                com alíquotas efetivas e detalhes de classificação.
+                com base nas regras de transição da EC 132/2023 e da LC 214/2025.
             </div>
         </div>
         """,
@@ -564,7 +587,7 @@ with tabs[0]:
 
     if consultar and ncm_input.strip():
         if df_tipi.empty:
-            st.error("Não foi possível consultar o NCM porque a base de classificação não foi encontrada no servidor.")
+            st.error("Não foi possível consultar o NCM porque a base de classificação (PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx) não foi encontrada no servidor.")
         else:
             row = buscar_ncm(df_tipi, ncm_input)
             if row is None:
@@ -572,35 +595,54 @@ with tabs[0]:
                     f"""
                     <div class="pricetax-card-erro" style="margin-top:0.8rem;">
                         NCM: <b>{ncm_input}</b><br>
-                        Não encontramos esse NCM na base de classificação.
+                        Não encontramos esse NCM na base PRICETAX. Verifique o código informado.
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
             else:
-                ncm_fmt = str(row.get("NCM_FORMATADO_TIPI", row.get("NCM", ""))).strip()
-                desc = str(row.get("DESCRICAO_TIPI", "")).strip()
+                # Campos principais
+                ncm_fmt = str(row.get("NCM", "")).strip()
+                desc = str(row.get("NCM_DESCRICAO", "")).strip()
 
-                ess_ibs = str(row.get("ESSENCIALIDADE_IBS", "")).strip()
-                ess_cbs = str(row.get("ESSENCIALIDADE_CBS", "")).strip()
-                tipo_red = str(row.get("TIPO_REDUCAO", "")).strip()
-                perc_red = str(row.get("PERC_REDUCAO_VENDA", "")).strip()
-                cst_ibs_cbs = str(row.get("CST_IBS_CBS_VENDA", "")).strip()
+                regime_iva = str(row.get("REGIME_IVA_2026_FINAL", row.get("REGIME_IVA_2026", ""))).strip()
+                fonte_legal = str(row.get("FONTE_LEGAL_FINAL", row.get("FONTE_LEGAL_IVA", ""))).strip()
+                nivel_conf = str(row.get("NIVEL_CONFIANCA_FINAL", row.get("NIVEL_CONFIANCA_PRICETAX", ""))).strip()
 
-                aliq_ibs_uf = to_float_br(row.get("ALIQ_IBS_UF_VENDA_2026"))
-                aliq_ibs_mun = to_float_br(row.get("ALIQ_IBS_MUN_VENDA_2026"))
-                aliq_cbs_nom = to_float_br(row.get("ALIQ_CBS_VENDA_2026"))
-                aliq_ibs_efet = to_float_br(row.get("ALIQ_EFETIVA_IBS_VENDA_2026"))
-                aliq_cbs_efet = to_float_br(row.get("ALIQ_EFETIVA_CBS_VENDA_2026"))
+                flag_alimento = str(row.get("FLAG_ALIMENTO", "")).strip()
+                flag_cesta = str(row.get("FLAG_CESTA_BASICA", "")).strip()
+                flag_hf = str(row.get("FLAG_HORTIFRUTI_OVOS", "")).strip()
+                flag_red60 = str(row.get("FLAG_RED_60", "")).strip()
+                flag_dep_dest = str(row.get("FLAG_DEPENDE_DESTINACAO", "")).strip()
 
-                ind_is = str(row.get("IND_IS", "")).strip()
-                tem_is = "Sim" if ind_is.upper() in ("1", "S", "SIM", "Y", "TRUE") else "Não"
+                cst_ibs_cbs = str(row.get("CST_IBSCBS", "")).strip()
 
-                motivo = str(row.get("MOTIVO", "")).strip()
-                base_legal = str(row.get("BASE_LEGAL", "")).strip()
+                ibs_uf_final = to_float_br(row.get("IBS_UF_TESTE_2026_FINAL"))
+                ibs_mun_final = to_float_br(row.get("IBS_MUN_TESTE_2026_FINAL"))
+                cbs_final = to_float_br(row.get("CBS_TESTE_2026_FINAL"))
 
-                trat_sintetico = f"{tipo_red or 'ALIQ_CHEIA'} • Redução {perc_red or '0'}% • Essencialidade IBS {ess_ibs or 'N/D'}"
+                aliq_ibs_efet = ibs_uf_final + ibs_mun_final
+                aliq_cbs_efet = cbs_final
 
+                # Imposto seletivo
+                flag_is = str(row.get("FLAG_IMPOSTO_SELETIVO", "")).strip().upper()
+                tem_is = "Sim" if flag_is == "SIM" else "Não"
+
+                obs_alimento = str(row.get("OBS_ALIMENTO", "")).strip()
+                obs_dest = str(row.get("OBS_DESTINACAO", "")).strip()
+                alerta_app = str(row.get("ALERTA_APP", "")).strip()
+                obs_regime_esp = str(row.get("OBS_REGIME_ESPECIAL", "")).strip()
+
+                # Motivo / texto explicativo (prioriza regime especial, depois observações)
+                motivo = obs_regime_esp or obs_alimento or obs_dest or "Classificação baseada na combinação de TIPI + LC 214/2025."
+
+                trat_sintetico = (
+                    f"{regime_iva or 'Regime não mapeado'} • "
+                    f"Nível de confiança PRICETAX: {nivel_conf or 'N/D'} • "
+                    f"Cesta Básica: {flag_cesta or 'NAO'} • Hortifrúti/Ovos: {flag_hf or 'NAO'}"
+                )
+
+                # Card principal
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.8rem;">
@@ -608,7 +650,7 @@ with tabs[0]:
                             NCM {ncm_fmt} – {desc}
                         </div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            <b>Tratamento IBS/CBS em 2026:</b><br>
+                            <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
                             {trat_sintetico}
                         </div>
                     </div>
@@ -616,7 +658,7 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
-                # BIG NUMBERS
+                # BIG NUMBERS – ALÍQUOTAS EFETIVAS
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
@@ -626,7 +668,8 @@ with tabs[0]:
                                 {pct_str(aliq_ibs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Considera a alíquota de teste de 0,1% e as regras de redução aplicáveis a este NCM.
+                                Considera a alíquota de teste de 0,1% e as reduções ou alíquota zero previstas para este NCM,
+                                conforme EC 132/2023 e LC 214/2025.
                             </div>
                         </div>
                         <div style="flex:1;min-width:220px;">
@@ -635,7 +678,7 @@ with tabs[0]:
                                 {pct_str(aliq_cbs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Calculada a partir da alíquota de teste de 0,9% com a mesma lógica de redução.
+                                Calculada a partir da alíquota de teste de 0,9%, aplicando redução de 60% ou alíquota zero quando cabível.
                             </div>
                         </div>
                         <div style="flex:1;min-width:220px;">
@@ -644,7 +687,7 @@ with tabs[0]:
                                 {pct_str(aliq_ibs_efet + aliq_cbs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Carga efetiva estimada do IVA Dual para este NCM no ano de teste.
+                                Carga efetiva estimada do IVA Dual para este NCM no ano de teste, já considerando o regime de alimentos e cestas básicas.
                             </div>
                         </div>
                     </div>
@@ -658,27 +701,27 @@ with tabs[0]:
                 st.subheader("Parâmetros de classificação", divider="gray")
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
-                    st.markdown("**Essencialidade IBS**")
+                    st.markdown("**Regime IVA 2026**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_ibs or '—'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{regime_iva or '—'}</span>",
                         unsafe_allow_html=True,
                     )
                 with c2:
-                    st.markdown("**Essencialidade CBS**")
+                    st.markdown("**Nível de confiança PRICETAX**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_cbs or '—'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{nivel_conf or '—'}</span>",
                         unsafe_allow_html=True,
                     )
                 with c3:
-                    st.markdown("**Tipo de redução**")
+                    st.markdown("**Produto é alimento?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tipo_red or 'ALIQ_CHEIA'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{flag_alimento or 'NAO'}</span>",
                         unsafe_allow_html=True,
                     )
                 with c4:
-                    st.markdown("**% Redução (pRedAliq)**")
+                    st.markdown("**Depende de destinação?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{perc_red or '0'}%</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{flag_dep_dest or 'NAO'}</span>",
                         unsafe_allow_html=True,
                     )
 
@@ -698,34 +741,46 @@ with tabs[0]:
 
                 st.markdown("")
 
-                # Alíquotas padrão x efetivas
+                # Alíquotas 2026 para este NCM
                 st.subheader("Alíquotas 2026 para este NCM", divider="gray")
                 a1, a2, a3 = st.columns(3)
 
                 with a1:
-                    st.markdown("**Alíquotas de teste (padrão 2026)**")
-                    st.write(f"IBS UF: **{pct_str(aliq_ibs_uf)}**")
-                    st.write(f"IBS Mun: **{pct_str(aliq_ibs_mun)}**")
-                    st.write(f"IBS total teste: **{pct_str(aliq_ibs_uf + aliq_ibs_mun)}**")
-                    st.write(f"CBS teste: **{pct_str(aliq_cbs_nom)}**")
+                    st.markdown("**Alíquotas de referência (ano teste 2026)**")
+                    st.write(f"IBS referência (UF): **0,10%**")
+                    st.write(f"IBS referência (Mun): **0,00%**")
+                    st.write(f"IBS total referência: **0,10%**")
+                    st.write(f"CBS referência: **0,90%**")
 
                 with a2:
                     st.markdown("**Alíquotas efetivas IBS/CBS**")
-                    st.write(f"IBS Efetivo: **{pct_str(aliq_ibs_efet)}**")
+                    st.write(f"IBS UF Efetivo: **{pct_str(ibs_uf_final)}**")
+                    st.write(f"IBS Mun Efetivo: **{pct_str(ibs_mun_final)}**")
+                    st.write(f"IBS Total Efetivo: **{pct_str(aliq_ibs_efet)}**")
                     st.write(f"CBS Efetivo: **{pct_str(aliq_cbs_efet)}**")
                     st.write(f"Total Efetivo IBS + CBS: **{pct_str(aliq_ibs_efet + aliq_cbs_efet)}**")
 
                 with a3:
                     st.markdown("**Resumo executivo**")
-                    st.write(
-                        "- Simulação baseada nas alíquotas de teste de 0,1% (IBS) e 0,9% (CBS);  \n"
-                        f"- Aplicada redução de **{perc_red or '0'}%** conforme o tipo de tratamento;  \n"
-                        "- Informações pensadas para parametrização do ERP e planejamento tributário."
+                    resumo = (
+                        "- Simulação com base nas alíquotas de teste de 0,1% (IBS) e 0,9% (CBS);\n"
+                        f"- Regime aplicado: **{regime_iva or 'N/D'}**;\n"
+                        f"- Cesta Básica Nacional: **{flag_cesta or 'NAO'}**; Hortifrutis/Ovos: **{flag_hf or 'NAO'}**;\n"
+                        "- Resultado pensado para parametrização de ERP e planejamento tributário, "
+                        "alinhado à EC 132/2023 e à LC 214/2025."
                     )
+                    st.write(resumo)
 
                 st.markdown("---")
-                st.markdown(f"**Motivo da classificação:** {motivo or '—'}")
-                st.markdown(f"**Base legal aplicada:** {base_legal or '—'}")
+                st.markdown(f"**Base legal aplicada:** {fonte_legal or '—'}")
+                if alerta_app:
+                    st.markdown(f"**Alerta PRICETAX:** {alerta_app}")
+                if obs_alimento:
+                    st.markdown(f"**Observação sobre alimentos:** {obs_alimento}")
+                if obs_dest:
+                    st.markdown(f"**Observação sobre destinação:** {obs_dest}")
+                if obs_regime_esp:
+                    st.markdown(f"**Regime especial / motivo adicional:** {obs_regime_esp}")
 
 # --------------------------------------------------
 # ABA 2 – SPED PIS/COFINS → EXCEL
