@@ -19,6 +19,8 @@ st.set_page_config(
 
 PRIMARY_YELLOW = "#FFC300"
 PRIMARY_BLACK = "#050608"
+PRIMARY_CYAN = "#0EB8B3"
+CARD_BG = "#101015"
 
 st.markdown(
     f"""
@@ -28,6 +30,8 @@ st.markdown(
         color: #F5F5F5;
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }}
+
+    /* Título principal */
     .pricetax-title {{
         font-size: 2.2rem;
         font-weight: 700;
@@ -37,21 +41,31 @@ st.markdown(
         font-size: 0.98rem;
         color: #E0E0E0;
     }}
+
+    /* Cards gerais */
     .pricetax-card {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
         background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
+    .pricetax-card-soft {{
+        border-radius: 0.9rem;
+        padding: 1.1rem 1.3rem;
+        background: #111318;
+        border: 1px solid #2B2F3A;
+    }}
     .pricetax-card-erro {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
-        background: #11233b;
-        border: 1px solid #4da3ff;
+        background: #2b1a1a;
+        border: 1px solid #ff5656;
     }}
+
+    /* Badges / chips */
     .pricetax-badge {{
         display: inline-block;
-        padding: 0.2rem 0.6rem;
+        padding: 0.2rem 0.7rem;
         border-radius: 999px;
         background: {PRIMARY_YELLOW};
         color: {PRIMARY_BLACK};
@@ -60,6 +74,28 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }}
+    .pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.18rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(15,15,18,0.9);
+        color: #EDEDED;
+    }}
+    .pill-regime {{
+        border-color: {PRIMARY_CYAN};
+        background: rgba(14,184,179,0.08);
+        color: #E5FEFC;
+    }}
+    .pill-tag {{
+        background: rgba(0,0,0,0.4);
+    }}
+
+    /* Métricas */
     .pricetax-metric-label {{
         font-size: 0.78rem;
         color: #BBBBBB;
@@ -71,6 +107,8 @@ st.markdown(
         font-weight: 600;
         color: {PRIMARY_YELLOW};
     }}
+
+    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
         border-bottom: 1px solid #333333;
     }}
@@ -81,6 +119,8 @@ st.markdown(
         color: {PRIMARY_YELLOW} !important;
         font-weight: 600;
     }}
+
+    /* Inputs */
     .stTextInput > div > div > input {{
         background-color: #111318;
         color: #FFFFFF;
@@ -89,6 +129,19 @@ st.markdown(
     }}
     .stFileUploader > label div {{
         color: #DDDDDD;
+    }}
+
+    /* Botão primário */
+    .stButton>button[kind="primary"] {{
+        background-color: #ff4d4d;
+        color: #ffffff;
+        border-radius: 0.6rem;
+        border: 1px solid #ff8080;
+        font-weight: 600;
+    }}
+    .stButton>button[kind="primary"]:hover {{
+        background-color: #ff6666;
+        border-color: #ff9999;
     }}
     </style>
     """,
@@ -138,7 +191,7 @@ def pct_str(v: float) -> str:
 
 
 # --------------------------------------------------
-# BASE TIPI → IBS/CBS (2026) – NOVA PLANILHA REFINADA
+# BASE TIPI → IBS/CBS (2026) – PLANILHA REFINADA PRICETAX
 # --------------------------------------------------
 TIPI_DEFAULT_NAME = "PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx"
 
@@ -536,6 +589,33 @@ def processar_speds_uploaded(files) -> io.BytesIO:
 
 
 # --------------------------------------------------
+# HELPERS VISUAIS (PACK PRICETAX)
+# --------------------------------------------------
+def regime_label(regime: str) -> str:
+    r = (regime or "").upper()
+    mapping = {
+        "ALIQ_ZERO_CESTA_BASICA_NACIONAL": "Alíquota zero • Cesta Básica Nacional",
+        "ALIQ_ZERO_HORTIFRUTI_OVOS": "Alíquota zero • Hortifrúti e Ovos",
+        "RED_60_ALIMENTOS": "Redução de 60% • Alimentos",
+        "RED_60_ESSENCIALIDADE": "Redução de 60% • Essencialidade",
+        "TRIBUTACAO_PADRAO": "Tributação padrão (sem benefício)",
+    }
+    return mapping.get(r, regime or "Regime não mapeado")
+
+
+emoji_sim = "🔵"
+emoji_nao = "🔴"
+
+
+def badge_flag(valor) -> str:
+    v = (str(valor or "")).strip().upper()
+    if v == "SIM":
+        return f"{emoji_sim} SIM"
+    else:
+        return f"{emoji_nao} NÃO"
+
+
+# --------------------------------------------------
 # CABEÇALHO
 # --------------------------------------------------
 st.markdown(
@@ -587,7 +667,10 @@ with tabs[0]:
 
     if consultar and ncm_input.strip():
         if df_tipi.empty:
-            st.error("Não foi possível consultar o NCM porque a base de classificação (PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx) não foi encontrada no servidor.")
+            st.error(
+                "Não foi possível consultar o NCM porque a base de classificação "
+                "(PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx) não foi encontrada no servidor."
+            )
         else:
             row = buscar_ncm(df_tipi, ncm_input)
             if row is None:
@@ -607,12 +690,10 @@ with tabs[0]:
 
                 regime_iva = str(row.get("REGIME_IVA_2026_FINAL", row.get("REGIME_IVA_2026", ""))).strip()
                 fonte_legal = str(row.get("FONTE_LEGAL_FINAL", row.get("FONTE_LEGAL_IVA", ""))).strip()
-                nivel_conf = str(row.get("NIVEL_CONFIANCA_FINAL", row.get("NIVEL_CONFIANCA_PRICETAX", ""))).strip()
 
                 flag_alimento = str(row.get("FLAG_ALIMENTO", "")).strip()
                 flag_cesta = str(row.get("FLAG_CESTA_BASICA", "")).strip()
                 flag_hf = str(row.get("FLAG_HORTIFRUTI_OVOS", "")).strip()
-                flag_red60 = str(row.get("FLAG_RED_60", "")).strip()
                 flag_dep_dest = str(row.get("FLAG_DEPENDE_DESTINACAO", "")).strip()
 
                 cst_ibs_cbs = str(row.get("CST_IBSCBS", "")).strip()
@@ -633,13 +714,11 @@ with tabs[0]:
                 alerta_app = str(row.get("ALERTA_APP", "")).strip()
                 obs_regime_esp = str(row.get("OBS_REGIME_ESPECIAL", "")).strip()
 
-                # Motivo / texto explicativo (prioriza regime especial, depois observações)
-                motivo = obs_regime_esp or obs_alimento or obs_dest or "Classificação baseada na combinação de TIPI + LC 214/2025."
-
+                # Trecho sintético cliente-friendly
                 trat_sintetico = (
-                    f"{regime_iva or 'Regime não mapeado'} • "
-                    f"Nível de confiança PRICETAX: {nivel_conf or 'N/D'} • "
-                    f"Cesta Básica: {flag_cesta or 'NAO'} • Hortifrúti/Ovos: {flag_hf or 'NAO'}"
+                    f"<span class='pill pill-regime'>{regime_label(regime_iva)}</span> "
+                    f"&nbsp; <span class='pill pill-tag'>Cesta Básica: {badge_flag(flag_cesta)}</span> "
+                    f"&nbsp; <span class='pill pill-tag'>Hortifrúti/Ovos: {badge_flag(flag_hf)}</span>"
                 )
 
                 # Card principal
@@ -649,9 +728,11 @@ with tabs[0]:
                         <div style="font-size:1.05rem;font-weight:600;color:{PRIMARY_YELLOW};">
                             NCM {ncm_fmt} – {desc}
                         </div>
-                        <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
+                        <div style="margin-top:0.55rem;font-size:0.9rem;color:#E0E0E0;">
                             <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
-                            {trat_sintetico}
+                            <div style="margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:0.35rem;">
+                                {trat_sintetico}
+                            </div>
                         </div>
                     </div>
                     """,
@@ -677,7 +758,7 @@ with tabs[0]:
                             <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
                                 {pct_str(aliq_cbs_efet)}
                             </div>
-                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                            <div style="font-size:0.8rem;color:#B0B0B;margin-top:0.3rem;">
                                 Calculada a partir da alíquota de teste de 0,9%, aplicando redução de 60% ou alíquota zero quando cabível.
                             </div>
                         </div>
@@ -686,7 +767,7 @@ with tabs[0]:
                             <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
                                 {pct_str(aliq_ibs_efet + aliq_cbs_efet)}
                             </div>
-                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                            <div style="font-size:0.8rem;color:#B0B0B;margin-top:0.3rem;">
                                 Carga efetiva estimada do IVA Dual para este NCM no ano de teste, já considerando o regime de alimentos e cestas básicas.
                             </div>
                         </div>
@@ -701,27 +782,27 @@ with tabs[0]:
                 st.subheader("Parâmetros de classificação", divider="gray")
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
-                    st.markdown("**Regime IVA 2026**")
+                    st.markdown("**Produto é alimento?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{regime_iva or '—'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_alimento)}</span>",
                         unsafe_allow_html=True,
                     )
                 with c2:
-                    st.markdown("**Nível de confiança PRICETAX**")
+                    st.markdown("**Cesta Básica Nacional (CeNA)?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{nivel_conf or '—'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_cesta)}</span>",
                         unsafe_allow_html=True,
                     )
                 with c3:
-                    st.markdown("**Produto é alimento?**")
+                    st.markdown("**Hortifrúti / Ovos (Anexo XV)?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{flag_alimento or 'NAO'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_hf)}</span>",
                         unsafe_allow_html=True,
                     )
                 with c4:
                     st.markdown("**Depende de destinação?**")
                     st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{flag_dep_dest or 'NAO'}</span>",
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_dep_dest)}</span>",
                         unsafe_allow_html=True,
                     )
 
@@ -764,10 +845,9 @@ with tabs[0]:
                     st.markdown("**Resumo executivo**")
                     resumo = (
                         "- Simulação com base nas alíquotas de teste de 0,1% (IBS) e 0,9% (CBS);\n"
-                        f"- Regime aplicado: **{regime_iva or 'N/D'}**;\n"
-                        f"- Cesta Básica Nacional: **{flag_cesta or 'NAO'}**; Hortifrutis/Ovos: **{flag_hf or 'NAO'}**;\n"
-                        "- Resultado pensado para parametrização de ERP e planejamento tributário, "
-                        "alinhado à EC 132/2023 e à LC 214/2025."
+                        f"- Regime aplicado: **{regime_label(regime_iva)}**;\n"
+                        f"- Cesta Básica Nacional: {badge_flag(flag_cesta)}; Hortifrúti/Ovos: {badge_flag(flag_hf)};\n"
+                        "- Resultado pensado para parametrização do ERP e discussão com contabilidade/consultoria tributária."
                     )
                     st.write(resumo)
 
