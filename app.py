@@ -44,11 +44,12 @@ st.markdown(
         background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
+    /* ERRO agora em azul escuro */
     .pricetax-card-erro {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
-        background: #3b1111;
-        border: 1px solid #ff4d4d;
+        background: #11233b;
+        border: 1px solid #4da3ff;
     }}
     .pricetax-badge {{
         display: inline-block;
@@ -90,6 +91,23 @@ st.markdown(
     }}
     .stFileUploader > label div {{
         color: #DDDDDD;
+    }}
+    /* painel de alíquotas */
+    .pricetax-aliq-panel {{
+        margin-top: 1rem;
+        border-top: 1px dashed #333;
+        padding-top: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.8rem;
+    }}
+    .pricetax-aliq-block {{
+        min-width: 220px;
+        font-size: 0.9rem;
+        color: #E0E0E0;
+    }}
+    .pricetax-aliq-block b {{
+        color: {PRIMARY_YELLOW};
     }}
     </style>
     """,
@@ -133,6 +151,11 @@ def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def pct_str(v: float) -> str:
+    """Formata 0.1 -> '0,10%'."""
+    return f"{v:.2f}".replace(".", ",") + "%"
+
+
 # --------------------------------------------------
 # BASE TIPI → IBS/CBS (MIND7 LAVO 2026)
 # --------------------------------------------------
@@ -154,12 +177,10 @@ def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
             df = pd.read_excel(uploaded_file)
             origem = "Upload do usuário"
         else:
-            # Candidatos de caminho (para evitar problemas de __file__/cwd)
             candidatos = [
                 Path(TIPI_DEFAULT_NAME),
                 Path.cwd() / TIPI_DEFAULT_NAME,
             ]
-            # __file__ pode não existir em alguns ambientes, então protegemos
             try:
                 candidatos.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
             except NameError:
@@ -413,7 +434,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
                     "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
                     "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
                     "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                    "VL_CRED": to_float_br(campos[6] if len(camcos) > 6 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
                 }
             )
 
@@ -575,7 +596,6 @@ with tabs[0]:
 
     df_tipi = load_tipi_base(base_upload)
 
-    # Info de debug amigável sobre a origem da base
     origem_info = st.session_state.get("TIPI_ORIGEM", "Base ainda não carregada.")
     st.caption(f"🗂️ Origem da base TIPI: {origem_info}")
 
@@ -586,7 +606,7 @@ with tabs[0]:
             placeholder="Ex.: 10063021 ou 10.06.30.21",
         )
     with col2:
-        st.write("")  # alinhamento
+        st.write("")
         consultar = st.button("Consultar NCM", type="primary")
 
     if consultar and ncm_input.strip():
@@ -616,6 +636,7 @@ with tabs[0]:
 
                 aliq_ibs_uf = to_float_br(row.get("ALIQ_IBS_UF_VENDA_2026"))
                 aliq_ibs_mun = to_float_br(row.get("ALIQ_IBS_MUN_VENDA_2026"))
+                aliq_cbs_nom = to_float_br(row.get("ALIQ_CBS_VENDA_2026"))
                 aliq_ibs_efet = to_float_br(row.get("ALIQ_EFETIVA_IBS_VENDA_2026"))
                 aliq_cbs_efet = to_float_br(row.get("ALIQ_EFETIVA_CBS_VENDA_2026"))
 
@@ -637,6 +658,7 @@ with tabs[0]:
                             <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
                             {trat_sintetico}
                         </div>
+
                         <div style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
                             <div>
                                 <div class="pricetax-metric-label">Essencialidade IBS</div>
@@ -664,22 +686,23 @@ with tabs[0]:
                             </div>
                         </div>
 
-                        <div style="margin-top:1rem;border-top:1px dashed #333;padding-top:0.8rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
-                            <div>
-                                <div class="pricetax-metric-label">IBS UF 2026 (%)</div>
-                                <div class="pricetax-metric-value">{aliq_ibs_uf:.4f}</div>
+                        <div class="pricetax-aliq-panel">
+                            <div class="pricetax-aliq-block">
+                                <div class="pricetax-metric-label">Alíquotas de teste 2026</div>
+                                <p>
+                                    IBS (padrão): <b>{pct_str(aliq_ibs_uf + aliq_ibs_mun)}</b><br>
+                                    &nbsp;&nbsp;• UF: {pct_str(aliq_ibs_uf)}<br>
+                                    &nbsp;&nbsp;• Mun: {pct_str(aliq_ibs_mun)}<br>
+                                    CBS (padrão): <b>{pct_str(aliq_cbs_nom)}</b>
+                                </p>
                             </div>
-                            <div>
-                                <div class="pricetax-metric-label">IBS Mun 2026 (%)</div>
-                                <div class="pricetax-metric-value">{aliq_ibs_mun:.4f}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">IBS Efetivo 2026 (%)</div>
-                                <div class="pricetax-metric-value">{aliq_ibs_efet:.4f}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">CBS Efetivo 2026 (%)</div>
-                                <div class="pricetax-metric-value">{aliq_cbs_efet:.4f}</div>
+                            <div class="pricetax-aliq-block">
+                                <div class="pricetax-metric-label">Alíquotas efetivas para este NCM</div>
+                                <p>
+                                    IBS Efetivo: <b>{pct_str(aliq_ibs_efet)}</b><br>
+                                    CBS Efetivo: <b>{pct_str(aliq_cbs_efet)}</b><br>
+                                    Total Efetivo IBS + CBS: <b>{pct_str(aliq_ibs_efet + aliq_cbs_efet)}</b>
+                                </p>
                             </div>
                         </div>
 
@@ -695,9 +718,6 @@ with tabs[0]:
                     """,
                     unsafe_allow_html=True,
                 )
-
-                with st.expander("Ver linha completa da base TIPI (debug / auditoria)"):
-                    st.dataframe(row.to_frame().T)
 
 
 # --------------------------------------------------
