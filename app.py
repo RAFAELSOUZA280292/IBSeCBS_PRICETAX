@@ -3,6 +3,7 @@ import io
 import re
 import zipfile
 from pathlib import Path
+from typing import Optional, Dict, Any
 
 import pandas as pd
 import streamlit as st
@@ -18,7 +19,6 @@ st.set_page_config(
 
 PRIMARY_YELLOW = "#FFC300"
 PRIMARY_BLACK = "#050608"
-DARK_BLUE = "#001B3A"
 
 st.markdown(
     f"""
@@ -98,7 +98,7 @@ st.markdown(
 # --------------------------------------------------
 # FUNÇÕES UTILITÁRIAS
 # --------------------------------------------------
-def only_digits(s: str) -> str:
+def only_digits(s: Optional[str]) -> str:
     return re.sub(r"\D+", "", s or "")
 
 
@@ -108,6 +108,7 @@ def to_float_br(s) -> float:
     s = str(s).strip()
     if s == "":
         return 0.0
+    # Trata formatos tipo 1.234,56
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -126,74 +127,78 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
     return ""
 
 
-# --------------------------------------------------
-# BASE TIPI → IBS/CBS
-# --------------------------------------------------
-@st.cache_data(show_spinner=False)
-def load_tipi_base() -> pd.DataFrame:
-    """
-    Carrega a base TIPI/IBS-CBS da PRICETAX.
-    Espera o arquivo 'TIPI_IBS_CBS.xlsx' na raiz do projeto.
-    """
-    base_path = Path(__file__).parent / "TIPI_IBS_CBS.xlsx"
-
-    if not base_path.exists():
-        st.session_state["tipi_base_ok"] = False
-        return pd.DataFrame()
-
-    df = pd.read_excel(base_path, dtype=str)
-    df.columns = [c.strip().upper() for c in df.columns]
-
-    # --- AJUSTE OS NOMES DAS COLUNAS AQUI, SE PRECISAR ---
-    col_ncm = "NCM"
-    col_desc = "DESCRICAO" if "DESCRICAO" in df.columns else "DESCRIÇÃO"
-
-    # Tratamento IBS/CBS pode ter variações de nome
-    candidato_trat = None
-    for nome in [
-        "TRATAMENTO_IBS_CBS",
-        "TRATAMENTO",
-        "TRATAMENTO GERAL",
-        "TRATAMENTO_IBS",
-    ]:
-        if nome in df.columns:
-            candidato_trat = nome
-            break
-
-    if candidato_trat is None:
-        df["TRATAMENTO_IBS_CBS"] = ""
-    else:
-        df["TRATAMENTO_IBS_CBS"] = df[candidato_trat].fillna("").astype(str)
-
-    # cClassTrib
-    if "CCLASSTRIB" not in df.columns:
-        df["CCLASSTRIB"] = ""
-
-    # Alíquotas – vindas do gerador de alíquotas
-    if "ALIQ_IBS" not in df.columns:
-        df["ALIQ_IBS"] = ""
-    if "ALIQ_CBS" not in df.columns:
-        df["ALIQ_CBS"] = ""
-
-    # NCM normalizado (só dígitos, 8 posições) para facilitar busca
-    df[col_ncm] = df[col_ncm].fillna("").astype(str)
-    df["NCM_DIG"] = (
-        df[col_ncm].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
-    )
-
-    st.session_state["tipi_base_ok"] = True
-    st.session_state["tipi_cols"] = {
-        "NCM": col_ncm,
-        "DESCR": col_desc,
-    }
+def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df.columns = [str(c).strip().upper() for c in df.columns]
     return df
 
 
-def buscar_ncm(df: pd.DataFrame, ncm_str: str):
+# --------------------------------------------------
+# BASE TIPI → IBS/CBS (MIND7 LAVO 2026)
+# --------------------------------------------------
+TIPI_DEFAULT_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
+
+@st.cache_data(show_spinner=False)
+def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
+    """
+    Carrega a base TIPI/IBS-CBS 2026 (mind7 LAVO).
+    - Se o usuário fizer upload de um Excel, usa esse arquivo.
+    - Caso contrário, tenta ler o arquivo TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx
+      na raiz do projeto (mesmo nível do app.py).
+    """
+    if uploaded_file is not None:
+        try:
+            df = pd.read_excel(uploaded_file)
+        except Exception as e:
+            st.error(f"Erro ao ler a base TIPI enviada: {e}")
+            return pd.DataFrame()
+    else:
+        base_path = Path(__file__).parent / TIPI_DEFAULT_NAME
+        if not base_path.exists():
+            st.session_state["tipi_base_ok"] = False
+            return pd.DataFrame()
+        df = pd.read_excel(base_path)
+
+    df = normalize_cols_upper(df)
+
+    # Campos principais esperados na base mind7
+    # (ajustar apenas se mudar o layout da planilha)
+    required_cols = [
+        "NCM",
+        "NCM_FORMATADO_TIPI",
+        "DESCRICAO_TIPI",
+        "ESSENCIALIDADE_IBS",
+        "ESSENCIALIDADE_CBS",
+        "TIPO_REDUCAO",
+        "PERC_REDUCAO_VENDA",
+        "CST_IBS_CBS_VENDA",
+        "ALIQ_IBS_UF_VENDA_2026",
+        "ALIQ_IBS_MUN_VENDA_2026",
+        "ALIQ_CBS_VENDA_2026",
+        "ALIQ_EFETIVA_IBS_VENDA_2026",
+        "ALIQ_EFETIVA_CBS_VENDA_2026",
+        "IND_IS",
+        "MOTIVO",
+        "BASE_LEGAL",
+    ]
+    for c in required_cols:
+        if c not in df.columns:
+            df[c] = ""
+
+    # NCM normalizado (só dígitos, 8 posições) para facilitar busca
+    df["NCM"] = df["NCM"].fillna("").astype(str)
+    df["NCM_DIG"] = (
+        df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
+    )
+
+    st.session_state["tipi_base_ok"] = True
+    return df
+
+
+def buscar_ncm(df: pd.DataFrame, ncm_str: str) -> Optional[pd.Series]:
     norm = only_digits(ncm_str)
     if len(norm) != 8 or df.empty:
         return None
-
     row = df.loc[df["NCM_DIG"] == norm]
     if row.empty:
         return None
@@ -219,7 +224,7 @@ M200_HEADERS = [
 ]
 M600_HEADERS = M200_HEADERS[:]
 
-COD_CONT_DESC = {
+COD_CONT_DESC: Dict[str, str] = {
     "01": "Contribuição não-cumulativa apurada à alíquota básica",
     "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
     "03": "Contribuição não-cumulativa – receitas com alíquota específica",
@@ -235,7 +240,7 @@ COD_CONT_DESC = {
     "15": "Contribuição cumulativa – outras hipóteses legais",
 }
 
-NAT_REC_DESC = {
+NAT_REC_DESC: Dict[str, str] = {
     "401": "Exportação de mercadorias para o exterior",
     "405": "Desperdícios, resíduos ou aparas de plástico, papel, vidro e metais",
     "908": "Vendas de mercadorias destinadas ao consumo",
@@ -243,7 +248,7 @@ NAT_REC_DESC = {
     "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão",
 }
 
-NAT_BC_CRED_DESC = {
+NAT_BC_CRED_DESC: Dict[str, str] = {
     "01": "Aquisição de bens para revenda",
     "02": "Aquisição de bens e serviços utilizados como insumo",
     "03": "Energia elétrica e térmica",
@@ -286,20 +291,14 @@ def desc_nat_bc(codigo: str) -> str:
     return NAT_BC_CRED_DESC.get(c, f"(Descrição não cadastrada: {c})") if c else ""
 
 
-def parse_sped_conteudo(nome_arquivo: str, conteudo: str):
+def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
     empresa_cnpj = ""
     dt_ini = ""
     dt_fin = ""
     competencia = ""
 
-    ap_pis = []
-    credito_pis = []
-    receitas_pis = []
-    rec_isentas_pis = []
-    ap_cofins = []
-    credito_cofins = []
-    receitas_cofins = []
-    rec_isentas_cofins = []
+    ap_pis, credito_pis, receitas_pis, rec_isentas_pis = [], [], [], []
+    ap_cofins, credito_cofins, receitas_cofins, rec_isentas_cofins = [], [], [], []
 
     for raw in conteudo.splitlines():
         if not raw or raw == "|":
@@ -441,7 +440,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str):
     }
 
 
-def processar_speds_uploaded(files):
+def processar_speds_uploaded(files) -> io.BytesIO:
     ap_pis_all, cred_pis_all, rec_pis_all, rec_is_pis_all = [], [], [], []
     ap_cof_all, cred_cof_all, rec_cof_all, rec_is_cof_all = [], [], [], []
 
@@ -515,29 +514,30 @@ st.markdown(
     """
     <div class="pricetax-title">PRICETAX • Classificador IBS/CBS & SPED PIS/COFINS</div>
     <div class="pricetax-subtitle">
-        Classificação de bens para IBS/CBS baseada em TIPI + cClassTrib, e análise do SPED Contribuições (Bloco M – PIS/COFINS).
+        Ano teste 2026: classificação de bens (TIPI + mind7 LAVO) para IBS/CBS e análise do SPED Contribuições (Bloco M – PIS/COFINS).
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 st.markdown("")
-tabs = st.tabs(["🔍 Consulta TIPI → Tratamento IBS/CBS", "📁 SPED PIS/COFINS → Excel"])
+tabs = st.tabs([
+    "🔍 Consulta TIPI → Tratamento IBS/CBS (2026)",
+    "📁 SPED PIS/COFINS → Excel (Bloco M)",
+])
 
 
 # --------------------------------------------------
 # ABA 1 – CONSULTA TIPI → IBS/CBS
 # --------------------------------------------------
 with tabs[0]:
-    df_tipi = load_tipi_base()
-
     st.markdown(
-        f"""
+        """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Módulo PRICETAX</span>
+            <span class="pricetax-badge">Base IBS/CBS 2026 • mind7 LAVO</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Informe um NCM e veja, na prática, o tratamento sugerido de IBS/CBS:
-                descrição TIPI, cClassTrib e alíquotas de IBS/CBS (quando preenchidas na base).
+                Você pode usar a base padrão (<code>TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx</code>)
+                ou fazer upload de uma versão customizada (por cliente ou por segmento).
             </div>
         </div>
         """,
@@ -546,12 +546,22 @@ with tabs[0]:
 
     st.markdown("")
 
+    base_upload = st.file_uploader(
+        "Opcional: envie uma base TIPI IBS/CBS customizada (.xlsx)",
+        type=["xlsx"],
+        accept_multiple_files=False,
+        key="tipi_upload",
+    )
+
+    df_tipi = load_tipi_base(base_upload)
+
     if df_tipi.empty or not st.session_state.get("tipi_base_ok", False):
         st.markdown(
-            """
+            f"""
             <div class="pricetax-card-erro">
                 <b>Base TIPI/IBS-CBS não carregada.</b><br>
-                Garanta que o arquivo <code>TIPI_IBS_CBS.xlsx</code> está na raiz do projeto (mesmo nível do <code>app.py</code>).
+                • Garanta que o arquivo <code>{TIPI_DEFAULT_NAME}</code> está na raiz do projeto (mesmo nível do <code>app.py</code>)<br>
+                • Ou faça upload de uma base customizada no campo acima.
             </div>
             """,
             unsafe_allow_html=True,
@@ -561,7 +571,7 @@ with tabs[0]:
         with col1:
             ncm_input = st.text_input(
                 "Informe o NCM (com ou sem pontos)",
-                placeholder="Ex.: 8471.90.14 ou 84719014",
+                placeholder="Ex.: 10063021 ou 10.06.30.21",
             )
         with col2:
             st.write("")  # alinhamento
@@ -574,27 +584,34 @@ with tabs[0]:
                     f"""
                     <div class="pricetax-card-erro">
                         NCM: <b>{ncm_input}</b><br>
-                        Não encontramos esse NCM na base <code>TIPI_IBS_CBS.xlsx</code>.
+                        Não encontramos esse NCM na base de IBS/CBS carregada.
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
             else:
-                ncm_fmt = str(row.get("NCM", "")).strip()
-                desc = str(row.get("DESCRICAO", row.get("DESCRIÇÃO", ""))).strip()
-                trat = str(row.get("TRATAMENTO_IBS_CBS", "")).strip()
-                cct = str(row.get("CCLASSTRIB", "")).strip()
+                ncm_fmt = str(row.get("NCM_FORMATADO_TIPI", row.get("NCM", ""))).strip()
+                desc = str(row.get("DESCRICAO_TIPI", "")).strip()
 
-                aliq_ibs = str(row.get("ALIQ_IBS", "")).replace(",", ".").strip()
-                aliq_cbs = str(row.get("ALIQ_CBS", "")).replace(",", ".").strip()
+                ess_ibs = str(row.get("ESSENCIALIDADE_IBS", "")).strip()
+                ess_cbs = str(row.get("ESSENCIALIDADE_CBS", "")).strip()
+                tipo_red = str(row.get("TIPO_REDUCAO", "")).strip()
+                perc_red = str(row.get("PERC_REDUCAO_VENDA", "")).strip()
+                cst_ibs_cbs = str(row.get("CST_IBS_CBS_VENDA", "")).strip()
 
-                try:
-                    total_efetivo = ""
-                    if aliq_ibs and aliq_cbs:
-                        total_val = float(aliq_ibs) + float(aliq_cbs)
-                        total_efetivo = f"{total_val:.2f}"
-                except Exception:
-                    total_efetivo = ""
+                aliq_ibs_uf = to_float_br(row.get("ALIQ_IBS_UF_VENDA_2026"))
+                aliq_ibs_mun = to_float_br(row.get("ALIQ_IBS_MUN_VENDA_2026"))
+                aliq_cbs = to_float_br(row.get("ALIQ_CBS_VENDA_2026"))
+                aliq_ibs_efet = to_float_br(row.get("ALIQ_EFETIVA_IBS_VENDA_2026"))
+                aliq_cbs_efet = to_float_br(row.get("ALIQ_EFETIVA_CBS_VENDA_2026"))
+
+                ind_is = str(row.get("IND_IS", "")).strip()
+                tem_is = "Sim" if ind_is in ("1", "S", "SIM", "Y", "TRUE") else "Não"
+
+                motivo = str(row.get("MOTIVO", "")).strip()
+                base_legal = str(row.get("BASE_LEGAL", "")).strip()
+
+                trat_sintetico = f"{tipo_red or 'ALIQ_CHEIA'} • Redução {perc_red or '0'}% • Essencialidade IBS {ess_ibs or 'N/D'}"
 
                 st.markdown(
                     f"""
@@ -603,36 +620,71 @@ with tabs[0]:
                             NCM {ncm_fmt} – {desc}
                         </div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            <b>Tratamento IBS/CBS sugerido:</b><br>
-                            {trat if trat else "Não informado na base."}
+                            <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
+                            {trat_sintetico}
                         </div>
-                        <div style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
+                        <div style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
                             <div>
-                                <div class="pricetax-metric-label">cClassTrib sugerido</div>
-                                <div class="pricetax-metric-value">{cct if cct else "—"}</div>
+                                <div class="pricetax-metric-label">Essencialidade IBS</div>
+                                <div class="pricetax-metric-value">{ess_ibs or "—"}</div>
                             </div>
                             <div>
-                                <div class="pricetax-metric-label">Alíquota IBS (%)</div>
-                                <div class="pricetax-metric-value">{aliq_ibs if aliq_ibs else "—"}</div>
+                                <div class="pricetax-metric-label">Essencialidade CBS</div>
+                                <div class="pricetax-metric-value">{ess_cbs or "—"}</div>
                             </div>
                             <div>
-                                <div class="pricetax-metric-label">Alíquota CBS (%)</div>
-                                <div class="pricetax-metric-value">{aliq_cbs if aliq_cbs else "—"}</div>
+                                <div class="pricetax-metric-label">Tipo de redução</div>
+                                <div class="pricetax-metric-value">{tipo_red or "ALIQ_CHEIA"}</div>
                             </div>
                             <div>
-                                <div class="pricetax-metric-label">Total IBS + CBS (%)</div>
-                                <div class="pricetax-metric-value">{total_efetivo if total_efetivo else "—"}</div>
+                                <div class="pricetax-metric-label">% Redução (pRedAliq)</div>
+                                <div class="pricetax-metric-value">{perc_red or "0"}%</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">CST IBS/CBS (venda)</div>
+                                <div class="pricetax-metric-value">{cst_ibs_cbs or "—"}</div>
                             </div>
                         </div>
-                        <div style="margin-top:0.8rem;font-size:0.85rem;color:#B0B0B0;border-top:1px dashed #333;padding-top:0.5rem;">
-                            Para operações regulares, esse NCM tende a seguir a
-                            <b>tributação padrão com crédito integral</b>, desde que não haja regra específica
-                            de redução, isenção ou hipótese de Imposto Seletivo aplicável ao cClassTrib definido.
+
+                        <div style="margin-top:1rem;border-top:1px dashed #333;padding-top:0.8rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
+                            <div>
+                                <div class="pricetax-metric-label">IBS UF 2026 (%)</div>
+                                <div class="pricetax-metric-value">{aliq_ibs_uf:.4f}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">IBS Mun 2026 (%)</div>
+                                <div class="pricetax-metric-value">{aliq_ibs_mun:.4f}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">IBS Efetivo 2026 (%)</div>
+                                <div class="pricetax-metric-value">{aliq_ibs_efet:.4f}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">CBS Efetivo 2026 (%)</div>
+                                <div class="pricetax-metric-value">{aliq_cbs_efet:.4f}</div>
+                            </div>
+                            <div>
+                                <div class="pricetax-metric-label">Tem Imposto Seletivo (IS)?</div>
+                                <div class="pricetax-metric-value">{tem_is}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:1rem;border-top:1px dashed #333;padding-top:0.8rem;font-size:0.85rem;color:#B0B0B0;">
+                            <b>Motivo da classificação:</b><br>
+                            {motivo or "—"}
+                        </div>
+                        <div style="margin-top:0.4rem;font-size:0.8rem;color:#9A9A9A;">
+                            <b>Base legal aplicada:</b><br>
+                            {base_legal or "—"}
                         </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
+
+                with st.expander("Ver linha completa da base TIPI (debug / auditoria)"):
+                    st.dataframe(row.to_frame().T)
+
 
 # --------------------------------------------------
 # ABA 2 – SPED PIS/COFINS → EXCEL
@@ -645,7 +697,7 @@ with tabs[1]:
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
                 Faça o upload de um ou mais arquivos SPED Contribuições (<code>.txt</code> ou <code>.zip</code>).
                 O módulo consolida os registros do Bloco M (M200, M600, M105, M505, M210, M610, M410, M810)
-                e gera um Excel com abas analíticas.
+                e gera um Excel com abas analíticas para auditoria.
             </div>
         </div>
         """,
@@ -657,11 +709,12 @@ with tabs[1]:
         "Selecione arquivos SPED Contribuições (.txt ou .zip)",
         type=["txt", "zip"],
         accept_multiple_files=True,
+        key="sped_upload",
     )
 
     if uploaded:
         if st.button("Processar SPED PIS/COFINS → Excel"):
-            with st.spinner("Processando arquivos SPED e montando planilha de auditoria..."):
+            with st.spinner("Processando arquivos SPED e montando planilha de auditoria do Bloco M..."):
                 output_xlsx = processar_speds_uploaded(uploaded)
 
             st.success("Processamento concluído. Faça o download da planilha abaixo.")
