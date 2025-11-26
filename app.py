@@ -43,7 +43,6 @@ st.markdown(
         background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
-    /* ERRO em azul escuro */
     .pricetax-card-erro {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
@@ -139,44 +138,35 @@ def pct_str(v: float) -> str:
 
 
 # --------------------------------------------------
-# BASE TIPI → IBS/CBS (MIND7 LAVO 2026)
+# BASE TIPI → IBS/CBS (2026)
 # --------------------------------------------------
 TIPI_DEFAULT_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
 
 @st.cache_data(show_spinner=False)
-def load_tipi_base(uploaded_file=None) -> pd.DataFrame:
-    origem = "N/D"
-
+def load_tipi_base() -> pd.DataFrame:
+    """Carrega a base padrão de classificação IBS/CBS por NCM."""
     try:
-        if uploaded_file is not None:
-            df = pd.read_excel(uploaded_file)
-            origem = "Upload do usuário"
-        else:
-            candidatos = [
-                Path(TIPI_DEFAULT_NAME),
-                Path.cwd() / TIPI_DEFAULT_NAME,
-            ]
-            try:
-                candidatos.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
-            except NameError:
-                pass
+        candidatos = [
+            Path(TIPI_DEFAULT_NAME),
+            Path.cwd() / TIPI_DEFAULT_NAME,
+        ]
+        try:
+            candidatos.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
+        except NameError:
+            pass
 
-            base_path = None
-            for c in candidatos:
-                if c.exists():
-                    base_path = c
-                    break
+        base_path = None
+        for c in candidatos:
+            if c.exists():
+                base_path = c
+                break
 
-            if base_path is None:
-                st.session_state["TIPI_ORIGEM"] = "Arquivo não encontrado"
-                return pd.DataFrame()
+        if base_path is None:
+            return pd.DataFrame()
 
-            df = pd.read_excel(base_path)
-            origem = f"Arquivo local: {base_path}"
-
-    except Exception as e:
-        st.session_state["TIPI_ORIGEM"] = f"Erro ao ler base: {e}"
+        df = pd.read_excel(base_path)
+    except Exception:
         return pd.DataFrame()
 
     df = normalize_cols_upper(df)
@@ -207,8 +197,6 @@ def load_tipi_base(uploaded_file=None) -> pd.DataFrame:
     df["NCM_DIG"] = (
         df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
     )
-
-    st.session_state["TIPI_ORIGEM"] = f"{origem} • {df.shape[0]} linhas, {df.shape[1]} colunas"
     return df
 
 
@@ -531,7 +519,7 @@ st.markdown(
     """
     <div class="pricetax-title">PRICETAX • Classificador IBS/CBS & SPED PIS/COFINS</div>
     <div class="pricetax-subtitle">
-        Ano teste 2026: classificação de bens (TIPI + mind7 LAVO) para IBS/CBS e análise do SPED Contribuições (Bloco M – PIS/COFINS).
+        Consulte o NCM do seu produto, visualize as alíquotas de IBS e CBS para 2026 e audite o SPED PIS/COFINS.
     </div>
     """,
     unsafe_allow_html=True,
@@ -539,7 +527,7 @@ st.markdown(
 
 st.markdown("")
 tabs = st.tabs([
-    "🔍 Consulta TIPI → Tratamento IBS/CBS (2026)",
+    "🔍 Consulta NCM → IBS/CBS 2026",
     "📁 SPED PIS/COFINS → Excel (Bloco M)",
 ])
 
@@ -550,10 +538,10 @@ with tabs[0]:
     st.markdown(
         """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Base IBS/CBS 2026 • mind7 LAVO</span>
+            <span class="pricetax-badge">Consulta de produtos</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Você pode usar a base padrão (<code>TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx</code>)
-                ou fazer upload de uma versão customizada (por cliente ou por segmento).
+                Informe o código NCM do seu produto e veja a tributação de IBS e CBS simulada para o ano de teste de 2026,
+                com alíquotas efetivas e detalhes de classificação.
             </div>
         </div>
         """,
@@ -562,17 +550,7 @@ with tabs[0]:
 
     st.markdown("")
 
-    base_upload = st.file_uploader(
-        "Opcional: envie uma base TIPI IBS/CBS customizada (.xlsx)",
-        type=["xlsx"],
-        accept_multiple_files=False,
-        key="tipi_upload",
-    )
-
-    df_tipi = load_tipi_base(base_upload)
-
-    origem_info = st.session_state.get("TIPI_ORIGEM", "Base ainda não carregada.")
-    st.caption(f"🗂️ Origem da base TIPI: {origem_info}")
+    df_tipi = load_tipi_base()
 
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -586,7 +564,7 @@ with tabs[0]:
 
     if consultar and ncm_input.strip():
         if df_tipi.empty:
-            st.error("Não foi possível consultar o NCM porque a base TIPI/IBS-CBS não está carregada.")
+            st.error("Não foi possível consultar o NCM porque a base de classificação não foi encontrada no servidor.")
         else:
             row = buscar_ncm(df_tipi, ncm_input)
             if row is None:
@@ -594,7 +572,7 @@ with tabs[0]:
                     f"""
                     <div class="pricetax-card-erro" style="margin-top:0.8rem;">
                         NCM: <b>{ncm_input}</b><br>
-                        Não encontramos esse NCM na base de IBS/CBS carregada.
+                        Não encontramos esse NCM na base de classificação.
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -623,7 +601,6 @@ with tabs[0]:
 
                 trat_sintetico = f"{tipo_red or 'ALIQ_CHEIA'} • Redução {perc_red or '0'}% • Essencialidade IBS {ess_ibs or 'N/D'}"
 
-                # Card de cabeçalho
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.8rem;">
@@ -631,7 +608,7 @@ with tabs[0]:
                             NCM {ncm_fmt} – {desc}
                         </div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
+                            <b>Tratamento IBS/CBS em 2026:</b><br>
                             {trat_sintetico}
                         </div>
                     </div>
@@ -639,7 +616,7 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
-                # BIG NUMBERS – ALÍQUOTAS EFETIVAS 2026
+                # BIG NUMBERS
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
@@ -649,7 +626,7 @@ with tabs[0]:
                                 {pct_str(aliq_ibs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Aplicada sobre a base da operação, considerando redução e essencialidade desse NCM.
+                                Considera a alíquota de teste de 0,1% e as regras de redução aplicáveis a este NCM.
                             </div>
                         </div>
                         <div style="flex:1;min-width:220px;">
@@ -658,7 +635,7 @@ with tabs[0]:
                                 {pct_str(aliq_cbs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Baseada na alíquota de teste de 0,9% com os mesmos critérios de redução.
+                                Calculada a partir da alíquota de teste de 0,9% com a mesma lógica de redução.
                             </div>
                         </div>
                         <div style="flex:1;min-width:220px;">
@@ -667,7 +644,7 @@ with tabs[0]:
                                 {pct_str(aliq_ibs_efet + aliq_cbs_efet)}
                             </div>
                             <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
-                                Carga efetiva do IVA Dual para esse NCM no ano teste 2026.
+                                Carga efetiva estimada do IVA Dual para este NCM no ano de teste.
                             </div>
                         </div>
                     </div>
@@ -675,9 +652,9 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
-                st.markdown("")  # espaçamento
+                st.markdown("")
 
-                # Linha 1 – parâmetros de classificação
+                # Parâmetros de classificação
                 st.subheader("Parâmetros de classificação", divider="gray")
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
@@ -721,7 +698,7 @@ with tabs[0]:
 
                 st.markdown("")
 
-                # Linha 2 – painel de alíquotas padrão x efetivas
+                # Alíquotas padrão x efetivas
                 st.subheader("Alíquotas 2026 para este NCM", divider="gray")
                 a1, a2, a3 = st.columns(3)
 
@@ -741,9 +718,9 @@ with tabs[0]:
                 with a3:
                     st.markdown("**Resumo executivo**")
                     st.write(
-                        "- Ano teste 2026 com base nas alíquotas de 0,1% (IBS) e 0,9% (CBS);  \n"
-                        f"- Aplicada redução de **{perc_red or '0'}%** conforme TIPO_REDUCAO;  \n"
-                        f"- Tratamento alinhado ao cClassTrib parametrizado na base PRICETAX."
+                        "- Simulação baseada nas alíquotas de teste de 0,1% (IBS) e 0,9% (CBS);  \n"
+                        f"- Aplicada redução de **{perc_red or '0'}%** conforme o tipo de tratamento;  \n"
+                        "- Informações pensadas para parametrização do ERP e planejamento tributário."
                     )
 
                 st.markdown("---")
