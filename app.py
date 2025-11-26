@@ -1,5 +1,6 @@
 # app.py
 import io
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -144,18 +145,41 @@ def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
     Carrega a base TIPI/IBS-CBS 2026 (mind7 LAVO).
     - Se o usuário fizer upload de um Excel, usa esse arquivo.
     - Caso contrário, tenta ler o arquivo TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx
-      na raiz do projeto (mesmo nível do app.py).
+      a partir do diretório atual ou do diretório do app.py.
     """
+    origem = "N/D"
+
     try:
         if uploaded_file is not None:
             df = pd.read_excel(uploaded_file)
+            origem = "Upload do usuário"
         else:
-            base_path = Path(__file__).parent / TIPI_DEFAULT_NAME
-            if not base_path.exists():
+            # Candidatos de caminho (para evitar problemas de __file__/cwd)
+            candidatos = [
+                Path(TIPI_DEFAULT_NAME),
+                Path.cwd() / TIPI_DEFAULT_NAME,
+            ]
+            # __file__ pode não existir em alguns ambientes, então protegemos
+            try:
+                candidatos.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
+            except NameError:
+                pass
+
+            base_path = None
+            for c in candidatos:
+                if c.exists():
+                    base_path = c
+                    break
+
+            if base_path is None:
+                st.session_state["TIPI_ORIGEM"] = "Arquivo não encontrado"
                 return pd.DataFrame()
+
             df = pd.read_excel(base_path)
+            origem = f"Arquivo local: {base_path}"
+
     except Exception as e:
-        st.error(f"Erro ao carregar a base TIPI/IBS-CBS: {e}")
+        st.session_state["TIPI_ORIGEM"] = f"Erro ao ler base: {e}"
         return pd.DataFrame()
 
     df = normalize_cols_upper(df)
@@ -187,6 +211,7 @@ def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
         df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
     )
 
+    st.session_state["TIPI_ORIGEM"] = f"{origem} • {df.shape[0]} linhas, {df.shape[1]} colunas"
     return df
 
 
@@ -388,7 +413,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
                     "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
                     "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
                     "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
-                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(camcos) > 6 else 0),
                 }
             )
 
@@ -550,6 +575,10 @@ with tabs[0]:
 
     df_tipi = load_tipi_base(base_upload)
 
+    # Info de debug amigável sobre a origem da base
+    origem_info = st.session_state.get("TIPI_ORIGEM", "Base ainda não carregada.")
+    st.caption(f"🗂️ Origem da base TIPI: {origem_info}")
+
     col1, col2 = st.columns([3, 1])
     with col1:
         ncm_input = st.text_input(
@@ -560,22 +589,9 @@ with tabs[0]:
         st.write("")  # alinhamento
         consultar = st.button("Consultar NCM", type="primary")
 
-    # Se a base não carregou, avisa o usuário, mas SEM esconder o input de NCM
-    if df_tipi.empty:
-        st.markdown(
-            f"""
-            <div class="pricetax-card-erro" style="margin-top:0.8rem;">
-                <b>Base TIPI/IBS-CBS não carregada.</b><br>
-                • Garanta que o arquivo <code>{TIPI_DEFAULT_NAME}</code> está na raiz do projeto (mesmo nível do <code>app.py</code>)<br>
-                • Ou faça upload de uma base customizada no campo acima.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
     if consultar and ncm_input.strip():
         if df_tipi.empty:
-            st.warning("Não foi possível consultar o NCM porque a base TIPI/IBS-CBS não está carregada.")
+            st.error("Não foi possível consultar o NCM porque a base TIPI/IBS-CBS não está carregada.")
         else:
             row = buscar_ncm(df_tipi, ncm_input)
             if row is None:
@@ -600,7 +616,6 @@ with tabs[0]:
 
                 aliq_ibs_uf = to_float_br(row.get("ALIQ_IBS_UF_VENDA_2026"))
                 aliq_ibs_mun = to_float_br(row.get("ALIQ_IBS_MUN_VENDA_2026"))
-                aliq_cbs = to_float_br(row.get("ALIQ_CBS_VENDA_2026"))
                 aliq_ibs_efet = to_float_br(row.get("ALIQ_EFETIVA_IBS_VENDA_2026"))
                 aliq_cbs_efet = to_float_br(row.get("ALIQ_EFETIVA_CBS_VENDA_2026"))
 
@@ -643,6 +658,10 @@ with tabs[0]:
                                 <div class="pricetax-metric-label">CST IBS/CBS (venda)</div>
                                 <div class="pricetax-metric-value">{cst_ibs_cbs or "—"}</div>
                             </div>
+                            <div>
+                                <div class="pricetax-metric-label">Tem Imposto Seletivo (IS)?</div>
+                                <div class="pricetax-metric-value">{tem_is}</div>
+                            </div>
                         </div>
 
                         <div style="margin-top:1rem;border-top:1px dashed #333;padding-top:0.8rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
@@ -661,10 +680,6 @@ with tabs[0]:
                             <div>
                                 <div class="pricetax-metric-label">CBS Efetivo 2026 (%)</div>
                                 <div class="pricetax-metric-value">{aliq_cbs_efet:.4f}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">Tem Imposto Seletivo (IS)?</div>
-                                <div class="pricetax-metric-value">{tem_is}</div>
                             </div>
                         </div>
 
