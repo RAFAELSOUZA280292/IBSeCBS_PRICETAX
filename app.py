@@ -108,7 +108,6 @@ def to_float_br(s) -> float:
     s = str(s).strip()
     if s == "":
         return 0.0
-    # Trata formatos tipo 1.234,56
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -138,6 +137,7 @@ def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------
 TIPI_DEFAULT_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
+
 @st.cache_data(show_spinner=False)
 def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
     """
@@ -146,23 +146,20 @@ def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
     - Caso contrário, tenta ler o arquivo TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx
       na raiz do projeto (mesmo nível do app.py).
     """
-    if uploaded_file is not None:
-        try:
+    try:
+        if uploaded_file is not None:
             df = pd.read_excel(uploaded_file)
-        except Exception as e:
-            st.error(f"Erro ao ler a base TIPI enviada: {e}")
-            return pd.DataFrame()
-    else:
-        base_path = Path(__file__).parent / TIPI_DEFAULT_NAME
-        if not base_path.exists():
-            st.session_state["tipi_base_ok"] = False
-            return pd.DataFrame()
-        df = pd.read_excel(base_path)
+        else:
+            base_path = Path(__file__).parent / TIPI_DEFAULT_NAME
+            if not base_path.exists():
+                return pd.DataFrame()
+            df = pd.read_excel(base_path)
+    except Exception as e:
+        st.error(f"Erro ao carregar a base TIPI/IBS-CBS: {e}")
+        return pd.DataFrame()
 
     df = normalize_cols_upper(df)
 
-    # Campos principais esperados na base mind7
-    # (ajustar apenas se mudar o layout da planilha)
     required_cols = [
         "NCM",
         "NCM_FORMATADO_TIPI",
@@ -185,13 +182,11 @@ def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
         if c not in df.columns:
             df[c] = ""
 
-    # NCM normalizado (só dígitos, 8 posições) para facilitar busca
     df["NCM"] = df["NCM"].fillna("").astype(str)
     df["NCM_DIG"] = (
         df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
     )
 
-    st.session_state["tipi_base_ok"] = True
     return df
 
 
@@ -206,7 +201,7 @@ def buscar_ncm(df: pd.DataFrame, ncm_str: str) -> Optional[pd.Series]:
 
 
 # --------------------------------------------------
-# PARSER SPED PIS/COFINS (BLOCO M) – VERSÃO STREAMLIT
+# PARSER SPED PIS/COFINS (BLOCO M)
 # --------------------------------------------------
 M200_HEADERS = [
     "Valor Total da Contribuição Não-cumulativa do Período",
@@ -322,7 +317,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
 
         elif reg == "M200":
             row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-            vals = campos[2 : 2 + len(M200_HEADERS)]
+            vals = campos[2: 2 + len(M200_HEADERS)]
             for titulo, val in zip(M200_HEADERS, vals):
                 row[titulo] = to_float_br(val)
             ap_pis.append(row)
@@ -376,7 +371,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
 
         elif reg == "M600":
             row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
-            vals = campos[2 : 2 + len(M600_HEADERS)]
+            vals = campos[2: 2 + len(M600_HEADERS)]
             for titulo, val in zip(M600_HEADERS, vals):
                 row[titulo] = to_float_br(val)
             ap_cofins.append(row)
@@ -555,10 +550,21 @@ with tabs[0]:
 
     df_tipi = load_tipi_base(base_upload)
 
-    if df_tipi.empty or not st.session_state.get("tipi_base_ok", False):
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        ncm_input = st.text_input(
+            "Informe o NCM (com ou sem pontos)",
+            placeholder="Ex.: 10063021 ou 10.06.30.21",
+        )
+    with col2:
+        st.write("")  # alinhamento
+        consultar = st.button("Consultar NCM", type="primary")
+
+    # Se a base não carregou, avisa o usuário, mas SEM esconder o input de NCM
+    if df_tipi.empty:
         st.markdown(
             f"""
-            <div class="pricetax-card-erro">
+            <div class="pricetax-card-erro" style="margin-top:0.8rem;">
                 <b>Base TIPI/IBS-CBS não carregada.</b><br>
                 • Garanta que o arquivo <code>{TIPI_DEFAULT_NAME}</code> está na raiz do projeto (mesmo nível do <code>app.py</code>)<br>
                 • Ou faça upload de uma base customizada no campo acima.
@@ -566,23 +572,16 @@ with tabs[0]:
             """,
             unsafe_allow_html=True,
         )
-    else:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            ncm_input = st.text_input(
-                "Informe o NCM (com ou sem pontos)",
-                placeholder="Ex.: 10063021 ou 10.06.30.21",
-            )
-        with col2:
-            st.write("")  # alinhamento
-            consultar = st.button("Consultar NCM", type="primary")
 
-        if consultar and ncm_input.strip():
+    if consultar and ncm_input.strip():
+        if df_tipi.empty:
+            st.warning("Não foi possível consultar o NCM porque a base TIPI/IBS-CBS não está carregada.")
+        else:
             row = buscar_ncm(df_tipi, ncm_input)
             if row is None:
                 st.markdown(
                     f"""
-                    <div class="pricetax-card-erro">
+                    <div class="pricetax-card-erro" style="margin-top:0.8rem;">
                         NCM: <b>{ncm_input}</b><br>
                         Não encontramos esse NCM na base de IBS/CBS carregada.
                     </div>
@@ -606,7 +605,7 @@ with tabs[0]:
                 aliq_cbs_efet = to_float_br(row.get("ALIQ_EFETIVA_CBS_VENDA_2026"))
 
                 ind_is = str(row.get("IND_IS", "")).strip()
-                tem_is = "Sim" if ind_is in ("1", "S", "SIM", "Y", "TRUE") else "Não"
+                tem_is = "Sim" if ind_is.upper() in ("1", "S", "SIM", "Y", "TRUE") else "Não"
 
                 motivo = str(row.get("MOTIVO", "")).strip()
                 base_legal = str(row.get("BASE_LEGAL", "")).strip()
