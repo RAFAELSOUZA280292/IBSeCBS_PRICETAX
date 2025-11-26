@@ -851,16 +851,34 @@ with tabs[0]:
                     )
                     st.write(resumo)
 
+                # --------------------------------------------------
+                # BLOCO FINAL – TEXTOS LIMPOS (SEM NAN) E AJUSTE REDUCAO 60%
+                # --------------------------------------------------
                 st.markdown("---")
-                st.markdown(f"**Base legal aplicada:** {fonte_legal or '—'}")
-                if alerta_app:
-                    st.markdown(f"**Alerta PRICETAX:** {alerta_app}")
-                if obs_alimento:
-                    st.markdown(f"**Observação sobre alimentos:** {obs_alimento}")
-                if obs_dest:
-                    st.markdown(f"**Observação sobre destinação:** {obs_dest}")
-                if obs_regime_esp:
-                    st.markdown(f"**Regime especial / motivo adicional:** {obs_regime_esp}")
+
+                def clean_txt(v):
+                    s = str(v or "").strip()
+                    return "" if s.lower() == "nan" else s
+
+                fonte_legal_fmt = clean_txt(fonte_legal)
+                alerta_fmt = clean_txt(alerta_app)
+                obs_alimento_fmt = clean_txt(obs_alimento)
+                obs_dest_fmt = clean_txt(obs_dest)
+                regime_extra_fmt = clean_txt(obs_regime_esp)
+
+                # Se o regime indicar redução de 60%, ajusta textos padrão
+                if "RED_60" in (regime_iva or "").upper():
+                    alerta_fmt = "REDUCAO 60%; conferir aderencia ao segmento do contribuinte."
+                    regime_extra_fmt = (
+                        "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. "
+                        "Aplicada reducao de 60% conforme REDUCAO 60%."
+                    )
+
+                st.markdown(f"**Base legal aplicada:** {fonte_legal_fmt or '—'}")
+                st.markdown(f"**Alerta PRICETAX:** {alerta_fmt}")
+                st.markdown(f"**Observação sobre alimentos:** {obs_alimento_fmt}")
+                st.markdown(f"**Observação sobre destinação:** {obs_dest_fmt}")
+                st.markmarkdown(f"**Regime especial / motivo adicional:** {regime_extra_fmt}")
 
 # --------------------------------------------------
 # ABA 2 – SPED PIS/COFINS → EXCEL
