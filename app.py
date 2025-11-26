@@ -1,6 +1,5 @@
 # app.py
 import io
-import os
 import re
 import zipfile
 from pathlib import Path
@@ -44,7 +43,7 @@ st.markdown(
         background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
-    /* ERRO agora em azul escuro */
+    /* ERRO em azul escuro */
     .pricetax-card-erro {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
@@ -91,23 +90,6 @@ st.markdown(
     }}
     .stFileUploader > label div {{
         color: #DDDDDD;
-    }}
-    /* painel de alíquotas */
-    .pricetax-aliq-panel {{
-        margin-top: 1rem;
-        border-top: 1px dashed #333;
-        padding-top: 0.8rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.8rem;
-    }}
-    .pricetax-aliq-block {{
-        min-width: 220px;
-        font-size: 0.9rem;
-        color: #E0E0E0;
-    }}
-    .pricetax-aliq-block b {{
-        color: {PRIMARY_YELLOW};
     }}
     </style>
     """,
@@ -163,13 +145,7 @@ TIPI_DEFAULT_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
 
 @st.cache_data(show_spinner=False)
-def load_tipi_base(uploaded_file: Optional[Any] = None) -> pd.DataFrame:
-    """
-    Carrega a base TIPI/IBS-CBS 2026 (mind7 LAVO).
-    - Se o usuário fizer upload de um Excel, usa esse arquivo.
-    - Caso contrário, tenta ler o arquivo TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx
-      a partir do diretório atual ou do diretório do app.py.
-    """
+def load_tipi_base(uploaded_file=None) -> pd.DataFrame:
     origem = "N/D"
 
     try:
@@ -567,7 +543,6 @@ tabs = st.tabs([
     "📁 SPED PIS/COFINS → Excel (Bloco M)",
 ])
 
-
 # --------------------------------------------------
 # ABA 1 – CONSULTA TIPI → IBS/CBS
 # --------------------------------------------------
@@ -648,6 +623,7 @@ with tabs[0]:
 
                 trat_sintetico = f"{tipo_red or 'ALIQ_CHEIA'} • Redução {perc_red or '0'}% • Essencialidade IBS {ess_ibs or 'N/D'}"
 
+                # Card de cabeçalho (simples, sem HTML aninhado complicando)
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:0.8rem;">
@@ -658,67 +634,73 @@ with tabs[0]:
                             <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
                             {trat_sintetico}
                         </div>
-
-                        <div style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.8rem;">
-                            <div>
-                                <div class="pricetax-metric-label">Essencialidade IBS</div>
-                                <div class="pricetax-metric-value">{ess_ibs or "—"}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">Essencialidade CBS</div>
-                                <div class="pricetax-metric-value">{ess_cbs or "—"}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">Tipo de redução</div>
-                                <div class="pricetax-metric-value">{tipo_red or "ALIQ_CHEIA"}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">% Redução (pRedAliq)</div>
-                                <div class="pricetax-metric-value">{perc_red or "0"}%</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">CST IBS/CBS (venda)</div>
-                                <div class="pricetax-metric-value">{cst_ibs_cbs or "—"}</div>
-                            </div>
-                            <div>
-                                <div class="pricetax-metric-label">Tem Imposto Seletivo (IS)?</div>
-                                <div class="pricetax-metric-value">{tem_is}</div>
-                            </div>
-                        </div>
-
-                        <div class="pricetax-aliq-panel">
-                            <div class="pricetax-aliq-block">
-                                <div class="pricetax-metric-label">Alíquotas de teste 2026</div>
-                                <p>
-                                    IBS (padrão): <b>{pct_str(aliq_ibs_uf + aliq_ibs_mun)}</b><br>
-                                    &nbsp;&nbsp;• UF: {pct_str(aliq_ibs_uf)}<br>
-                                    &nbsp;&nbsp;• Mun: {pct_str(aliq_ibs_mun)}<br>
-                                    CBS (padrão): <b>{pct_str(aliq_cbs_nom)}</b>
-                                </p>
-                            </div>
-                            <div class="pricetax-aliq-block">
-                                <div class="pricetax-metric-label">Alíquotas efetivas para este NCM</div>
-                                <p>
-                                    IBS Efetivo: <b>{pct_str(aliq_ibs_efet)}</b><br>
-                                    CBS Efetivo: <b>{pct_str(aliq_cbs_efet)}</b><br>
-                                    Total Efetivo IBS + CBS: <b>{pct_str(aliq_ibs_efet + aliq_cbs_efet)}</b>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div style="margin-top:1rem;border-top:1px dashed #333;padding-top:0.8rem;font-size:0.85rem;color:#B0B0B0;">
-                            <b>Motivo da classificação:</b><br>
-                            {motivo or "—"}
-                        </div>
-                        <div style="margin-top:0.4rem;font-size:0.8rem;color:#9A9A9A;">
-                            <b>Base legal aplicada:</b><br>
-                            {base_legal or "—"}
-                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
+                st.markdown("")  # espaçamento
+
+                # Linha 1 – Essencialidade, tipo de redução, CST, IS
+                st.subheader("Parâmetros de classificação", divider="gray")
+                c1, c2, c3, c4 = st.columns(4)
+                with c1:
+                    st.markdown("**Essencialidade IBS**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_ibs or '—'}</span>",
+                                unsafe_allow_html=True)
+                with c2:
+                    st.markdown("**Essencialidade CBS**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{ess_cbs or '—'}</span>",
+                                unsafe_allow_html=True)
+                with c3:
+                    st.markdown("**Tipo de redução**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tipo_red or 'ALIQ_CHEIA'}</span>",
+                                unsafe_allow_html=True)
+                with c4:
+                    st.markdown("**% Redução (pRedAliq)**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{perc_red or '0'}%</span>",
+                                unsafe_allow_html=True)
+
+                c5, c6 = st.columns(2)
+                with c5:
+                    st.markdown("**CST IBS/CBS (venda)**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{cst_ibs_cbs or '—'}</span>",
+                                unsafe_allow_html=True)
+                with c6:
+                    st.markdown("**Imposto Seletivo (IS)**")
+                    st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tem_is}</span>",
+                                unsafe_allow_html=True)
+
+                st.markdown("")  # espaçamento
+
+                # Linha 2 – Painel de alíquotas
+                st.subheader("Alíquotas 2026 para este NCM", divider="gray")
+                a1, a2, a3 = st.columns(3)
+
+                with a1:
+                    st.markdown("**Alíquotas de teste (padrão 2026)**")
+                    st.write(f"IBS UF: **{pct_str(aliq_ibs_uf)}**")
+                    st.write(f"IBS Mun: **{pct_str(aliq_ibs_mun)}**")
+                    st.write(f"IBS total teste: **{pct_str(aliq_ibs_uf + aliq_ibs_mun)}**")
+                    st.write(f"CBS teste: **{pct_str(aliq_cbs_nom)}**")
+
+                with a2:
+                    st.markdown("**Alíquotas efetivas IBS/CBS**")
+                    st.write(f"IBS Efetivo: **{pct_str(aliq_ibs_efet)}**")
+                    st.write(f"CBS Efetivo: **{pct_str(aliq_cbs_efet)}**")
+                    st.write(f"Total Efetivo IBS + CBS: **{pct_str(aliq_ibs_efet + aliq_cbs_efet)}**")
+
+                with a3:
+                    st.markdown("**Resumo executivo**")
+                    st.write(
+                        "- Ano teste 2026 com base nas alíquotas de 0,1% (IBS) e 0,9% (CBS);  \n"
+                        f"- Aplicada redução de **{perc_red or '0'}%** conforme TIPO_REDUCAO;  \n"
+                        f"- Tratamento alinhado ao cClassTrib parametrizado na base PRICETAX."
+                    )
+
+                st.markdown("---")
+                st.markdown(f"**Motivo da classificação:** {motivo or '—'}")
+                st.markdown(f"**Base legal aplicada:** {base_legal or '—'}")
 
 # --------------------------------------------------
 # ABA 2 – SPED PIS/COFINS → EXCEL
