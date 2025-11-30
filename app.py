@@ -3,7 +3,7 @@ import re
 import zipfile
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 import pandas as pd
 import streamlit as st
@@ -116,17 +116,17 @@ st.markdown(
     .stFileUploader > label div {{
         color: #DDDDDD;
     }}
-    /* Botão primário */
+    /* Botão primário - agora em azul ciano */
     .stButton>button[kind="primary"] {{
-        background-color: #ff4d4d;
+        background-color: {PRIMARY_CYAN};
         color: #ffffff;
         border-radius: 0.6rem;
-        border: 1px solid #ff8080;
+        border: 1px solid {PRIMARY_CYAN};
         font-weight: 600;
     }}
     .stButton>button[kind="primary"]:hover {{
-        background-color: #ff6666;
-        border-color: #ff9999;
+        background-color: #15d0c9;
+        border-color: #4fe0dc;
     }}
     </style>
     """,
@@ -276,7 +276,7 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                     produtos[cod_item] = {'NCM': cod_ncm, 'DESCR_ITEM': descr_item}
 
             elif registro == 'C100':
-                # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|...
+                # ATENÇÃO: ajustes podem ser necessários conforme layout da EFD Contribuições
                 ind_oper = fields[2] if len(fields) > 2 else ''
                 if ind_oper == '1':  # Saída
                     chv_nfe = fields[9] if len(fields) > 9 else ''
@@ -368,196 +368,13 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
     return df
 
 # --------------------------------------------------
-# PARSER BLOCO M (PIS/COFINS) – AUDITORIA
-# --------------------------------------------------
-M200_HEADERS = [
-    "Valor Total da Contribuição Não-cumulativa do Período",
-    "Valor do Crédito Descontado, Apurado no Próprio Período da Escrituração",
-    "Valor do Crédito Descontado, Apurado em Período de Apuração Anterior",
-    "Valor Total da Contribuição Não Cumulativa Devida",
-    "Valor Retido na Fonte Deduzido no Período (Não Cumulativo)",
-    "Outras Deduções do Regime Não Cumulativo no Período",
-    "Valor da Contribuição Não Cumulativa a Recolher/Pagar",
-    "Valor Total da Contribuição Cumulativa do Período",
-    "Valor Retido na Fonte Deduzido no Período (Cumulativo)",
-    "Outras Deduções do Regime Cumulativo no Período",
-    "Valor da Contribuição Cumulativa a Recolher/Pagar",
-    "Valor Total da Contribuição a Recolher/Pagar no Período",
-]
-M600_HEADERS = M200_HEADERS[:]
-
-COD_CONT_DESC: Dict[str, str] = {
-    "01": "Contribuição não-cumulativa apurada à alíquota básica",
-    "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
-    "03": "Contribuição não-cumulativa – receitas com alíquota específica",
-    "04": "Contribuição não-cumulativa – receitas sujeitas à alíquota zero",
-    "05": "Contribuição não-cumulativa – receitas não alcançadas (isenção/suspensão)",
-    "06": "Contribuição não-cumulativa – regime monofásico",
-    "07": "Contribuição não-cumulativa – substituição tributária",
-    "08": "Contribuição não-cumulativa – alíquota por unidade de medida",
-    "09": "Contribuição não-cumulativa – outras hipóteses legais",
-    "12": "Contribuição cumulativa – alíquota básica",
-    "13": "Contribuição cumulativa – alíquota diferenciada",
-    "14": "Contribuição cumulativa – alíquota zero",
-    "15": "Contribuição cumulativa – outras hipóteses legais",
-}
-
-NAT_REC_DESC: Dict[str, str] = {
-    "401": "Exportação de mercadorias para o exterior",
-    "405": "Desperdícios, resíduos ou aparas de plástico, papel, vidro e metais",
-    "908": "Vendas de mercadorias destinadas ao consumo",
-    "911": "Receitas financeiras, inclusive variação cambial ativa tributável",
-    "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão",
-}
-
-def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
-    try:
-        content = file_content.decode("latin-1")
-    except UnicodeDecodeError:
-        content = file_content.decode("utf-8", errors="ignore")
-
-    lines = content.splitlines()
-    data = {
-        "competencia": "",
-        "m200": {},
-        "m600": {},
-        "m210": [],
-        "m610": [],
-        "m400": [],
-        "m800": [],
-    }
-
-    for line in lines:
-        if line.startswith("|0000|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                data["competencia"] = competencia_from_dt(parts[4], parts[5])
-            break
-
-    for line in lines:
-        if line.startswith("|M200|"):
-            parts = line.split("|")
-            if len(parts) >= 14:
-                for i, header in enumerate(M200_HEADERS):
-                    data["m200"][header] = to_float_br(parts[i + 2])
-            break
-
-    for line in lines:
-        if line.startswith("|M600|"):
-            parts = line.split("|")
-            if len(parts) >= 14:
-                for i, header in enumerate(M600_HEADERS):
-                    data["m600"][header] = to_float_br(parts[i + 2])
-            break
-
-    for line in lines:
-        if line.startswith("|M210|"):
-            parts = line.split("|")
-            if len(parts) >= 10:
-                cod_cont = parts[2]
-                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
-                data["m210"].append(
-                    {
-                        "cod_cont": cod_cont,
-                        "descricao": desc,
-                        "vl_rec_bruta": to_float_br(parts[3]),
-                        "vl_bc_cont": to_float_br(parts[4]),
-                        "aliq_pis": to_float_br(parts[5]),
-                        "vl_cont": to_float_br(parts[6]),
-                        "cod_rec": parts[7],
-                        "vl_ajus_ac": to_float_br(parts[8]),
-                        "vl_ajus_red": to_float_br(parts[9]),
-                    }
-                )
-
-    for line in lines:
-        if line.startswith("|M610|"):
-            parts = line.split("|")
-            if len(parts) >= 10:
-                cod_cont = parts[2]
-                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
-                data["m610"].append(
-                    {
-                        "cod_cont": cod_cont,
-                        "descricao": desc,
-                        "vl_rec_bruta": to_float_br(parts[3]),
-                        "vl_bc_cont": to_float_br(parts[4]),
-                        "aliq_cofins": to_float_br(parts[5]),
-                        "vl_cont": to_float_br(parts[6]),
-                        "cod_rec": parts[7],
-                        "vl_ajus_ac": to_float_br(parts[8]),
-                        "vl_ajus_red": to_float_br(parts[9]),
-                    }
-                )
-
-    for line in lines:
-        if line.startswith("|M400|"):
-            parts = line.split("|")
-            if len(parts) >= 4:
-                data["m400"].append(
-                    {
-                        "vl_rec_nao_trib": to_float_br(parts[2]),
-                        "vl_rec_cum": to_float_br(parts[3]),
-                    }
-                )
-
-    for line in lines:
-        if line.startswith("|M800|"):
-            parts = line.split("|")
-            if len(parts) >= 4:
-                data["m800"].append(
-                    {
-                        "vl_rec_nao_trib": to_float_br(parts[2]),
-                        "vl_rec_cum": to_float_br(parts[3]),
-                    }
-                )
-
-    for line in lines:
-        if line.startswith("|M410|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                cod_nat_rec = parts[2]
-                desc = NAT_REC_DESC.get(
-                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
-                )
-                data["m400"].append(
-                    {
-                        "cod_nat_rec": cod_nat_rec,
-                        "descricao": desc,
-                        "vl_rec_nao_trib": to_float_br(parts[3]),
-                        "cod_cta": parts[4],
-                        "desc_compl": parts[5],
-                    }
-                )
-
-    for line in lines:
-        if line.startswith("|M810|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                cod_nat_rec = parts[2]
-                desc = NAT_REC_DESC.get(
-                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
-                )
-                data["m800"].append(
-                    {
-                        "cod_nat_rec": cod_nat_rec,
-                        "descricao": desc,
-                        "vl_rec_nao_trib": to_float_br(parts[3]),
-                        "cod_cta": parts[4],
-                        "desc_compl": parts[5],
-                    }
-                )
-
-    return data
-
-# --------------------------------------------------
 # CABEÇALHO / TABS
 # --------------------------------------------------
 st.markdown(
     """
     <div class="pricetax-title">PRICETAX • IBS/CBS 2026 & Ranking SPED</div>
     <div class="pricetax-subtitle">
-        Consulte o NCM do seu produto, gere ranking de saídas pelo SPED e audite o Bloco M (PIS/COFINS).
+        Consulte o NCM do seu produto e gere o ranking de saídas pelo SPED PIS/COFINS.
     </div>
     """,
     unsafe_allow_html=True,
@@ -566,7 +383,6 @@ st.markdown(
 tabs = st.tabs([
     "🔍 Consulta NCM → IBS/CBS 2026",
     "📊 Ranking de Saídas (SPED PIS/COFINS)",
-    "📝 Bloco M (PIS/COFINS) – Auditoria",
 ])
 
 # --------------------------------------------------
@@ -891,88 +707,3 @@ with tabs[1]:
                     st.info("Não há dados suficientes para montar o gráfico TOP 10 por NCM.")
     else:
         st.info("Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise.")
-
-# --------------------------------------------------
-# ABA 3 – BLOCO M (PIS/COFINS)
-# --------------------------------------------------
-with tabs[2]:
-    st.markdown(
-        """
-        <div class="pricetax-card">
-            <span class="pricetax-badge">Auditoria Bloco M (PIS/COFINS)</span>
-            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Faça o upload do seu arquivo SPED PIS/COFINS (.txt) para extrair e visualizar os dados de apuração e detalhamento de receitas e créditos (Blocos M200, M600, M210, M610, M400, M800).
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    uploaded_bloco_m = st.file_uploader(
-        "Selecione o arquivo SPED PIS/COFINS (.txt)",
-        type=["txt"],
-        key="sped_bloco_m_upload",
-    )
-
-    if uploaded_bloco_m is not None:
-        with st.spinner("Analisando arquivo SPED (Bloco M)..."):
-            file_content = uploaded_bloco_m.read()
-            sped_data = parse_sped_bloco_m(file_content)
-
-        if sped_data["m200"] or sped_data["m600"]:
-            st.success(f"Análise do Bloco M concluída para a competência: {sped_data['competencia']}")
-            st.markdown("---")
-
-            def display_sped_bloco_m_result(data: Dict[str, Any]):
-                st.subheader("Resumo de Apuração (Blocos M200/M600)")
-                col_pis, col_cofins = st.columns(2)
-
-                with col_pis:
-                    st.markdown("**PIS (Não-Cumulativo)**")
-                    for k, v in data["m200"].items():
-                        v_fmt = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        st.markdown(f"- {k}: R$ {v_fmt}")
-
-                with col_cofins:
-                    st.markdown("**COFINS (Não-Cumulativo)**")
-                    for k, v in data["m600"].items():
-                        v_fmt = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        st.markdown(f"- {k}: R$ {v_fmt}")
-
-                st.markdown("---")
-                st.subheader("Detalhamento da Contribuição (Blocos M210/M610)")
-                if data["m210"]:
-                    st.markdown("**PIS (M210)**")
-                    for item in data["m210"]:
-                        v_fmt = f"{item['vl_rec_bruta']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {v_fmt}')
-                if data["m610"]:
-                    st.markdown("**COFINS (M610)**")
-                    for item in data["m610"]:
-                        v_fmt = f"{item['vl_rec_bruta']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {v_fmt}')
-
-                st.markdown("---")
-                st.subheader("Receitas Não-Tributadas (Blocos M400/M800)")
-                if data["m400"]:
-                    st.markdown("**PIS Não-Tributado (M400/M410)**")
-                    for item in data["m400"]:
-                        if "cod_nat_rec" in item:
-                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {v_fmt}')
-                        else:
-                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            st.markdown(f'- Total PIS Não-Tributado: R$ {v_fmt}')
-                if data["m800"]:
-                    st.markdown("**COFINS Não-Tributado (M800/M810)**")
-                    for item in data["m800"]:
-                        if "cod_nat_rec" in item:
-                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {v_fmt}')
-                        else:
-                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            st.markdown(f'- Total COFINS Não-Tributado: R$ {v_fmt}')
-
-            display_sped_bloco_m_result(sped_data)
-        else:
-            st.error("Não foi possível encontrar os registros M200 ou M600 no arquivo SPED. Verifique se o arquivo está correto.")
