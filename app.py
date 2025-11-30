@@ -1,13 +1,13 @@
 import io
 import re
 import zipfile
+from collections import defaultdict
 from pathlib import Path
 from typing import Optional, Dict, Any
-from collections import defaultdict
-import csv  # mantido, caso queira usar depois
 
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 # --------------------------------------------------
 # CONFIG GERAL / TEMA PRICETAX
@@ -140,16 +140,18 @@ def only_digits(s: Optional[str]) -> str:
     return re.sub(r"\D+", "", s or "")
 
 def to_float_br(s) -> float:
-    if not s:
+    if s is None:
         return 0.0
-    s = str(s)
+    s = str(s).strip()
+    if s == "":
+        return 0.0
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
         s = s.replace(",", ".")
     try:
         return float(s)
-    except:
+    except Exception:
         return 0.0
 
 def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
@@ -200,7 +202,7 @@ def load_tipi_base() -> pd.DataFrame:
     try:
         paths.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
         paths.append(Path(__file__).parent / ALT_TIPI_NAME)
-    except:
+    except Exception:
         pass
 
     df = None
@@ -223,8 +225,8 @@ def load_tipi_base() -> pd.DataFrame:
         "NCM_DESCRICAO", "REGIME_IVA_2026_FINAL", "FONTE_LEGAL_FINAL",
         "FLAG_ALIMENTO","FLAG_CESTA_BASICA","FLAG_HORTIFRUTI_OVOS","FLAG_RED_60",
         "FLAG_DEPENDE_DESTINACAO","IBS_UF_TESTE_2026_FINAL","IBS_MUN_TESTE_2026_FINAL",
-        "CBS_TESTE_2026_FINAL","CST_IBSCBS","FLAG_IMPOSTO_SELETIVO",
-        "ALERTA_APP","OBS_ALIMENTO","OBS_DESTINACAO","OBS_REGIME_ESPECIAL"
+        "CBS_TESTE_2026_FINAL","CST_IBSCBS","ALERTA_APP","OBS_ALIMENTO",
+        "OBS_DESTINACAO","OBS_REGIME_ESPECIAL","FLAG_IMPOSTO_SELETIVO"
     ]
     for c in required:
         if c not in df.columns:
@@ -241,24 +243,23 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
 df_tipi = load_tipi_base()
 
 # --------------------------------------------------
-# PYTHON DO RANKING SPED (AGORA RETORNA DATAFRAME)
+# PROCESSADOR SPED – RANKING DE SAÍDAS (C100/C170, CFOP 5/6/7)
 # --------------------------------------------------
 def process_sped_file(file_content: str) -> pd.DataFrame:
     """
-    Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas de saída.
-    Retorna um DataFrame com colunas:
-    NCM, DESCRICAO, CFOP, VALOR_TOTAL_VENDAS
+    Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas.
+    Retorna um DataFrame com colunas: NCM, DESCRICAO, CFOP, VALOR_TOTAL_VENDAS.
     """
-    produtos = {}  # {COD_ITEM: {'NCM': NCM, 'DESCR_ITEM': DESCR_ITEM}}
-    documentos = {}  # {CHAVE_DOC: {'IND_OPER': '1'}}
-    itens_venda = []  # Lista de itens de venda válidos
+    produtos = {}   # {COD_ITEM: {'NCM': NCM, 'DESCR_ITEM': DESCR_ITEM}}
+    documentos = {} # {CHAVE_DOC: {'IND_OPER': '1'}}
+    itens_venda = []
 
     cfop_saida_pattern = re.compile(r'^[567]\d{3}$')
     current_doc_key = None
-    
+
     try:
         file_stream = io.StringIO(file_content)
-        
+
         for line in file_stream:
             fields = line.strip().split('|')
             if not fields or len(fields) < 2:
@@ -267,6 +268,7 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
             registro = fields[1]
 
             if registro == '0200':
+                # |0200|COD_ITEM|DESCR_ITEM|...|COD_NCM(8)|...
                 if len(fields) >= 9:
                     cod_item = fields[2]
                     descr_item = fields[3]
@@ -274,30 +276,34 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                     produtos[cod_item] = {'NCM': cod_ncm, 'DESCR_ITEM': descr_item}
 
             elif registro == 'C100':
-                # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|DT_DOC|DT_E_S|VL_DOC|...
-                ind_oper = fields[2] if len(fields) > 2 else ""
-                if ind_oper == '1':  # Operação de Saída
+                # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|...
+                ind_oper = fields[2] if len(fields) > 2 else ''
+                if ind_oper == '1':  # Saída
                     chv_nfe = fields[9] if len(fields) > 9 else ''
                     ser = fields[6] if len(fields) > 6 else ''
                     num_doc = fields[7] if len(fields) > 7 else ''
-                    
+
                     if chv_nfe:
                         current_doc_key = chv_nfe
                     elif ser and num_doc:
                         current_doc_key = f"{ser}-{num_doc}"
                     else:
                         current_doc_key = None
-                    
+
                     if current_doc_key:
                         documentos[current_doc_key] = {'IND_OPER': ind_oper}
                 else:
-                    current_doc_key = None  # Não processar documentos de entrada
+                    current_doc_key = None
 
-            elif registro == 'C170' and current_doc_key and documentos.get(current_doc_key, {}).get('IND_OPER') == '1':
-                # |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|IND_MOV|CST_ICMS|CFOP|COD_NAT|...
+            elif (
+                registro == 'C170'
+                and current_doc_key
+                and documentos.get(current_doc_key, {}).get('IND_OPER') == '1'
+            ):
+                # |C170|NUM_ITEM|COD_ITEM(3)|DESCR_COMPL|QTD|UNID|VL_ITEM(7)|...|CFOP(11)|...
                 if len(fields) >= 12:
                     cod_item = fields[3]
-                    vl_item_str = fields[7].replace(',', '.')  # Valor total do item
+                    vl_item_str = fields[7].replace(',', '.')
                     cfop = fields[11]
 
                     try:
@@ -306,48 +312,53 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                         continue
 
                     if cfop_saida_pattern.match(cfop):
-                        itens_venda.append({
-                            'COD_ITEM': cod_item,
-                            'VL_ITEM': vl_item,
-                            'CFOP': cfop,
-                            'DOC_KEY': current_doc_key
-                        })
-            
+                        itens_venda.append(
+                            {
+                                'COD_ITEM': cod_item,
+                                'VL_ITEM': vl_item,
+                                'CFOP': cfop,
+                                'DOC_KEY': current_doc_key,
+                            }
+                        )
+
             elif registro in ('C190', 'C300', 'D100', 'E100'):
                 current_doc_key = None
 
-    except Exception:
-        # Em caso de erro geral, retorna DF vazio
-        return pd.DataFrame(columns=["NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS"])
+    except Exception as e:
+        st.error(f"Erro ao processar o arquivo: {e}")
+        return pd.DataFrame()
 
-    # 2. Agregação e Geração do Ranking
-    ranking_vendas = defaultdict(lambda: {'NCM': '', 'DESCR_ITEM': '', 'CFOP': '', 'TOTAL_VENDAS': 0.0})
+    # Agregação
+    ranking_vendas = defaultdict(
+        lambda: {'NCM': '', 'DESCR_ITEM': '', 'CFOP': '', 'TOTAL_VENDAS': 0.0}
+    )
 
     for item in itens_venda:
         cod_item = item['COD_ITEM']
         vl_item = item['VL_ITEM']
         cfop = item['CFOP']
-        
+
         produto_info = produtos.get(cod_item)
-        
         if produto_info:
             ncm = produto_info['NCM']
             descr_item = produto_info['DESCR_ITEM']
-            chave_ranking = (ncm, descr_item, cfop)
-            
-            ranking_vendas[chave_ranking]['NCM'] = ncm
-            ranking_vendas[chave_ranking]['DESCR_ITEM'] = descr_item
-            ranking_vendas[chave_ranking]['CFOP'] = cfop
-            ranking_vendas[chave_ranking]['TOTAL_VENDAS'] += vl_item
+
+            chave = (ncm, descr_item, cfop)
+            ranking_vendas[chave]['NCM'] = ncm
+            ranking_vendas[chave]['DESCR_ITEM'] = descr_item
+            ranking_vendas[chave]['CFOP'] = cfop
+            ranking_vendas[chave]['TOTAL_VENDAS'] += vl_item
 
     relatorio = []
-    for _, dados in ranking_vendas.items():
-        relatorio.append({
-            'NCM': dados['NCM'],
-            'DESCRICAO': dados['DESCR_ITEM'],
-            'CFOP': dados['CFOP'],
-            'VALOR_TOTAL_VENDAS': dados['TOTAL_VENDAS'],
-        })
+    for chave, dados in ranking_vendas.items():
+        relatorio.append(
+            {
+                'NCM': dados['NCM'],
+                'DESCRICAO': dados['DESCR_ITEM'],
+                'VALOR_TOTAL_VENDAS': dados['TOTAL_VENDAS'],
+                'CFOP': dados['CFOP'],
+            }
+        )
 
     if not relatorio:
         return pd.DataFrame(columns=["NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS"])
@@ -357,7 +368,7 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
     return df
 
 # --------------------------------------------------
-# PARSER BLOCO M (MANTIDO)
+# PARSER BLOCO M (PIS/COFINS) – AUDITORIA
 # --------------------------------------------------
 M200_HEADERS = [
     "Valor Total da Contribuição Não-cumulativa do Período",
@@ -400,9 +411,6 @@ NAT_REC_DESC: Dict[str, str] = {
 }
 
 def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
-    """
-    Analisa o arquivo SPED PIS/COFINS (Bloco M) e extrai informações relevantes.
-    """
     try:
         content = file_content.decode("latin-1")
     except UnicodeDecodeError:
@@ -543,13 +551,13 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
     return data
 
 # --------------------------------------------------
-# INTERFACE – TABS
+# CABEÇALHO / TABS
 # --------------------------------------------------
 st.markdown(
     """
     <div class="pricetax-title">PRICETAX • IBS/CBS 2026 & Ranking SPED</div>
     <div class="pricetax-subtitle">
-        Consulte o NCM do seu produto, veja a tributação IBS/CBS 2026 e audite o SPED PIS/COFINS.
+        Consulte o NCM do seu produto, gere ranking de saídas pelo SPED e audite o Bloco M (PIS/COFINS).
     </div>
     """,
     unsafe_allow_html=True,
@@ -557,7 +565,7 @@ st.markdown(
 
 tabs = st.tabs([
     "🔍 Consulta NCM → IBS/CBS 2026",
-    "📊 Ranking de Produtos (via SPED)",
+    "📊 Ranking de Saídas (SPED PIS/COFINS)",
     "📝 Bloco M (PIS/COFINS) – Auditoria",
 ])
 
@@ -580,7 +588,7 @@ with tabs[0]:
     with col1:
         ncm_input = st.text_input(
             "Informe o NCM (com ou sem pontos)",
-            placeholder="Ex.: 16023220 ou 16.02.32.20"
+            placeholder="Ex.: 16023220 ou 16.02.32.20",
         )
     with col2:
         st.write("")
@@ -695,6 +703,7 @@ with tabs[0]:
                 )
 
             st.markdown("---")
+
             def clean_txt(v):
                 s = str(v or "").strip()
                 return "" if s.lower() == "nan" else s
@@ -720,7 +729,7 @@ with tabs[0]:
             st.markdown(f"**Regime especial / motivo adicional:** {reg_extra or '—'}")
 
 # --------------------------------------------------
-# ABA 2 – RANKING DE PRODUTOS (SPED) – PLANILHA + DOWNLOAD
+# ABA 2 – RANKING DE SAÍDAS (SPED) – TOTAL + DOWNLOAD + GRÁFICO
 # --------------------------------------------------
 with tabs[1]:
     st.markdown(
@@ -734,7 +743,7 @@ with tabs[1]:
                 • Considerar apenas notas de saída (IND_OPER = 1)<br>
                 • Filtrar CFOPs de saída (5.xxx, 6.xxx, 7.xxx)<br>
                 • Consolidar vendas por NCM, Descrição do Item e CFOP<br>
-                • Gerar um ranking em formato de planilha, com opção de download.
+                • Gerar um ranking TOTAL com opção de download e gráfico TOP 10.
             </div>
         </div>
         """,
@@ -770,6 +779,7 @@ with tabs[1]:
                                         texto = conteudo.decode("latin-1")
                                     except UnicodeDecodeError:
                                         texto = conteudo.decode("utf-8", errors="ignore")
+
                                     df_rank = process_sped_file(texto)
                                     if not df_rank.empty:
                                         df_rank.insert(0, "ARQUIVO", info.filename)
@@ -780,6 +790,7 @@ with tabs[1]:
                             texto = conteudo.decode("latin-1")
                         except UnicodeDecodeError:
                             texto = conteudo.decode("utf-8", errors="ignore")
+
                         df_rank = process_sped_file(texto)
                         if not df_rank.empty:
                             df_rank.insert(0, "ARQUIVO", nome)
@@ -791,10 +802,18 @@ with tabs[1]:
             progress_bar.empty()
 
             if not df_list:
-                st.error("Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada nos arquivos enviados.")
+                st.error(
+                    "Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada nos arquivos enviados."
+                )
             else:
                 df_total = pd.concat(df_list, ignore_index=True)
                 df_total = df_total.sort_values("VALOR_TOTAL_VENDAS", ascending=False).reset_index(drop=True)
+
+                # DataFrame para visualização com valor formatado BR
+                df_vis = df_total.copy()
+                df_vis["VALOR_TOTAL_VENDAS"] = df_vis["VALOR_TOTAL_VENDAS"].apply(
+                    lambda v: f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
 
                 st.success("Processamento concluído!")
                 st.markdown("---")
@@ -813,26 +832,48 @@ with tabs[1]:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
-                st.markdown("### Ranking de Saídas – Top 50")
-                st.dataframe(
-                    df_total.head(50),
-                    use_container_width=True,
-                )
+                st.markdown("### Ranking de Saídas – TODAS AS LINHAS")
+                st.dataframe(df_vis, use_container_width=True)
 
                 total_vendas = df_total["VALOR_TOTAL_VENDAS"].sum()
+                total_vendas_fmt = (
+                    f"{total_vendas:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
+
                 st.markdown(
                     f"""
                     <div class="pricetax-card-soft" style="margin-top:1rem;">
                         <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">📊 Insight PRICETAX</div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            • Total geral de vendas (saídas CFOP 5/6/7): <b>R$ {total_vendas:,.2f}</b><br>
+                            • Total geral de vendas (saídas CFOP 5/6/7): <b>R$ {total_vendas_fmt}</b><br>
                             • Arquivos analisados: <b>{total_files}</b><br>
                             • Ranking consolidado por NCM + Descrição + CFOP.<br>
                         </div>
                     </div>
-                    """.replace(",", "X").replace(".", ",").replace("X", "."),
+                    """,
                     unsafe_allow_html=True,
                 )
+
+                # Gráfico TOP 10 – Pizza por NCM
+                st.markdown("### 🔥 TOP 10 – Distribuição Percentual por NCM")
+
+                df_top10 = (
+                    df_total.groupby("NCM")["VALOR_TOTAL_VENDAS"]
+                    .sum()
+                    .sort_values(ascending=False)
+                    .head(10)
+                )
+
+                if not df_top10.empty:
+                    fig = px.pie(
+                        names=df_top10.index,
+                        values=df_top10.values,
+                        title="TOP 10 – Percentual por NCM (Vendas de Saída)",
+                        hole=0.45,
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Não há dados suficientes para montar o gráfico TOP 10 por NCM.")
     else:
         st.info("Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise.")
 
@@ -845,8 +886,7 @@ with tabs[2]:
         <div class="pricetax-card">
             <span class="pricetax-badge">Auditoria Bloco M (PIS/COFINS)</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Faça o upload do seu arquivo SPED PIS/COFINS (.txt) para extrair e visualizar os dados de apuração e detalhamento
-                de receitas e créditos (Blocos M200, M600, M210, M610, M400, M800).
+                Faça o upload do seu arquivo SPED PIS/COFINS (.txt) para extrair e visualizar os dados de apuração e detalhamento de receitas e créditos (Blocos M200, M600, M210, M610, M400, M800).
             </div>
         </div>
         """,
@@ -875,33 +915,27 @@ with tabs[2]:
                 with col_pis:
                     st.markdown("**PIS (Não-Cumulativo)**")
                     for k, v in data["m200"].items():
-                        st.markdown(
-                            f"- {k}: R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        )
+                        v_fmt = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        st.markdown(f"- {k}: R$ {v_fmt}")
 
                 with col_cofins:
                     st.markdown("**COFINS (Não-Cumulativo)**")
                     for k, v in data["m600"].items():
-                        st.markdown(
-                            f"- {k}: R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        )
+                        v_fmt = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        st.markdown(f"- {k}: R$ {v_fmt}")
 
                 st.markdown("---")
                 st.subheader("Detalhamento da Contribuição (Blocos M210/M610)")
                 if data["m210"]:
                     st.markdown("**PIS (M210)**")
                     for item in data["m210"]:
-                        st.markdown(
-                            f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {item["vl_rec_bruta"]:,.2f}'
-                            .replace(",", "X").replace(".", ",").replace("X", ".")
-                        )
+                        v_fmt = f"{item['vl_rec_bruta']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {v_fmt}')
                 if data["m610"]:
                     st.markdown("**COFINS (M610)**")
                     for item in data["m610"]:
-                        st.markdown(
-                            f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {item["vl_rec_bruta"]:,.2f}'
-                            .replace(",", "X").replace(".", ",").replace("X", ".")
-                        )
+                        v_fmt = f"{item['vl_rec_bruta']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {v_fmt}')
 
                 st.markdown("---")
                 st.subheader("Receitas Não-Tributadas (Blocos M400/M800)")
@@ -909,28 +943,20 @@ with tabs[2]:
                     st.markdown("**PIS Não-Tributado (M400/M410)**")
                     for item in data["m400"]:
                         if "cod_nat_rec" in item:
-                            st.markdown(
-                                f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {item["vl_rec_nao_trib"]:,.2f}'
-                                .replace(",", "X").replace(".", ",").replace("X", ".")
-                            )
+                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {v_fmt}')
                         else:
-                            st.markdown(
-                                f'- Total PIS Não-Tributado: R$ {item["vl_rec_nao_trib"]:,.2f}'
-                                .replace(",", "X").replace(".", ",").replace("X", ".")
-                            )
+                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            st.markdown(f'- Total PIS Não-Tributado: R$ {v_fmt}')
                 if data["m800"]:
                     st.markdown("**COFINS Não-Tributado (M800/M810)**")
                     for item in data["m800"]:
                         if "cod_nat_rec" in item:
-                            st.markdown(
-                                f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {item["vl_rec_nao_trib"]:,.2f}'
-                                .replace(",", "X").replace(".", ",").replace("X", ".")
-                            )
+                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {v_fmt}')
                         else:
-                            st.markdown(
-                                f'- Total COFINS Não-Tributado: R$ {item["vl_rec_nao_trib"]:,.2f}'
-                                .replace(",", "X").replace(".", ",").replace("X", ".")
-                            )
+                            v_fmt = f"{item['vl_rec_nao_trib']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            st.markdown(f'- Total COFINS Não-Tributado: R$ {v_fmt}')
 
             display_sped_bloco_m_result(sped_data)
         else:
