@@ -191,7 +191,6 @@ def normalize_cst_key(cst_val: Any) -> str:
     s = re.sub(r"\D+", "", str(cst_val or "").strip())
     if s == "":
         return ""
-    # remove zeros à esquerda
     try:
         return str(int(s))
     except Exception:
@@ -276,11 +275,9 @@ def load_classificacao_base() -> pd.DataFrame:
     if df is None:
         return pd.DataFrame()
 
-    # normaliza CST_KEY
     df = df.copy()
     df["CST_KEY"] = df["Código da Situação Tributária"].apply(normalize_cst_key)
 
-    # Normaliza campos Sim/Não para evitar ruído
     for col in [
         "Tributação Regular",
         "Redução de Alíquota",
@@ -297,14 +294,14 @@ def load_classificacao_base() -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def build_cclasstrib_index(df_class: pd.DataFrame) -> Dict[str, Dict[str, str]]:
     """
-    Cria um índice: CST_KEY -> cenário padrão de cClassTrib para NFe,
-    seguindo a regra que combinamos:
-    - NFe == "Sim"
-    - Tributação Regular == "Sim"
-    - Redução de Alíquota == "Não"
-    - Transferência de Crédito == "Não"
-    - Diferimento == "Não"
-    Se não achar com todos esses filtros, relaxa a regra (NFe Sim, depois sem filtro).
+    Índice: CST_KEY -> cenário padrão de cClassTrib para NFe.
+    Regra:
+      - NFe == "Sim"
+      - Tributação Regular == "Sim"
+      - Redução de Alíquota == "Não"
+      - Transferência de Crédito == "Não"
+      - Diferimento == "Não"
+    Se não achar com todos, relaxa a regra.
     """
     index: Dict[str, Dict[str, str]] = {}
     if df_class.empty:
@@ -316,13 +313,13 @@ def build_cclasstrib_index(df_class: pd.DataFrame) -> Dict[str, Dict[str, str]]:
 
         g = grp.copy()
 
-        # 1) prioriza NFe = Sim
+        # 1) NFe = Sim
         if "NFe" in g.columns:
             g_pref = g[g["NFe"].str.lower() == "sim"]
             if not g_pref.empty:
                 g = g_pref
 
-        # 2) prioriza cenário regular sem redução, sem transferência, sem diferimento
+        # 2) cenário regular sem redução, sem transf, sem diferimento
         for col in [
             "Tributação Regular",
             "Redução de Alíquota",
@@ -342,10 +339,9 @@ def build_cclasstrib_index(df_class: pd.DataFrame) -> Dict[str, Dict[str, str]]:
         if not g_reg.empty:
             g = g_reg
 
-        # 3) escolhe a linha com menor Código da Classificação Tributária (para desempate)
+        # 3) menor código de classificação (desempate)
         def class_code_val(x):
             try:
-                # tenta float, depois int, se der ruim joga lá pra cima
                 s = str(x).replace(",", ".")
                 return float(s)
             except Exception:
@@ -472,7 +468,6 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
         st.error(f"Erro ao processar o arquivo: {e}")
         return pd.DataFrame()
 
-    # Agregação
     ranking_vendas = defaultdict(
         lambda: {'NCM': '', 'DESCR_ITEM': '', 'CFOP': '', 'TOTAL_VENDAS': 0.0}
     )
@@ -584,7 +579,6 @@ with tabs[0]:
             total_iva = ibs_uf + ibs_mun + cbs
             cst_ibscbs = row.get("CST_IBSCBS", "")
 
-            # Busca cClassTrib padrão para esse CST
             c_info = get_cclasstrib_for_cst(cst_ibscbs)
 
             st.markdown(
@@ -666,9 +660,6 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
-            # -----------------------------
-            # BLOCO: CAMPOS PARA XML 2026
-            # -----------------------------
             st.subheader("Parâmetros para XML 2026 – NFe (venda padrão)", divider="gray")
 
             if c_info:
@@ -694,7 +685,6 @@ with tabs[0]:
                         f"- Monofásica: **{c_info['MONOFASICA'] or '—'}**"
                     )
 
-                # Alíquotas que vão pro XML (pIBS / pCBS) – visão prática pro ERP
                 st.markdown("**Alíquotas para parametrização XML (pIBS / pCBS)**")
                 st.markdown(
                     f"- pIBS (UF): **{pct_str(ibs_uf)}**  \n"
@@ -819,15 +809,12 @@ with tabs[1]:
             else:
                 df_total = pd.concat(df_list, ignore_index=True)
 
-                # -----------------------------
                 # CRUZAMENTO COM TIPI IBS/CBS + cClassTrib
-                # -----------------------------
                 if df_tipi.empty:
                     st.warning(
                         "Base TIPI IBS/CBS 2026 não carregada. O ranking será exibido sem os campos de IBS/CBS/cClassTrib."
                     )
                 else:
-                    # Normaliza NCM e junta com TIPI
                     df_total["NCM_DIG"] = (
                         df_total["NCM"]
                         .astype(str)
@@ -853,7 +840,6 @@ with tabs[1]:
                         how="left",
                     )
 
-                    # Converte alíquotas para float
                     df_total["IBS_UF_2026"] = df_total["IBS_UF_TESTE_2026_FINAL"].apply(to_float_br)
                     df_total["IBS_MUN_2026"] = df_total["IBS_MUN_TESTE_2026_FINAL"].apply(to_float_br)
                     df_total["CBS_2026"] = df_total["CBS_TESTE_2026_FINAL"].apply(to_float_br)
@@ -861,10 +847,8 @@ with tabs[1]:
                         df_total["IBS_UF_2026"] + df_total["IBS_MUN_2026"] + df_total["CBS_2026"]
                     )
 
-                    # CST_KEY para buscar cClassTrib
                     df_total["CST_KEY"] = df_total["CST_IBSCBS"].apply(normalize_cst_key)
 
-                    # mapeia cClassTrib sugerido
                     def map_cclass(key: str, field: str) -> str:
                         info = cclasstrib_index.get(key)
                         if not info:
@@ -881,15 +865,93 @@ with tabs[1]:
                         lambda k: map_cclass(k, "TIPO_ALIQUOTA")
                     )
 
-                # Ordena pelo valor total de vendas
                 df_total = df_total.sort_values("VALOR_TOTAL_VENDAS", ascending=False).reset_index(drop=True)
 
-                # DataFrame para visualização com valor formatado BR
+                # VISUALIZAÇÃO
                 df_vis = df_total.copy()
                 df_vis["VALOR_TOTAL_VENDAS"] = df_vis["VALOR_TOTAL_VENDAS"].apply(
                     lambda v: f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 )
 
-                # formata alíquotas em texto amigável (sem mexer no df_total numérico)
-                if "IBS_UF_2026" in df_vis.columns:
-                    for col in ["IBS_UF_2026", "IBS_MUN_2026", "CBS_2026", "ALI
+                # Formata alíquotas como texto (%) para visualização
+                for col in ["IBS_UF_2026", "IBS_MUN_2026", "CBS_2026", "ALIQ_IVA_TOTAL_2026"]:
+                    if col in df_vis.columns:
+                        df_vis[col] = df_vis[col].apply(
+                            lambda v: pct_str(v) if pd.notnull(v) else ""
+                        )
+
+                st.success("Processamento concluído!")
+                st.markdown("---")
+
+                # DOWNLOAD
+                def to_excel(df: pd.DataFrame) -> bytes:
+                    buf = io.BytesIO()
+                    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+                        df.to_excel(w, index=False, sheet_name="RANKING_SAIDAS_2026")
+                    buf.seek(0)
+                    return buf.read()
+
+                st.download_button(
+                    "📥 Baixar Ranking de Saídas 2026 (Excel)",
+                    data=to_excel(df_total),
+                    file_name="PRICETAX_Ranking_Saidas_Sped_2026.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+
+                st.markdown("### Ranking de Saídas – Visão 2026 (IBS/CBS + cClassTrib)")
+                st.dataframe(df_vis, use_container_width=True)
+
+                total_vendas = df_total["VALOR_TOTAL_VENDAS"].sum()
+                total_vendas_fmt = (
+                    f"{total_vendas:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
+
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-soft" style="margin-top:1rem;">
+                        <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">📊 Insight PRICETAX</div>
+                        <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
+                            • Total geral de vendas (saídas CFOP 5/6/7): <b>R$ {total_vendas_fmt}</b><br>
+                            • Arquivos analisados: <b>{total_files}</b><br>
+                            • Ranking consolidado por NCM + Descrição + CFOP, já com visão IBS/CBS 2026 e cClassTrib sugerido.<br>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown("### 🔥 TOP 10 – Distribuição Percentual por NCM (Vendas de Saída)")
+                df_top10 = (
+                    df_total.groupby("NCM")["VALOR_TOTAL_VENDAS"]
+                    .sum()
+                    .sort_values(ascending=False)
+                    .head(10)
+                )
+
+                if not df_top10.empty:
+                    df_top10 = df_top10.reset_index()
+                    df_top10.rename(
+                        columns={"NCM": "NCM", "VALOR_TOTAL_VENDAS": "VALOR_TOTAL_VENDAS"},
+                        inplace=True,
+                    )
+
+                    chart = (
+                        alt.Chart(df_top10)
+                        .mark_arc(innerRadius=60)
+                        .encode(
+                            theta="VALOR_TOTAL_VENDAS:Q",
+                            color="NCM:N",
+                            tooltip=["NCM:N", "VALOR_TOTAL_VENDAS:Q"],
+                        )
+                        .properties(
+                            width=500,
+                            height=400,
+                            title="TOP 10 – Percentual por NCM (Vendas de Saída)",
+                        )
+                    )
+
+                    st.altair_chart(chart, use_container_width=True)
+                else:
+                    st.info("Não há dados suficientes para montar o gráfico TOP 10 por NCM.")
+    else:
+        st.info("Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise.")
