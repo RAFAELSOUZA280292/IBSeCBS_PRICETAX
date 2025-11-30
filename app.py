@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 
 import pandas as pd
 import streamlit as st
-import plotly.express as px
+import altair as alt
 
 # --------------------------------------------------
 # CONFIG GERAL / TEMA PRICETAX
@@ -238,7 +238,7 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
     if len(n) != 8 or df.empty:
         return None
     row = df.loc[df["NCM_DIG"] == n]
-    return None if row.empty else row.iloc[0]
+    return None if row.isnull().all().all() or row.empty else row.iloc[0]
 
 df_tipi = load_tipi_base()
 
@@ -854,7 +854,7 @@ with tabs[1]:
                     unsafe_allow_html=True,
                 )
 
-                # Gráfico TOP 10 – Pizza por NCM
+                # Gráfico TOP 10 – Pizza por NCM (Altair)
                 st.markdown("### 🔥 TOP 10 – Distribuição Percentual por NCM")
 
                 df_top10 = (
@@ -865,13 +865,28 @@ with tabs[1]:
                 )
 
                 if not df_top10.empty:
-                    fig = px.pie(
-                        names=df_top10.index,
-                        values=df_top10.values,
-                        title="TOP 10 – Percentual por NCM (Vendas de Saída)",
-                        hole=0.45,
+                    df_top10 = df_top10.reset_index()
+                    df_top10.rename(
+                        columns={"NCM": "NCM", "VALOR_TOTAL_VENDAS": "VALOR_TOTAL_VENDAS"},
+                        inplace=True,
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+
+                    chart = (
+                        alt.Chart(df_top10)
+                        .mark_arc(innerRadius=60)
+                        .encode(
+                            theta="VALOR_TOTAL_VENDAS:Q",
+                            color="NCM:N",
+                            tooltip=["NCM:N", "VALOR_TOTAL_VENDAS:Q"],
+                        )
+                        .properties(
+                            width=500,
+                            height=400,
+                            title="TOP 10 – Percentual por NCM (Vendas de Saída)",
+                        )
+                    )
+
+                    st.altair_chart(chart, use_container_width=True)
                 else:
                     st.info("Não há dados suficientes para montar o gráfico TOP 10 por NCM.")
     else:
