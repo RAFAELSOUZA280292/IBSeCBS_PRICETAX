@@ -238,7 +238,7 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
 df_tipi = load_tipi_base()
 
 # --------------------------------------------------
-# PARSER SPED PIS/COFINS (BLOCO M) - LÓGICA FUNCIONAL INSERIDA
+# PARSER SPED PIS/COFINS (BLOCO M) - LÓGICA FUNCIONAL
 # --------------------------------------------------
 M200_HEADERS = [
     "Valor Total da Contribuição Não-cumulativa do Período",
@@ -679,9 +679,10 @@ st.markdown(
 tabs = st.tabs([
     "🔍 Consulta NCM → IBS/CBS 2026",
     "📊 Ranking de Produtos (via SPED) – IBS/CBS 2026",
+    "📝 Bloco M (PIS/COFINS) – Auditoria", # Nova aba para o Bloco M
 ])
 
-# Aba de consulta NCM
+# Aba de consulta NCM (Mantida)
 with tabs[0]:
     st.markdown(
         """
@@ -823,7 +824,7 @@ with tabs[0]:
             st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
             st.markdown(f"**Regime especial / motivo adicional:** {reg_extra or '—'}")
 
-# Aba de ranking SPED
+# Aba de ranking SPED (Mantida)
 with tabs[1]:
     st.markdown(
         """
@@ -921,3 +922,88 @@ with tabs[1]:
                 )
     else:
         st.info("Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise.")
+
+# Nova Aba para Bloco M (Corrigida)
+with tabs[2]:
+    st.markdown(
+        """
+        <div class="pricetax-card">
+            <span class="pricetax-badge">Auditoria Bloco M (PIS/COFINS)</span>
+            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+                Faça o upload do seu arquivo SPED PIS/COFINS (.txt) para extrair e visualizar os dados de apuração e detalhamento de receitas e créditos (Blocos M200, M600, M210, M610, M400, M800).
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    uploaded_bloco_m = st.file_uploader(
+        "Selecione o arquivo SPED PIS/COFINS (.txt)",
+        type=["txt"],
+        key="sped_bloco_m_upload",
+    )
+
+    if uploaded_bloco_m is not None:
+        with st.spinner("Analisando arquivo SPED (Bloco M)..."):
+            file_content = uploaded_bloco_m.read()
+            sped_data = parse_sped_bloco_m(file_content)
+
+        if sped_data["m200"] or sped_data["m600"]:
+            st.success(f"Análise do Bloco M concluída para a competência: {sped_data['competencia']}")
+            st.markdown("---")
+
+            # Função para exibir os resultados do Bloco M (simplificada para este contexto)
+            def display_sped_bloco_m_result(data: Dict[str, Any]):
+                st.subheader("Resumo de Apuração (Blocos M200/M600)")
+                col_pis, col_cofins = st.columns(2)
+
+                with col_pis:
+                    st.markdown(f"**PIS (Não-Cumulativo)**")
+                    for k, v in data["m200"].items():
+                        st.markdown(f"- {k}: R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+                with col_cofins:
+                    st.markdown(f"**COFINS (Não-Cumulativo)**")
+                    for k, v in data["m600"].items():
+                        st.markdown(f"- {k}: R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+                st.markdown("---")
+                st.subheader("Detalhamento da Contribuição (Blocos M210/M610)")
+                if data["m210"]:
+                    st.markdown("**PIS (M210)**")
+                    for item in data["m210"]:
+                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {item["vl_rec_bruta"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+                if data["m610"]:
+                    st.markdown("**COFINS (M610)**")
+                    for item in data["m610"]:
+                        st.markdown(f'- [{item["cod_cont"]}] {item["descricao"]} - Receita Bruta: R$ {item["vl_rec_bruta"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+
+                st.markdown("---")
+                st.subheader("Receitas Não-Tributadas (Blocos M400/M800)")
+                if data["m400"]:
+                    st.markdown("**PIS Não-Tributado (M400/M410)**")
+                    for item in data["m400"]:
+                        if "cod_nat_rec" in item:
+                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+                        else:
+                            st.markdown(f'- Total PIS Não-Tributado: R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+                if data["m800"]:
+                    st.markdown("**COFINS Não-Tributado (M800/M810)**")
+                    for item in data["m800"]:
+                        if "cod_nat_rec" in item:
+                            st.markdown(f'- [{item["cod_nat_rec"]}] {item["descricao"]} - Valor: R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+                        else:
+                            st.markdown(f'- Total COFINS Não-Tributado: R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+
+
+            display_sped_bloco_m_result(sped_data)
+        else:
+            st.error("Não foi possível encontrar os registros M200 ou M600 no arquivo SPED. Verifique se o arquivo está correto.")
+
+# --------------------------------------------------
+# FIM DA INTERFACE
+# --------------------------------------------------
+# O restante do código da interface (que não foi alterado) é mantido.
+# As funções parse_sped_saida e processar_speds_vendas (para a aba de Ranking)
+# são mantidas, pois fazem parte da funcionalidade original do seu arquivo.
+# Apenas a lógica do Bloco M foi adicionada/corrigida.
