@@ -150,6 +150,13 @@ def to_float_br(s) -> float:
     except:
         return 0.0
 
+def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
+    for raw in (dt_ini or "", dt_fin or ""):
+        dig = only_digits(raw)
+        if len(dig) == 8:
+            return f"{dig[2:4]}/{dig[4:8]}"
+    return ""
+
 def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [str(c).strip().upper() for c in df.columns]
@@ -229,6 +236,304 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
     return None if row.empty else row.iloc[0]
 
 df_tipi = load_tipi_base()
+
+# --------------------------------------------------
+# PARSER SPED PIS/COFINS (BLOCO M) - LÓGICA FUNCIONAL INSERIDA
+# --------------------------------------------------
+M200_HEADERS = [
+    "Valor Total da Contribuição Não-cumulativa do Período",
+    "Valor do Crédito Descontado, Apurado no Próprio Período da Escrituração",
+    "Valor do Crédito Descontado, Apurado em Período de Apuração Anterior",
+    "Valor Total da Contribuição Não Cumulativa Devida",
+    "Valor Retido na Fonte Deduzido no Período (Não Cumulativo)",
+    "Outras Deduções do Regime Não Cumulativo no Período",
+    "Valor da Contribuição Não Cumulativa a Recolher/Pagar",
+    "Valor Total da Contribuição Cumulativa do Período",
+    "Valor Retido na Fonte Deduzido no Período (Cumulativo)",
+    "Outras Deduções do Regime Cumulativo no Período",
+    "Valor da Contribuição Cumulativa a Recolher/Pagar",
+    "Valor Total da Contribuição a Recolher/Pagar no Período",
+]
+M600_HEADERS = M200_HEADERS[:]
+
+COD_CONT_DESC: Dict[str, str] = {
+    "01": "Contribuição não-cumulativa apurada à alíquota básica",
+    "02": "Contribuição não-cumulativa apurada à alíquota diferenciada/reduzida",
+    "03": "Contribuição não-cumulativa – receitas com alíquota específica",
+    "04": "Contribuição não-cumulativa – receitas sujeitas à alíquota zero",
+    "05": "Contribuição não-cumulativa – receitas não alcançadas (isenção/suspensão)",
+    "06": "Contribuição não-cumulativa – regime monofásico",
+    "07": "Contribuição não-cumulativa – substituição tributária",
+    "08": "Contribuição não-cumulativa – alíquota por unidade de medida",
+    "09": "Contribuição não-cumulativa – outras hipóteses legais",
+    "12": "Contribuição cumulativa – alíquota básica",
+    "13": "Contribuição cumulativa – alíquota diferenciada",
+    "14": "Contribuição cumulativa – alíquota zero",
+    "15": "Contribuição cumulativa – outras hipóteses legais",
+}
+
+NAT_REC_DESC: Dict[str, str] = {
+    "401": "Exportação de mercadorias para o exterior",
+    "405": "Desperdícios, resíduos ou aparas de plástico, papel, vidro e metais",
+    "908": "Vendas de mercadorias destinadas ao consumo",
+    "911": "Receitas financeiras, inclusive variação cambial ativa tributável",
+    "999": "Código genérico – Operações tributáveis à alíquota zero/isenção/suspensão",
+}
+
+NAT_BC_CRED_DESC: Dict[str, str] = {
+    "01": "Aquisição de bens para revenda",
+    "02": "Aquisição de bens e serviços utilizados como insumo",
+    "03": "Energia elétrica e térmica",
+    "04": "Aluguéis de prédios",
+    "05": "Aluguéis de máquinas e equipamentos",
+    "06": "Armazenagem de mercadoria e frete na venda",
+    "07": "Arrendamento mercantil",
+    "08": "Encargos de depreciação e amortização",
+    "09": "Devolução de vendas",
+    "10": "Outras operações com direito a crédito",
+    "11": "Atividade de transporte de cargas",
+    "12": "Atividade imobiliária",
+    "13": "Atividade de construção civil",
+    "14": "Atividade de serviços de saúde",
+    "15": "Atividade de telecomunicações",
+    "16": "Atividade de transporte de passageiros",
+    "17": "Atividade de radiodifusão",
+    "18": "Atividade de serviços de informática",
+    "19": "Atividade de serviços de vigilância e transporte de valores",
+    "20": "Atividade de serviços de limpeza, conservação e manutenção",
+    "21": "Atividade de serviços de agenciamento de publicidade e propaganda",
+    "22": "Atividade de serviços de engenharia e arquitetura",
+    "23": "Atividade de serviços de consultoria e auditoria",
+    "24": "Atividade de serviços de advocacia",
+    "25": "Atividade de serviços de contabilidade",
+    "26": "Atividade de serviços de treinamento e capacitação",
+    "27": "Atividade de serviços de locação de bens móveis",
+    "28": "Atividade de serviços de cessão de mão de obra",
+    "29": "Atividade de serviços de corretagem de seguros",
+    "30": "Atividade de serviços de representação comercial",
+    "31": "Atividade de serviços de intermediação de negócios",
+    "32": "Atividade de serviços de propaganda e publicidade",
+    "33": "Atividade de serviços de assessoria e consultoria técnica",
+    "34": "Atividade de serviços de organização de feiras e eventos",
+    "35": "Atividade de serviços de pesquisa e desenvolvimento",
+    "36": "Atividade de serviços de tratamento de dados",
+    "37": "Atividade de serviços de logística",
+    "38": "Atividade de serviços de armazenagem",
+    "39": "Atividade de serviços de transporte rodoviário de cargas",
+    "40": "Atividade de serviços de transporte ferroviário de cargas",
+    "41": "Atividade de serviços de transporte aquaviário de cargas",
+    "42": "Atividade de serviços de transporte aéreo de cargas",
+    "43": "Atividade de serviços de transporte dutoviário de cargas",
+    "44": "Atividade de serviços de transporte multimodal de cargas",
+    "45": "Atividade de serviços de transporte de valores",
+    "46": "Atividade de serviços de segurança",
+    "47": "Atividade de serviços de vigilância",
+    "48": "Atividade de serviços de limpeza e conservação",
+    "49": "Atividade de serviços de manutenção e reparação",
+    "50": "Atividade de serviços de instalação e montagem",
+    "51": "Atividade de serviços de construção civil",
+    "52": "Atividade de serviços de engenharia",
+    "53": "Atividade de serviços de arquitetura",
+    "54": "Atividade de serviços de agronomia",
+    "55": "Atividade de serviços de geologia",
+    "56": "Atividade de serviços de meteorologia",
+    "57": "Atividade de serviços de oceanografia",
+    "58": "Atividade de serviços de cartografia",
+    "59": "Atividade de serviços de topografia",
+    "60": "Atividade de serviços de aerofotogrametria",
+    "61": "Atividade de serviços de hidrografia",
+    "62": "Atividade de serviços de batimetria",
+    "63": "Atividade de serviços de sismologia",
+    "64": "Atividade de serviços de geofísica",
+    "65": "Atividade de serviços de prospecção",
+    "66": "Atividade de serviços de perfuração",
+    "67": "Atividade de serviços de exploração",
+    "68": "Atividade de serviços de produção",
+    "69": "Atividade de serviços de refino",
+    "70": "Atividade de serviços de distribuição",
+    "71": "Atividade de serviços de comercialização",
+    "72": "Atividade de serviços de importação",
+    "73": "Atividade de serviços de exportação",
+    "74": "Atividade de serviços de armazenagem",
+    "75": "Atividade de serviços de transporte",
+    "76": "Atividade de serviços de comunicação",
+    "77": "Atividade de serviços de informática",
+    "78": "Atividade de serviços de saúde",
+    "79": "Atividade de serviços de educação",
+    "80": "Atividade de serviços de cultura",
+    "81": "Atividade de serviços de esporte",
+    "82": "Atividade de serviços de lazer",
+    "83": "Atividade de serviços de turismo",
+    "84": "Atividade de serviços de hotelaria",
+    "85": "Atividade de serviços de alimentação",
+    "86": "Atividade de serviços de bebidas",
+    "87": "Atividade de serviços de vestuário",
+    "88": "Atividade de serviços de calçados",
+    "89": "Atividade de serviços de joias",
+    "90": "Atividade de serviços de relógios",
+    "91": "Atividade de serviços de cosméticos",
+    "92": "Atividade de serviços de perfumaria",
+    "93": "Atividade de serviços de higiene",
+    "94": "Atividade de serviços de limpeza",
+    "95": "Atividade de serviços de conservação",
+    "96": "Atividade de serviços de manutenção",
+    "97": "Atividade de serviços de reparação",
+    "98": "Atividade de serviços de instalação",
+    "99": "Atividade de serviços de montagem",
+}
+
+
+def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
+    """
+    Analisa o arquivo SPED PIS/COFINS (Bloco M) e extrai informações relevantes.
+    """
+    try:
+        content = file_content.decode("latin-1")
+    except UnicodeDecodeError:
+        content = file_content.decode("utf-8", errors="ignore")
+
+    lines = content.splitlines()
+    data = {
+        "competencia": "",
+        "m200": {},
+        "m600": {},
+        "m210": [],
+        "m610": [],
+        "m400": [],
+        "m800": [],
+    }
+
+    # 0. Busca a competência (Bloco 0000)
+    for line in lines:
+        if line.startswith("|0000|"):
+            parts = line.split("|")
+            if len(parts) >= 6:
+                data["competencia"] = competencia_from_dt(parts[4], parts[5])
+            break
+
+    # 1. Busca M200 (PIS Não-Cumulativo)
+    for line in lines:
+        if line.startswith("|M200|"):
+            parts = line.split("|")
+            if len(parts) >= 14:
+                for i, header in enumerate(M200_HEADERS):
+                    data["m200"][header] = to_float_br(parts[i + 2])
+            break
+
+    # 2. Busca M600 (COFINS Não-Cumulativo)
+    for line in lines:
+        if line.startswith("|M600|"):
+            parts = line.split("|")
+            if len(parts) >= 14:
+                for i, header in enumerate(M600_HEADERS):
+                    data["m600"][header] = to_float_br(parts[i + 2])
+            break
+
+    # 3. Busca M210 (Detalhamento PIS Não-Cumulativo)
+    for line in lines:
+        if line.startswith("|M210|"):
+            parts = line.split("|")
+            if len(parts) >= 10:
+                cod_cont = parts[2]
+                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
+                data["m210"].append(
+                    {
+                        "cod_cont": cod_cont,
+                        "descricao": desc,
+                        "vl_rec_bruta": to_float_br(parts[3]),
+                        "vl_bc_cont": to_float_br(parts[4]),
+                        "aliq_pis": to_float_br(parts[5]),
+                        "vl_cont": to_float_br(parts[6]),
+                        "cod_rec": parts[7],
+                        "vl_ajus_ac": to_float_br(parts[8]),
+                        "vl_ajus_red": to_float_br(parts[9]),
+                    }
+                )
+
+    # 4. Busca M610 (Detalhamento COFINS Não-Cumulativo)
+    for line in lines:
+        if line.startswith("|M610|"):
+            parts = line.split("|")
+            if len(parts) >= 10:
+                cod_cont = parts[2]
+                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
+                data["m610"].append(
+                    {
+                        "cod_cont": cod_cont,
+                        "descricao": desc,
+                        "vl_rec_bruta": to_float_br(parts[3]),
+                        "vl_bc_cont": to_float_br(parts[4]),
+                        "aliq_cofins": to_float_br(parts[5]),
+                        "vl_cont": to_float_br(parts[6]),
+                        "cod_rec": parts[7],
+                        "vl_ajus_ac": to_float_br(parts[8]),
+                        "vl_ajus_red": to_float_br(parts[9]),
+                    }
+                )
+
+    # 5. Busca M400 (Receitas Não-Tributadas PIS)
+    for line in lines:
+        if line.startswith("|M400|"):
+            parts = line.split("|")
+            if len(parts) >= 4:
+                data["m400"].append(
+                    {
+                        "vl_rec_nao_trib": to_float_br(parts[2]),
+                        "vl_rec_cum": to_float_br(parts[3]),
+                    }
+                )
+
+    # 6. Busca M800 (Receitas Não-Tributadas COFINS)
+    for line in lines:
+        if line.startswith("|M800|"):
+            parts = line.split("|")
+            if len(parts) >= 4:
+                data["m800"].append(
+                    {
+                        "vl_rec_nao_trib": to_float_br(parts[2]),
+                        "vl_rec_cum": to_float_br(parts[3]),
+                    }
+                )
+
+    # 7. Busca M410 (Detalhamento Receitas Não-Tributadas PIS)
+    for line in lines:
+        if line.startswith("|M410|"):
+            parts = line.split("|")
+            if len(parts) >= 6:
+                cod_nat_rec = parts[2]
+                desc = NAT_REC_DESC.get(
+                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
+                )
+                data["m400"].append(
+                    {
+                        "cod_nat_rec": cod_nat_rec,
+                        "descricao": desc,
+                        "vl_rec_nao_trib": to_float_br(parts[3]),
+                        "cod_cta": parts[4],
+                        "desc_compl": parts[5],
+                    }
+                )
+
+    # 8. Busca M810 (Detalhamento Receitas Não-Tributadas COFINS)
+    for line in lines:
+        if line.startswith("|M810|"):
+            parts = line.split("|")
+            if len(parts) >= 6:
+                cod_nat_rec = parts[2]
+                desc = NAT_REC_DESC.get(
+                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
+                )
+                data["m800"].append(
+                    {
+                        "cod_nat_rec": cod_nat_rec,
+                        "descricao": desc,
+                        "vl_rec_nao_trib": to_float_br(parts[3]),
+                        "cod_cta": parts[4],
+                        "desc_compl": parts[5],
+                    }
+                )
+
+    return data
 
 # --------------------------------------------------
 # PARSER SPED – EXTRAI TODAS AS NOTAS E FILTRA ITENS DE SAÍDA POR CFOP
