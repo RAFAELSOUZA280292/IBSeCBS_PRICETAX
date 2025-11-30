@@ -4,7 +4,7 @@ import zipfile
 from pathlib import Path
 from typing import Optional, Dict, Any
 from collections import defaultdict
-import csv  # não usado diretamente, mas mantido conforme seu código
+import csv  # mantido, caso queira usar depois
 
 import pandas as pd
 import streamlit as st
@@ -241,41 +241,32 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
 df_tipi = load_tipi_base()
 
 # --------------------------------------------------
-# PYTHON DO RANKING SPED (QUE VOCÊ MANDOU)
+# PYTHON DO RANKING SPED (AGORA RETORNA DATAFRAME)
 # --------------------------------------------------
-def process_sped_file(file_content):
+def process_sped_file(file_content: str) -> pd.DataFrame:
     """
-    Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas.
-    Espera o conteúdo do arquivo como uma string.
+    Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas de saída.
+    Retorna um DataFrame com colunas:
+    NCM, DESCRICAO, CFOP, VALOR_TOTAL_VENDAS
     """
     produtos = {}  # {COD_ITEM: {'NCM': NCM, 'DESCR_ITEM': DESCR_ITEM}}
     documentos = {}  # {CHAVE_DOC: {'IND_OPER': '1'}}
     itens_venda = []  # Lista de itens de venda válidos
 
-    # Expressão regular para CFOPs de saída (5.xxx, 6.xxx, 7.xxx)
     cfop_saida_pattern = re.compile(r'^[567]\d{3}$')
-
-    # Variáveis de controle para o Bloco C (Documentos Fiscais)
     current_doc_key = None
     
     try:
-        # Usar io.StringIO para tratar o conteúdo como um arquivo
         file_stream = io.StringIO(file_content)
         
         for line in file_stream:
-            # O SPED usa o pipe '|' como delimitador
             fields = line.strip().split('|')
-            
-            # O primeiro campo é sempre vazio, o segundo é o registro
             if not fields or len(fields) < 2:
                 continue
 
             registro = fields[1]
 
             if registro == '0200':
-                # Registro 0200: Cadastro de Itens
-                # |0200|COD_ITEM|DESCR_ITEM|COD_BARRA|COD_ANT_ITEM|UNID_INV|TIPO_ITEM|COD_NCM|EX_IPI|COD_GEN|COD_LST|ALIQ_ICMS|CEST|
-                # Índices: 2=COD_ITEM, 3=DESCR_ITEM, 8=COD_NCM
                 if len(fields) >= 9:
                     cod_item = fields[2]
                     descr_item = fields[3]
@@ -283,45 +274,38 @@ def process_sped_file(file_content):
                     produtos[cod_item] = {'NCM': cod_ncm, 'DESCR_ITEM': descr_item}
 
             elif registro == 'C100':
-                # Registro C100: Dados do Documento Fiscal
                 # |C100|IND_OPER|IND_EMIT|COD_PART|COD_MOD|COD_SIT|SER|NUM_DOC|CHV_NFE|DT_DOC|DT_E_S|VL_DOC|...
-                # Índices: 2=IND_OPER, 6=SER, 7=NUM_DOC, 9=CHV_NFE
-                ind_oper = fields[2]
-                if ind_oper == '1': # Operação de Saída
+                ind_oper = fields[2] if len(fields) > 2 else ""
+                if ind_oper == '1':  # Operação de Saída
                     chv_nfe = fields[9] if len(fields) > 9 else ''
                     ser = fields[6] if len(fields) > 6 else ''
                     num_doc = fields[7] if len(fields) > 7 else ''
                     
-                    # Cria uma chave única para o documento
                     if chv_nfe:
                         current_doc_key = chv_nfe
                     elif ser and num_doc:
                         current_doc_key = f"{ser}-{num_doc}"
                     else:
-                        current_doc_key = None # Documento inválido
+                        current_doc_key = None
                     
                     if current_doc_key:
                         documentos[current_doc_key] = {'IND_OPER': ind_oper}
                 else:
-                    current_doc_key = None # Não processar documentos de entrada
+                    current_doc_key = None  # Não processar documentos de entrada
 
             elif registro == 'C170' and current_doc_key and documentos.get(current_doc_key, {}).get('IND_OPER') == '1':
-                # Registro C170: Itens do Documento Fiscal
                 # |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|IND_MOV|CST_ICMS|CFOP|COD_NAT|...
-                # Índices: 3=COD_ITEM, 7=VL_ITEM, 11=CFOP
                 if len(fields) >= 12:
                     cod_item = fields[3]
-                    vl_item_str = fields[7].replace(',', '.') # Valor total do item
+                    vl_item_str = fields[7].replace(',', '.')  # Valor total do item
                     cfop = fields[11]
 
                     try:
                         vl_item = float(vl_item_str)
                     except ValueError:
-                        # Ignora itens com valor inválido (ex: 'CX')
                         continue
 
                     if cfop_saida_pattern.match(cfop):
-                        # Item de venda válido (CFOP 5.xxx, 6.xxx ou 7.xxx)
                         itens_venda.append({
                             'COD_ITEM': cod_item,
                             'VL_ITEM': vl_item,
@@ -329,14 +313,14 @@ def process_sped_file(file_content):
                             'DOC_KEY': current_doc_key
                         })
             
-            # Resetar a chave do documento ao sair do bloco C100/C170 (não estritamente necessário, mas boa prática)
             elif registro in ('C190', 'C300', 'D100', 'E100'):
                 current_doc_key = None
 
-    except Exception as e:
-        return f"Erro ao processar o arquivo: {e}"
+    except Exception:
+        # Em caso de erro geral, retorna DF vazio
+        return pd.DataFrame(columns=["NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS"])
 
-    # 2. Agregação e Geração do Relatório
+    # 2. Agregação e Geração do Ranking
     ranking_vendas = defaultdict(lambda: {'NCM': '', 'DESCR_ITEM': '', 'CFOP': '', 'TOTAL_VENDAS': 0.0})
 
     for item in itens_venda:
@@ -349,8 +333,6 @@ def process_sped_file(file_content):
         if produto_info:
             ncm = produto_info['NCM']
             descr_item = produto_info['DESCR_ITEM']
-            
-            # A chave do ranking é a combinação NCM, Descrição e CFOP
             chave_ranking = (ncm, descr_item, cfop)
             
             ranking_vendas[chave_ranking]['NCM'] = ncm
@@ -358,33 +340,21 @@ def process_sped_file(file_content):
             ranking_vendas[chave_ranking]['CFOP'] = cfop
             ranking_vendas[chave_ranking]['TOTAL_VENDAS'] += vl_item
 
-    # 3. Formatação e Ordenação
     relatorio = []
-    for chave, dados in ranking_vendas.items():
+    for _, dados in ranking_vendas.items():
         relatorio.append({
             'NCM': dados['NCM'],
             'DESCRICAO': dados['DESCR_ITEM'],
+            'CFOP': dados['CFOP'],
             'VALOR_TOTAL_VENDAS': dados['TOTAL_VENDAS'],
-            'CFOP': dados['CFOP']
         })
 
-    # Ordenar por VALOR_TOTAL_VENDAS decrescente
-    relatorio_ordenado = sorted(relatorio, key=lambda x: x['VALOR_TOTAL_VENDAS'], reverse=True)
+    if not relatorio:
+        return pd.DataFrame(columns=["NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS"])
 
-    # 4. Formatação para Markdown
-    if not relatorio_ordenado:
-        return "## Relatório de Ranking de Saídas\n\nNenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada ou os dados necessários estavam incompletos."
-    
-    content = "## Relatório de Ranking de Saídas (Total de Vendas)\n\n"
-    content += "| NCM | Descrição do Item | CFOP | Valor Total de Vendas (R$) |\n"
-    content += "| :--- | :--- | :--- | ---: |\n"
-    
-    for item in relatorio_ordenado:
-        # Formatação do valor para o padrão brasileiro (milhares com ponto, decimais com vírgula)
-        valor_formatado = f"{item['VALOR_TOTAL_VENDAS']:,.2f}".replace('.', '#').replace(',', '.').replace('#', ',')
-        content += f"| {item['NCM']} | {item['DESCRICAO']} | {item['CFOP']} | {valor_formatado} |\n"
-        
-    return content
+    df = pd.DataFrame(relatorio)
+    df = df.sort_values("VALOR_TOTAL_VENDAS", ascending=False).reset_index(drop=True)
+    return df
 
 # --------------------------------------------------
 # PARSER BLOCO M (MANTIDO)
@@ -449,7 +419,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
         "m800": [],
     }
 
-    # 0. Busca a competência (Bloco 0000)
     for line in lines:
         if line.startswith("|0000|"):
             parts = line.split("|")
@@ -457,7 +426,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                 data["competencia"] = competencia_from_dt(parts[4], parts[5])
             break
 
-    # 1. Busca M200 (PIS Não-Cumulativo)
     for line in lines:
         if line.startswith("|M200|"):
             parts = line.split("|")
@@ -466,7 +434,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     data["m200"][header] = to_float_br(parts[i + 2])
             break
 
-    # 2. Busca M600 (COFINS Não-Cumulativo)
     for line in lines:
         if line.startswith("|M600|"):
             parts = line.split("|")
@@ -475,7 +442,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     data["m600"][header] = to_float_br(parts[i + 2])
             break
 
-    # 3. Busca M210 (Detalhamento PIS Não-Cumulativo)
     for line in lines:
         if line.startswith("|M210|"):
             parts = line.split("|")
@@ -496,7 +462,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     }
                 )
 
-    # 4. Busca M610 (Detalhamento COFINS Não-Cumulativo)
     for line in lines:
         if line.startswith("|M610|"):
             parts = line.split("|")
@@ -517,7 +482,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     }
                 )
 
-    # 5. Busca M400 (Receitas Não-Tributadas PIS)
     for line in lines:
         if line.startswith("|M400|"):
             parts = line.split("|")
@@ -529,7 +493,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     }
                 )
 
-    # 6. Busca M800 (Receitas Não-Tributadas COFINS)
     for line in lines:
         if line.startswith("|M800|"):
             parts = line.split("|")
@@ -541,7 +504,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     }
                 )
 
-    # 7. Busca M410 (Detalhamento Receitas Não-Tributadas PIS)
     for line in lines:
         if line.startswith("|M410|"):
             parts = line.split("|")
@@ -560,7 +522,6 @@ def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
                     }
                 )
 
-    # 8. Busca M810 (Detalhamento Receitas Não-Tributadas COFINS)
     for line in lines:
         if line.startswith("|M810|"):
             parts = line.split("|")
@@ -639,7 +600,6 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
         else:
-            # Campos principais
             ncm_fmt = row["NCM_DIG"]
             desc    = row["NCM_DESCRICAO"]
             regime   = row["REGIME_IVA_2026_FINAL"]
@@ -655,7 +615,6 @@ with tabs[0]:
             total_iva = ibs_uf + ibs_mun + cbs
             cst_ibscbs = row.get("CST_IBSCBS", "")
 
-            # CARD PRINCIPAL
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:1rem;">
@@ -673,7 +632,6 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
-            # Métricas
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:1rem;display:flex;gap:2rem;">
@@ -694,7 +652,6 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
-            # Parâmetros
             st.subheader("Parâmetros de classificação", divider="gray")
             c1, c2, c3, c4 = st.columns(4)
             with c1:
@@ -737,9 +694,7 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
 
-            # Observações e base legal
             st.markdown("---")
-            # Limpa textos "nan"
             def clean_txt(v):
                 s = str(v or "").strip()
                 return "" if s.lower() == "nan" else s
@@ -749,7 +704,6 @@ with tabs[0]:
             obs_dest   = clean_txt(row.get("OBS_DESTINACAO"))
             reg_extra  = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
 
-            # Ajustes padrão para RED_60
             if "RED_60" in (regime or "").upper():
                 if not alerta_fmt:
                     alerta_fmt = "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
@@ -766,7 +720,7 @@ with tabs[0]:
             st.markdown(f"**Regime especial / motivo adicional:** {reg_extra or '—'}")
 
 # --------------------------------------------------
-# ABA 2 – RANKING DE PRODUTOS (SPED)
+# ABA 2 – RANKING DE PRODUTOS (SPED) – PLANILHA + DOWNLOAD
 # --------------------------------------------------
 with tabs[1]:
     st.markdown(
@@ -780,7 +734,7 @@ with tabs[1]:
                 • Considerar apenas notas de saída (IND_OPER = 1)<br>
                 • Filtrar CFOPs de saída (5.xxx, 6.xxx, 7.xxx)<br>
                 • Consolidar vendas por NCM, Descrição do Item e CFOP<br>
-                • Gerar um ranking em formato de tabela.
+                • Gerar um ranking em formato de planilha, com opção de download.
             </div>
         </div>
         """,
@@ -796,12 +750,17 @@ with tabs[1]:
 
     if uploaded_rank:
         if st.button("Processar SPED e Gerar Ranking", type="primary"):
-            relatorios = []
+            df_list = []
+            total_files = len(uploaded_rank)
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
             with st.spinner("Processando arquivos SPED..."):
-                for up in uploaded_rank:
+                for idx, up in enumerate(uploaded_rank, start=1):
                     nome = up.name
+                    status_text.markdown(f"**Processando arquivo {idx}/{total_files}:** `{nome}`")
+
                     if nome.lower().endswith(".zip"):
-                        # Processa cada .txt dentro do ZIP
                         z_bytes = up.read()
                         with zipfile.ZipFile(io.BytesIO(z_bytes), "r") as z:
                             for info in z.infolist():
@@ -811,25 +770,69 @@ with tabs[1]:
                                         texto = conteudo.decode("latin-1")
                                     except UnicodeDecodeError:
                                         texto = conteudo.decode("utf-8", errors="ignore")
-                                    md = process_sped_file(texto)
-                                    relatorios.append(f"### Arquivo: {info.filename}\n\n" + md)
+                                    df_rank = process_sped_file(texto)
+                                    if not df_rank.empty:
+                                        df_rank.insert(0, "ARQUIVO", info.filename)
+                                        df_list.append(df_rank)
                     else:
                         conteudo = up.read()
                         try:
                             texto = conteudo.decode("latin-1")
                         except UnicodeDecodeError:
                             texto = conteudo.decode("utf-8", errors="ignore")
-                        md = process_sped_file(texto)
-                        relatorios.append(f"### Arquivo: {nome}\n\n" + md)
+                        df_rank = process_sped_file(texto)
+                        if not df_rank.empty:
+                            df_rank.insert(0, "ARQUIVO", nome)
+                            df_list.append(df_rank)
 
-            if not relatorios:
-                st.error("Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada.")
+                    progress_bar.progress(idx / total_files)
+
+            status_text.empty()
+            progress_bar.empty()
+
+            if not df_list:
+                st.error("Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada nos arquivos enviados.")
             else:
+                df_total = pd.concat(df_list, ignore_index=True)
+                df_total = df_total.sort_values("VALOR_TOTAL_VENDAS", ascending=False).reset_index(drop=True)
+
                 st.success("Processamento concluído!")
                 st.markdown("---")
-                for rep in relatorios:
-                    st.markdown(rep)
-                    st.markdown("---")
+
+                def to_excel(df: pd.DataFrame) -> bytes:
+                    buf = io.BytesIO()
+                    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+                        df.to_excel(w, index=False, sheet_name="RANKING_SAIDAS")
+                    buf.seek(0)
+                    return buf.read()
+
+                st.download_button(
+                    "📥 Baixar Ranking de Saídas (Excel)",
+                    data=to_excel(df_total),
+                    file_name="PRICETAX_Ranking_Saidas_Sped.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+
+                st.markdown("### Ranking de Saídas – Top 50")
+                st.dataframe(
+                    df_total.head(50),
+                    use_container_width=True,
+                )
+
+                total_vendas = df_total["VALOR_TOTAL_VENDAS"].sum()
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-soft" style="margin-top:1rem;">
+                        <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">📊 Insight PRICETAX</div>
+                        <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
+                            • Total geral de vendas (saídas CFOP 5/6/7): <b>R$ {total_vendas:,.2f}</b><br>
+                            • Arquivos analisados: <b>{total_files}</b><br>
+                            • Ranking consolidado por NCM + Descrição + CFOP.<br>
+                        </div>
+                    </div>
+                    """.replace(",", "X").replace(".", ",").replace("X", "."),
+                    unsafe_allow_html=True,
+                )
     else:
         st.info("Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise.")
 
