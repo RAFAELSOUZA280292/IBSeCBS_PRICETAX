@@ -33,22 +33,26 @@ st.markdown(
 
     /* Layout geral */
     .block-container {{
-        padding-top: 1.5rem;
+        padding-top: 3.5rem;   /* mais respiro para não "comer" o cabeçalho */
         padding-bottom: 2rem;
         max-width: 1200px;
     }}
 
     /* Títulos */
     .pricetax-title {{
-        font-size: 2.3rem;
+        font-size: 2.1rem;
         font-weight: 700;
         color: {PRIMARY_YELLOW};
         letter-spacing: 0.04em;
+        line-height: 1.15;
+        margin-bottom: 0.2rem;
     }}
     .pricetax-subtitle {{
-        font-size: 0.95rem;
+        font-size: 0.96rem;
         color: #CFCFCF;
-        margin-top: 0.2rem;
+        margin-top: 0.15rem;
+        margin-bottom: 0.8rem;
+        max-width: 1000px;
     }}
 
     /* Cards */
@@ -228,9 +232,12 @@ def label_from_sped_header(text: str, default_name: str) -> str:
         for line in text.splitlines():
             if line.startswith("|0000|"):
                 parts = line.split("|")
-                dt_ini = parts[4] if len(parts) > 4 else ""
-                dt_fin = parts[5] if len(parts) > 5 else ""
-                nome = parts[6] if len(parts) > 6 else ""
+                # Layout EFD Contribuições:
+                # |0000|COD_VER|TIPO_ESCRIT|IND_SIT_ESP|NUM_REC_ANTERIOR|
+                # DT_INI|DT_FIN|NOME|CNPJ|UF|COD_MUN|SUFRAMA|IND_NAT_PJ|IND_ATIV|
+                dt_ini = parts[6] if len(parts) > 6 else ""
+                dt_fin = parts[7] if len(parts) > 7 else ""
+                nome = parts[8] if len(parts) > 8 else ""
                 comp = competencia_from_dt(dt_ini, dt_fin)
                 nome_clean = nome.strip() or default_name
                 if comp:
@@ -548,8 +555,8 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                 ind_oper = fields[2] if len(fields) > 2 else ""
                 if ind_oper == "1":  # Saída
                     chv_nfe = fields[9] if len(fields) > 9 else ""
-                    ser = fields[6] if len(fields) > 6 else ""
-                    num_doc = fields[7] if len(fields) > 7 else ""
+                    ser = fields[7] if len(fields) > 7 else ""      # ajuste índice
+                    num_doc = fields[8] if len(fields) > 8 else ""  # ajuste índice
 
                     if chv_nfe:
                         current_doc_key = chv_nfe
@@ -897,7 +904,7 @@ with tabs[0]:
 
             st.markdown(f"**Base legal considerada (TIPI/PRICETAX):** {fonte or '—'}")
             st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
-            st.markmarkdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
+            st.markdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
             st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
             st.markdown(
                 f"**Regime especial / observações adicionais:** {reg_extra or '—'}"
