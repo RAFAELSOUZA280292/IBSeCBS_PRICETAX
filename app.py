@@ -20,7 +20,7 @@ st.set_page_config(
 
 PRIMARY_YELLOW = "#FFC300"
 PRIMARY_BLACK = "#050608"
-PRIMARY_CYAN = "#007BFF"  # azul "normal"
+PRIMARY_CYAN = "#007BFF"  # azul normal
 
 st.markdown(
     f"""
@@ -30,16 +30,27 @@ st.markdown(
         color: #F5F5F5;
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }}
+
+    /* Layout geral */
+    .block-container {{
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }}
+
     /* Títulos */
     .pricetax-title {{
-        font-size: 2.2rem;
+        font-size: 2.3rem;
         font-weight: 700;
         color: {PRIMARY_YELLOW};
+        letter-spacing: 0.04em;
     }}
     .pricetax-subtitle {{
-        font-size: 0.98rem;
-        color: #E0E0E0;
+        font-size: 0.95rem;
+        color: #CFCFCF;
+        margin-top: 0.2rem;
     }}
+
     /* Cards */
     .pricetax-card {{
         border-radius: 0.9rem;
@@ -59,17 +70,18 @@ st.markdown(
         background: #2b1a1a;
         border: 1px solid #ff5656;
     }}
+
     /* Badges e chips */
     .pricetax-badge {{
         display: inline-block;
-        padding: 0.2rem 0.7rem;
+        padding: 0.18rem 0.7rem;
         border-radius: 999px;
         background: {PRIMARY_YELLOW};
         color: {PRIMARY_BLACK};
         font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.08em;
     }}
     .pill {{
         display: inline-flex;
@@ -85,12 +97,13 @@ st.markdown(
     }}
     .pill-regime {{
         border-color: {PRIMARY_CYAN};
-        background: rgba(0,123,255,0.1);
+        background: rgba(0,123,255,0.12);
         color: #E5F0FF;
     }}
     .pill-tag {{
         background: rgba(0,0,0,0.4);
     }}
+
     /* Métricas */
     .pricetax-metric-label {{
         font-size: 0.78rem;
@@ -98,14 +111,20 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }}
+
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
         border-bottom: 1px solid #333333;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        padding-top: 0.6rem;
+        padding-bottom: 0.4rem;
     }}
     .stTabs [aria-selected="true"] p {{
         color: {PRIMARY_YELLOW} !important;
         font-weight: 600;
     }}
+
     /* Inputs */
     .stTextInput > div > div > input {{
         background-color: #111318;
@@ -116,13 +135,15 @@ st.markdown(
     .stFileUploader > label div {{
         color: #DDDDDD;
     }}
-    /* Botão primário - azul normal */
+
+    /* Botão primário - azul */
     .stButton>button[kind="primary"] {{
         background-color: {PRIMARY_CYAN};
         color: #ffffff;
         border-radius: 0.6rem;
         border: 1px solid {PRIMARY_CYAN};
         font-weight: 600;
+        padding: 0.4rem 1.5rem;
     }}
     .stButton>button[kind="primary"]:hover {{
         background-color: #0069d9;
@@ -328,7 +349,7 @@ def build_cclasstrib_code_index(df_class_: pd.DataFrame) -> Dict[str, Dict[str, 
             (g["Tributação Regular"].astype(str).str.lower() == "sim")
             & (g["Redução de Alíquota"].astype(str).str.lower() == "não")
             & (g["Transferência de Crédito"].astype(str).str.lower() == "não")
-            & (g["Diferimento"].astype(str).str.lower() == "não")
+            & (g["DIFERIMENTO"].astype(str).str.lower() == "não")
         )
         g_reg = g[mask_reg]
         if not g_reg.empty:
@@ -590,7 +611,7 @@ st.markdown(
     """
     <div class="pricetax-title">PRICETAX • IBS/CBS 2026 & Ranking SPED</div>
     <div class="pricetax-subtitle">
-        Consulte o NCM do seu produto e gere o ranking de saídas pelo SPED PIS/COFINS com visão IBS/CBS + cClassTrib para 2026.
+        Ferramenta de apoio para parametrização do XML NFe com base no NCM, CFOP e nas regras IBS/CBS 2026, além de ranking de saídas a partir do SPED PIS/COFINS.
     </div>
     """,
     unsafe_allow_html=True,
@@ -610,13 +631,14 @@ with tabs[0]:
     st.markdown(
         """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Consulta de produtos</span>
+            <span class="pricetax-badge">Consulta por NCM</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Informe o NCM e o CFOP da operação de venda. Vamos retornar:
+                Use este painel como referência para parametrizar o item no ERP e no XML:
                 <br><br>
-                • Regime de IVA e alíquotas IBS/CBS simuladas para 2026;<br>
-                • cClassTrib sugerido para NFe (venda padrão) com base no CFOP;<br>
-                • Campos necessários para parametrização do XML (pIBS, pCBS, cClassTrib).
+                • Informe o <b>NCM</b> do produto e o <b>CFOP de venda</b> atualmente utilizado;<br>
+                • A ferramenta retorna o regime de IVA, as alíquotas IBS/CBS simuladas para 2026;<br>
+                • Sugere o <b>cClassTrib</b> padrão para NFe, a partir do CFOP informado;<br>
+                • Expõe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib).
             </div>
         </div>
         """,
@@ -625,18 +647,20 @@ with tabs[0]:
     col1, col2, col3 = st.columns([3, 1.4, 1])
     with col1:
         ncm_input = st.text_input(
-            "Informe o NCM (com ou sem pontos)",
+            "NCM do produto",
             placeholder="Ex.: 16023220 ou 16.02.32.20",
+            help="Informe o NCM completo (8 dígitos), com ou sem pontos.",
         )
     with col2:
         cfop_input = st.text_input(
-            "CFOP atual da venda (4 dígitos)",
+            "CFOP da venda (atual)",
             placeholder="Ex.: 5102",
             max_chars=4,
+            help="CFOP utilizado hoje na venda do produto (quatro dígitos).",
         )
     with col3:
         st.write("")
-        consultar = st.button("Consultar", type="primary")
+        consultar = st.button("Consultar parâmetros", type="primary")
 
     if consultar and ncm_input.strip():
         row = buscar_ncm(df_tipi, ncm_input)
@@ -645,8 +669,8 @@ with tabs[0]:
             st.markdown(
                 f"""
                 <div class="pricetax-card-erro" style="margin-top:0.8rem;">
-                    NCM: <b>{ncm_input}</b><br>
-                    Não encontramos esse NCM na base PRICETAX. Verifique o código informado.
+                    NCM informado: <b>{ncm_input}</b><br>
+                    Não localizamos esse NCM na base PRICETAX. Revise o código ou a planilha de referência.
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -673,37 +697,39 @@ with tabs[0]:
             )
             class_info = get_class_info_by_code(cclastrib_code)
 
+            # Header do produto
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:1rem;">
-                    <div style="font-size:1.1rem;font-weight:600;color:{PRIMARY_YELLOW};">
+                    <div style="font-size:1.05rem;font-weight:600;color:{PRIMARY_YELLOW};">
                         NCM {ncm_fmt} – {desc}
                     </div>
-                    <div style="margin-top:0.5rem;">
+                    <div style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
                         <span class="pill pill-regime">{regime_label(regime)}</span>
-                        &nbsp; <span class="pill pill-tag">Cesta Básica: {badge_flag(flag_cesta)}</span>
-                        &nbsp; <span class="pill pill-tag">Hortifrúti/Ovos: {badge_flag(flag_hf)}</span>
-                        &nbsp; <span class="pill pill-tag">Redução 60%: {badge_flag(flag_red)}</span>
+                        <span class="pill pill-tag">Cesta Básica: {badge_flag(flag_cesta)}</span>
+                        <span class="pill pill-tag">Hortifrúti/Ovos: {badge_flag(flag_hf)}</span>
+                        <span class="pill pill-tag">Redução 60%: {badge_flag(flag_red)}</span>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
+            # Métricas de alíquotas
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:1rem;display:flex;gap:2rem;flex-wrap:wrap;">
                     <div>
-                        <div class="pricetax-metric-label">IBS 2026 (UF+Mun)</div>
-                        <div style="font-size:2.4rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_uf + ibs_mun)}</div>
+                        <div class="pricetax-metric-label">IBS 2026 (UF + Município)</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_uf + ibs_mun)}</div>
                     </div>
                     <div>
                         <div class="pricetax-metric-label">CBS 2026</div>
-                        <div style="font-size:2.4rem;color:{PRIMARY_YELLOW};">{pct_str(cbs)}</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs)}</div>
                     </div>
                     <div>
-                        <div class="pricetax-metric-label">TOTAL IVA 2026</div>
-                        <div style="font-size:2.4rem;color:{PRIMARY_YELLOW};">{pct_str(total_iva)}</div>
+                        <div class="pricetax-metric-label">Carga Total IVA 2026</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(total_iva)}</div>
                     </div>
                 </div>
                 """,
@@ -769,7 +795,7 @@ with tabs[0]:
                         unsafe_allow_html=True,
                     )
 
-                st.markdown("**Tipo de Alíquota (cClassTrib)**")
+                st.markdown("**Tipo de alíquota (cClassTrib)**")
                 tipo_aliq = class_info["TIPO_ALIQUOTA"] if class_info else "—"
                 st.markdown(tipo_aliq)
 
@@ -781,11 +807,11 @@ with tabs[0]:
                     unsafe_allow_html=True,
                 )
                 if class_info:
-                    st.markdown("**Flags do cenário**")
+                    st.markdown("**Cenário da classificação**")
                     st.markdown(
                         "- Tributação Regular: **{}**  \n"
                         "- Redução de Alíquota: **{}**  \n"
-                        "- Transf. Crédito: **{}**  \n"
+                        "- Transferência de Crédito: **{}**  \n"
                         "- Diferimento: **{}**  \n"
                         "- Monofásica: **{}**".format(
                             class_info.get("TRIB_REG") or "—",
@@ -796,7 +822,7 @@ with tabs[0]:
                         )
                     )
 
-            st.markdown("**Alíquotas para parametrização XML (pIBS / pCBS)**")
+            st.markdown("**Alíquotas para parametrização no XML (pIBS / pCBS)**")
             st.markdown(
                 f"- pIBS (UF): **{pct_str(ibs_uf)}**  \n"
                 f"- pIBS (Município): **{pct_str(ibs_mun)}**  \n"
@@ -807,7 +833,7 @@ with tabs[0]:
             # Mensagem explicando a regra aplicada
             if cfop_input:
                 st.markdown(
-                    f"**Regra cClassTrib (CFOP {cfop_input.strip()}):** {cclastrib_msg}"
+                    f"**Regra sugerida para cClassTrib (CFOP {cfop_input.strip()}):** {cclastrib_msg}"
                 )
             else:
                 st.markdown(
@@ -836,12 +862,12 @@ with tabs[0]:
                         "Carga reduzida em 60% conforme regras de essencialidade/alimentos."
                     )
 
-            st.markdown(f"**Base legal aplicada (TIPI/PRICETAX):** {fonte or '—'}")
+            st.markdown(f"**Base legal considerada (TIPI/PRICETAX):** {fonte or '—'}")
             st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
             st.markdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
             st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
             st.markdown(
-                f"**Regime especial / motivo adicional:** {reg_extra or '—'}"
+                f"**Regime especial / observações adicionais:** {reg_extra or '—'}"
             )
 
 # --------------------------------------------------
@@ -851,16 +877,17 @@ with tabs[1]:
     st.markdown(
         """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Análise de Vendas (Saídas SPED)</span>
+            <span class="pricetax-badge">Ranking de vendas – SPED PIS/COFINS</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Faça upload de arquivos SPED PIS/COFINS (.txt ou .zip). O sistema irá:
+                Utilize este painel para identificar os itens mais relevantes na receita e preparar a base
+                para IBS/CBS 2026:
                 <br><br>
-                • Ler o Bloco C (C100/C170);<br>
-                • Considerar apenas notas de saída (IND_OPER = 1);<br>
-                • Filtrar CFOPs de saída (5.xxx, 6.xxx, 7.xxx);<br>
-                • Consolidar vendas por NCM, Descrição do Item e CFOP;<br>
-                • Cruzar com a TIPI IBS/CBS 2026 e sugerir cClassTrib a partir do CFOP;<br>
-                • Gerar um ranking total com os principais campos para parametrizar o XML em 2026.
+                • Importa arquivos SPED PIS/COFINS (<b>.txt</b> ou <b>.zip</b>);<br>
+                • Lê o Bloco C (C100/C170) e considera apenas saídas (IND_OPER = 1);<br>
+                • Consolida vendas por NCM, descrição do item e CFOP (5.xxx, 6.xxx, 7.xxx);<br>
+                • Cruza automaticamente com a TIPI IBS/CBS PRICETAX 2026;<br>
+                • Sugere o <b>cClassTrib</b> para cada combinação NCM + CFOP;<br>
+                • Gera um ranking exportável em Excel, pronto para trabalho em ERP e BI.
             </div>
         </div>
         """,
@@ -868,14 +895,15 @@ with tabs[1]:
     )
 
     uploaded_rank = st.file_uploader(
-        "Selecione arquivos SPED PIS/COFINS (.txt ou .zip)",
+        "Arquivos SPED PIS/COFINS (.txt ou .zip)",
         type=["txt", "zip"],
         accept_multiple_files=True,
         key="sped_upload_rank",
+        help="Você pode selecionar um ou vários arquivos. Arquivos .zip são descompactados automaticamente.",
     )
 
     if uploaded_rank:
-        if st.button("Processar SPED e Gerar Ranking", type="primary"):
+        if st.button("Processar SPED e gerar ranking", type="primary"):
             df_list = []
             total_files = len(uploaded_rank)
             progress_bar = st.progress(0)
@@ -1008,7 +1036,7 @@ with tabs[1]:
                     "VALOR_TOTAL_VENDAS", ascending=False
                 ).reset_index(drop=True)
 
-                # VISUALIZAÇÃO
+                # VISUALIZAÇÃO – preparando DF de tela
                 df_vis = df_total.copy()
                 df_vis["VALOR_TOTAL_VENDAS"] = df_vis["VALOR_TOTAL_VENDAS"].apply(
                     lambda v: f"{v:,.2f}"
@@ -1028,27 +1056,88 @@ with tabs[1]:
                             lambda v: pct_str(v) if pd.notnull(v) else ""
                         )
 
-                st.success("Processamento concluído!")
+                # Organiza colunas principais para o usuário
+                preferred_cols = [
+                    "ARQUIVO",
+                    "NCM",
+                    "DESCRICAO",
+                    "CFOP",
+                    "VALOR_TOTAL_VENDAS",
+                    "IBS_UF_2026",
+                    "IBS_MUN_2026",
+                    "CBS_2026",
+                    "ALIQ_IVA_TOTAL_2026",
+                    "CST_IBSCBS",
+                    "CCLASSTRIB_SUGERIDO",
+                    "DESC_CCLASSTRIB",
+                    "TIPO_ALIQUOTA_CCLASSTRIB",
+                ]
+                other_cols = [c for c in df_vis.columns if c not in preferred_cols]
+                df_vis = df_vis[preferred_cols + other_cols]
+
+                st.success("Processamento concluído.")
                 st.markdown("---")
 
+                # Exportação Excel formatada
                 def to_excel(df: pd.DataFrame) -> bytes:
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine="openpyxl") as w:
+                        sheet_name = "RANKING_SAIDAS_2026"
                         df.to_excel(
-                            w, index=False, sheet_name="RANKING_SAIDAS_2026"
+                            w, index=False, sheet_name=sheet_name
                         )
+                        ws = w.sheets[sheet_name]
+
+                        # Formatação básica do cabeçalho
+                        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+                        header_font = Font(bold=True, color="FFFFFF")
+                        header_fill = PatternFill("solid", fgColor="1F2933")
+                        thin = Side(border_style="thin", color="444444")
+                        border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+                        for cell in ws[1]:
+                            cell.font = header_font
+                            cell.fill = header_fill
+                            cell.border = border
+                            cell.alignment = Alignment(vertical="center")
+
+                        # Congela cabeçalho
+                        ws.freeze_panes = "A2"
+
+                        # Ajusta largura das colunas
+                        for col_cells in ws.columns:
+                            max_length = 0
+                            col_letter = col_cells[0].column_letter
+                            for cell in col_cells:
+                                try:
+                                    value = str(cell.value) if cell.value is not None else ""
+                                    if len(value) > max_length:
+                                        max_length = len(value)
+                                except Exception:
+                                    pass
+                            adjusted_width = min(max_length + 2, 50)
+                            ws.column_dimensions[col_letter].width = adjusted_width
+
+                        # Formato monetário para valor total de vendas
+                        for cell in ws[1]:
+                            if cell.value == "VALOR_TOTAL_VENDAS":
+                                col_letter = cell.column_letter
+                                for data_cell in ws[col_letter][1:]:
+                                    data_cell.number_format = "R$ #,##0.00"
+
                     buf.seek(0)
                     return buf.read()
 
                 st.download_button(
-                    "📥 Baixar Ranking de Saídas 2026 (Excel)",
+                    "📥 Baixar Ranking de Saídas 2026 (Excel formatado)",
                     data=to_excel(df_total),
                     file_name="PRICETAX_Ranking_Saidas_Sped_2026.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
                 st.markdown(
-                    "### Ranking de Saídas – Visão 2026 (IBS/CBS + cClassTrib)"
+                    "### Ranking de saídas – visão IBS/CBS 2026 + cClassTrib"
                 )
                 st.dataframe(df_vis, use_container_width=True)
 
@@ -1063,11 +1152,11 @@ with tabs[1]:
                 st.markdown(
                     f"""
                     <div class="pricetax-card-soft" style="margin-top:1rem;">
-                        <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">📊 Insight PRICETAX</div>
+                        <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">Resumo da análise</div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            • Total geral de vendas (saídas CFOP 5/6/7): <b>R$ {total_vendas_fmt}</b><br>
-                            • Arquivos analisados: <b>{total_files}</b><br>
-                            • Ranking consolidado por NCM + Descrição + CFOP, já com visão IBS/CBS 2026 e cClassTrib sugerido via CFOP.<br>
+                            • Total geral de vendas (CFOP 5/6/7): <b>R$ {total_vendas_fmt}</b><br>
+                            • Arquivos SPED analisados: <b>{total_files}</b><br>
+                            • Ranking consolidado por NCM + descrição + CFOP, já com visão IBS/CBS 2026 e cClassTrib sugerido.<br>
                         </div>
                     </div>
                     """,
@@ -1075,7 +1164,7 @@ with tabs[1]:
                 )
 
                 st.markdown(
-                    "### 🔥 TOP 10 – Distribuição Percentual por NCM (Vendas de Saída)"
+                    "### TOP 10 – Distribuição percentual por NCM (vendas de saída)"
                 )
                 df_top10 = (
                     df_total.groupby("NCM")["VALOR_TOTAL_VENDAS"]
@@ -1116,5 +1205,5 @@ with tabs[1]:
                     )
     else:
         st.info(
-            "Nenhum arquivo enviado ainda. Selecione um ou mais SPEDs para iniciar a análise."
+            "Selecione um ou mais arquivos SPED PIS/COFINS para gerar o ranking de saídas."
         )
