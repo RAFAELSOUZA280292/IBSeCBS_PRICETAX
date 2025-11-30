@@ -1,4 +1,3 @@
-# app.py
 import io
 import re
 import zipfile
@@ -12,7 +11,7 @@ import streamlit as st
 # CONFIG GERAL / TEMA PRICETAX
 # --------------------------------------------------
 st.set_page_config(
-    page_title="PRICETAX • IBS/CBS & Ranking SPED 2026",
+    page_title="PRICETAX • IBS/CBS 2026 & Ranking SPED",
     page_icon="💡",
     layout="wide",
 )
@@ -29,8 +28,7 @@ st.markdown(
         color: #F5F5F5;
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }}
-
-    /* Título principal */
+    /* Títulos */
     .pricetax-title {{
         font-size: 2.2rem;
         font-weight: 700;
@@ -40,7 +38,6 @@ st.markdown(
         font-size: 0.98rem;
         color: #E0E0E0;
     }}
-
     /* Cards */
     .pricetax-card {{
         border-radius: 0.9rem;
@@ -60,8 +57,7 @@ st.markdown(
         background: #2b1a1a;
         border: 1px solid #ff5656;
     }}
-
-    /* Badges / chips */
+    /* Badges e chips */
     .pricetax-badge {{
         display: inline-block;
         padding: 0.2rem 0.7rem;
@@ -93,7 +89,6 @@ st.markdown(
     .pill-tag {{
         background: rgba(0,0,0,0.4);
     }}
-
     /* Métricas */
     .pricetax-metric-label {{
         font-size: 0.78rem;
@@ -101,19 +96,14 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }}
-
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
         border-bottom: 1px solid #333333;
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        color: #EEEEEE;
     }}
     .stTabs [aria-selected="true"] p {{
         color: {PRIMARY_YELLOW} !important;
         font-weight: 600;
     }}
-
     /* Inputs */
     .stTextInput > div > div > input {{
         background-color: #111318;
@@ -124,7 +114,6 @@ st.markdown(
     .stFileUploader > label div {{
         color: #DDDDDD;
     }}
-
     /* Botão primário */
     .stButton>button[kind="primary"] {{
         background-color: #ff4d4d;
@@ -143,7 +132,7 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# FUNÇÕES UTILITÁRIAS
+# UTILITÁRIOS
 # --------------------------------------------------
 def only_digits(s: Optional[str]) -> str:
     return re.sub(r"\D+", "", s or "")
@@ -152,7 +141,6 @@ def to_float_br(s) -> float:
     if not s:
         return 0.0
     s = str(s)
-    # Remove separadores de milhar e troca vírgula por ponto
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -189,23 +177,16 @@ def regime_label(regime: str) -> str:
     return mapping.get(r, regime or "Regime não mapeado")
 
 # --------------------------------------------------
-# BASE TIPI → IBS/CBS (2026)
+# CARREGAR BASE TIPI (PROCURA PLANILHA OFICIAL OU MIND7)
 # --------------------------------------------------
 TIPI_DEFAULT_NAME = "PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx"
 ALT_TIPI_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
 @st.cache_data(show_spinner=False)
 def load_tipi_base() -> pd.DataFrame:
-    """
-    Carrega a base PRICETAX refinada de classificação IBS/CBS por NCM.
-    Procura primeiro PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx,
-    depois TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx.
-    """
     paths = [
-        Path(TIPI_DEFAULT_NAME),
-        Path.cwd() / TIPI_DEFAULT_NAME,
-        Path(ALT_TIPI_NAME),
-        Path.cwd() / ALT_TIPI_NAME,
+        Path(TIPI_DEFAULT_NAME), Path.cwd() / TIPI_DEFAULT_NAME,
+        Path(ALT_TIPI_NAME), Path.cwd() / ALT_TIPI_NAME
     ]
     try:
         paths.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
@@ -229,7 +210,6 @@ def load_tipi_base() -> pd.DataFrame:
     if "NCM_DIG" not in df.columns:
         df["NCM_DIG"] = df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
 
-    # Preenche campos necessários com vazio caso não existam
     required = [
         "NCM_DESCRICAO", "REGIME_IVA_2026_FINAL", "FONTE_LEGAL_FINAL",
         "FLAG_ALIMENTO","FLAG_CESTA_BASICA","FLAG_HORTIFRUTI_OVOS","FLAG_RED_60",
@@ -248,13 +228,13 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
     row = df.loc[df["NCM_DIG"] == n]
     return None if row.empty else row.iloc[0]
 
+df_tipi = load_tipi_base()
+
 # --------------------------------------------------
-# PARSER SPED – SOMENTE NOTAS DE SAÍDA (C100/C170)
+# PARSER SPED – EXTRAI TODAS AS NOTAS E FILTRA ITENS DE SAÍDA POR CFOP
 # --------------------------------------------------
 def parse_sped_saida(nome_arquivo: str, conteudo: str):
-    notas = []
     itens = []
-
     current_nf = None
 
     for raw in conteudo.splitlines():
@@ -267,22 +247,13 @@ def parse_sped_saida(nome_arquivo: str, conteudo: str):
 
         reg = campos[1].upper()
 
-        # C100 – Cabeçalho
+        # C100 – cabeçalho (não filtra por IND_OPER)
         if reg == "C100":
-            # Campos: IND_OPER (2), COD_MOD(6), SER (7), NUM_DOC (8), DT_DOC (9), VL_DOC (12), CFOP (11)
-            ind_oper = campos[2].strip()
-            cod_mod  = campos[6].strip()
-            serie    = campos[7].strip()
-            numero   = campos[8].strip()
-            dt_doc   = campos[9].strip()
-            cfop_tot = campos[11].strip() if len(campos) > 11 else ""
-            vl_doc   = campos[12].strip() if len(campos) > 12 else ""
-
-            # Só processa saídas
-            if ind_oper != "1":
-                current_nf = None
-                continue
-
+            cod_mod = campos[6].strip()
+            serie   = campos[7].strip()
+            numero  = campos[8].strip()
+            dt_doc  = campos[9].strip()
+            vl_doc  = campos[12].strip() if len(campos) > 12 else ""
             current_nf = {
                 "ID_NF": f"{nome_arquivo}__{numero}_{serie}",
                 "ARQUIVO": nome_arquivo,
@@ -290,45 +261,34 @@ def parse_sped_saida(nome_arquivo: str, conteudo: str):
                 "SERIE": serie,
                 "NUMERO": numero,
                 "DT_DOC": dt_doc,
-                "CFOP_DOC": cfop_tot,
                 "VL_DOC": to_float_br(vl_doc),
             }
-            notas.append(current_nf)
 
-        # C170 – Itens da NF
+        # C170 – itens
         elif reg == "C170" and current_nf:
-            # Campos: NUM_ITEM(2), COD_ITEM(3), DESCR_COMPL(4), QTD(5), VL_ITEM(7), CFOP(11), NCM(8)
+            # Campos: NUM_ITEM(2), COD_ITEM(3), DESCR_COMPL(4), QTD(5), VL_ITEM(7), CFOP(11), NCM(??)
             qtd = to_float_br(campos[5]) if len(campos) > 5 else 0.0
             vl_item = to_float_br(campos[7]) if len(campos) > 7 else 0.0
             cfop   = campos[11].strip() if len(campos) > 11 else ""
             ncm    = campos[8].strip() if len(campos) > 8 else ""
             descr  = campos[4].strip() if len(campos) > 4 else ""
 
-            itens.append({
-                "ID_NF": current_nf["ID_NF"],
-                "CFOP": cfop,
-                "DT_DOC": current_nf["DT_DOC"],
-                "NCM": only_digits(ncm),
-                "DESCR_ITEM": descr,
-                "QTD": qtd,
-                "VL_ITEM": vl_item,
-                "VL_TOTAL_ITEM": qtd * vl_item,
-            })
-
+            # Só considera saídas (CFOP 5xxx ou 6xxx)
+            if cfop and (cfop.startswith("5") or cfop.startswith("6")):
+                itens.append({
+                    "ID_NF": current_nf["ID_NF"],
+                    "CFOP": cfop,
+                    "DT_DOC": current_nf["DT_DOC"],
+                    "NCM": only_digits(ncm),
+                    "DESCR_ITEM": descr,
+                    "QTD": qtd,
+                    "VL_ITEM": vl_item,
+                    "VL_TOTAL_ITEM": qtd * vl_item,
+                })
     return itens
 
-# --------------------------------------------------
-# PROCESSAMENTO SPED – CONSOLIDAÇÃO E RANKING
-# --------------------------------------------------
+# Consolida SPED e cruza com TIPI
 def processar_speds_vendas(files, df_tipi):
-    """
-    Lê múltiplos arquivos SPED Contribuições (.txt ou .zip),
-    extrai notas de saída (C100) e itens (C170),
-    cruza com a base TIPI para IBS/CBS 2026 e retorna:
-       - df_itens_detalhado
-       - df_ranking_produtos
-       - df_erros (NCM sem correspondência)
-    """
     itens_all = []
 
     for up in files:
@@ -338,12 +298,10 @@ def processar_speds_vendas(files, df_tipi):
                 for info in z.infolist():
                     if info.filename.lower().endswith(".txt"):
                         conteudo = z.open(info).read().decode("utf-8", errors="replace")
-                        itens = parse_sped_saida(info.filename, conteudo)
-                        itens_all.extend(itens)
+                        itens_all.extend(parse_sped_saida(info.filename, conteudo))
         else:
             conteudo = up.read().decode("utf-8", errors="replace")
-            itens = parse_sped_saida(nome, conteudo)
-            itens_all.extend(itens)
+            itens_all.extend(parse_sped_saida(nome, conteudo))
 
     if not itens_all:
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -352,7 +310,10 @@ def processar_speds_vendas(files, df_tipi):
 
     # Normaliza NCM
     df_itens["NCM_DIG"] = (
-        df_itens["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
+        df_itens["NCM"]
+        .astype(str)
+        .str.replace(r"\D", "", regex=True)
+        .str.zfill(8)
     )
 
     # Cruza com TIPI
@@ -363,7 +324,7 @@ def processar_speds_vendas(files, df_tipi):
         right_on="NCM_DIG",
     )
 
-    # Erros: NCM não encontrado
+    # Erros de NCM
     df_erros = df_merged[df_merged["NCM_DESCRICAO"].isna()][
         ["NCM_DIG", "DESCR_ITEM", "CFOP", "VL_TOTAL_ITEM"]
     ]
@@ -375,13 +336,14 @@ def processar_speds_vendas(files, df_tipi):
     df_validos["IBS_MUN"] = pd.to_numeric(df_validos["IBS_MUN_TESTE_2026_FINAL"], errors="coerce").fillna(0)
     df_validos["CBS"]     = pd.to_numeric(df_validos["CBS_TESTE_2026_FINAL"], errors="coerce").fillna(0)
 
-    df_validos["IBS_EFETIVO"] = df_validos["IBS_UF"] + df_validos["IBS_MUN"]
+    df_validos["IBS_EFETIVO"]    = df_validos["IBS_UF"] + df_validos["IBS_MUN"]
     df_validos["TOTAL_IVA_2026"] = df_validos["IBS_EFETIVO"] + df_validos["CBS"]
 
     # Ranking por produto
     df_ranking = (
         df_validos.groupby([
-            "NCM_DIG", "NCM_DESCRICAO", "CFOP", "REGIME_IVA_2026_FINAL",
+            "NCM_DIG", "NCM_DESCRICAO", "CFOP",
+            "REGIME_IVA_2026_FINAL",
             "FLAG_CESTA_BASICA", "FLAG_HORTIFRUTI_OVOS", "FLAG_RED_60"
         ])
         .agg(
@@ -393,52 +355,40 @@ def processar_speds_vendas(files, df_tipi):
         .sort_values("FATURAMENTO_TOTAL", ascending=False)
     )
 
-    # Ordena detalhados
     df_validos = df_validos.sort_values(["DT_DOC", "ID_NF"])
     return df_validos, df_ranking, df_erros
 
 # --------------------------------------------------
-# CABEÇALHO E TABS
+# INTERFACE – TABS
 # --------------------------------------------------
 st.markdown(
     """
     <div class="pricetax-title">PRICETAX • IBS/CBS 2026 & Ranking SPED</div>
     <div class="pricetax-subtitle">
-        Consulte o NCM do seu produto e analise suas vendas pelo SPED já com a tributação IBS/CBS 2026 simulada.
+        Consulte o NCM do seu produto e analise suas vendas pelo SPED com a tributação de 2026.
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown("")
 tabs = st.tabs([
     "🔍 Consulta NCM → IBS/CBS 2026",
     "📊 Ranking de Produtos (via SPED) – IBS/CBS 2026",
 ])
 
-# ==================================================
-# TABELA TIPI CARREGADA
-# ==================================================
-df_tipi = load_tipi_base()
-
-# ==================================================
-# TAB 1 – CONSULTA NCM
-# ==================================================
+# Aba de consulta NCM
 with tabs[0]:
     st.markdown(
         """
         <div class="pricetax-card">
             <span class="pricetax-badge">Consulta de produtos</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Informe o código NCM do seu produto e veja a tributação de IBS e CBS simulada para 2026,
-                conforme a EC 132/2023 e a LC 214/2025.
+                Informe o NCM e veja o regime de IVA e alíquotas IBS/CBS simuladas para 2026.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("")
-
     col1, col2 = st.columns([3, 1])
     with col1:
         ncm_input = st.text_input("Informe o NCM (com ou sem pontos)", placeholder="Ex.: 16023220 ou 16.02.32.20")
@@ -460,24 +410,20 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
         else:
+            # Campos principais
             ncm_fmt = row["NCM_DIG"]
             desc    = row["NCM_DESCRICAO"]
-
             regime   = row["REGIME_IVA_2026_FINAL"]
             fonte    = row["FONTE_LEGAL_FINAL"]
-
             flag_cesta = row["FLAG_CESTA_BASICA"]
             flag_hf    = row["FLAG_HORTIFRUTI_OVOS"]
             flag_red   = row["FLAG_RED_60"]
             flag_alim  = row["FLAG_ALIMENTO"]
             flag_dep   = row["FLAG_DEPENDE_DESTINACAO"]
-
             ibs_uf  = to_float_br(row["IBS_UF_TESTE_2026_FINAL"])
             ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
             cbs     = to_float_br(row["CBS_TESTE_2026_FINAL"])
-
             total_iva = ibs_uf + ibs_mun + cbs
-
             cst_ibscbs = row.get("CST_IBSCBS", "")
 
             # CARD PRINCIPAL
@@ -498,7 +444,7 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
-            # MÉTRICAS
+            # Métricas
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:1rem;display:flex;gap:2rem;">
@@ -519,14 +465,14 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
-            # Parametrizações
+            # Parâmetros
             st.subheader("Parâmetros de classificação", divider="gray")
             c1, c2, c3, c4 = st.columns(4)
             with c1:
                 st.markdown("**Produto é alimento?**")
                 st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_alim)}</span>", unsafe_allow_html=True)
             with c2:
-                st.markdown("**Cesta Básica Nacional (CeNA)?**")
+                st.markdown("**Cesta Básica Nacional?**")
                 st.markdown(f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_cesta)}</span>", unsafe_allow_html=True)
             with c3:
                 st.markdown("**Hortifrúti / Ovos?**")
@@ -546,7 +492,7 @@ with tabs[0]:
 
             # Observações e base legal
             st.markdown("---")
-            # Ajusta alertas e observações
+            # Limpa textos "nan"
             def clean_txt(v):
                 s = str(v or "").strip()
                 return "" if s.lower() == "nan" else s
@@ -556,7 +502,7 @@ with tabs[0]:
             obs_dest   = clean_txt(row.get("OBS_DESTINACAO"))
             reg_extra  = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
 
-            # Se regime tem redução 60% e não há textos, define padrão
+            # Ajustes padrão para RED_60
             if "RED_60" in (regime or "").upper():
                 if not alerta_fmt:
                     alerta_fmt = "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
@@ -572,23 +518,19 @@ with tabs[0]:
             st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
             st.markdown(f"**Regime especial / motivo adicional:** {reg_extra or '—'}")
 
-# ==================================================
-# TAB 2 – RANKING DE PRODUTOS (SAÍDAS SPED)
-# ==================================================
+# Aba de ranking SPED
 with tabs[1]:
-
     st.markdown(
         """
         <div class="pricetax-card">
             <span class="pricetax-badge">Análise de Vendas (Saídas SPED)</span>
             <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Faça upload de arquivos SPED Contribuições (<b>.txt</b> ou <b>.zip</b>). O sistema irá:
+                Faça upload de arquivos SPED Contribuições (.txt ou .zip). O sistema irá:
                 <br><br>
-                • Ler todas as notas de <b>saída</b> (C100/C170)<br>
-                • Consolidar produtos por CFOP + NCM + Descrição<br>
+                • Ler todas as notas de saída (C100/C170)<br>
+                • Consolidar itens por CFOP, NCM e Descrição<br>
                 • Gerar ranking de faturamento<br>
-                • Cruzar cada item com a base PRICETAX IBS/CBS 2026<br>
-                • Exibir alíquotas IBS/CBS simuladas para 2026
+                • Cruzar com a tabela PRICETAX IBS/CBS para 2026<br>
             </div>
         </div>
         """,
@@ -596,15 +538,12 @@ with tabs[1]:
     )
 
     uploaded = st.file_uploader(
-        "Selecione arquivos SPED Contribuições (.txt ou .zip)",
-        type=["txt", "zip"],
-        accept_multiple_files=True,
-        key="sped_upload_rank",
+        "Selecione arquivos SPED (.txt ou .zip)", type=["txt", "zip"], accept_multiple_files=True, key="sped_upload_rank"
     )
 
     if uploaded:
         if st.button("Processar SPED e Gerar Ranking", type="primary"):
-            with st.spinner("Processando SPED, extraindo notas de saída e cruzando com tabelas PRICETAX..."):
+            with st.spinner("Processando arquivos SPED..."):
                 df_itens, df_ranking, df_erros = processar_speds_vendas(uploaded, df_tipi)
 
             if df_itens.empty:
@@ -613,7 +552,7 @@ with tabs[1]:
                 st.success("Processamento concluído!")
                 st.markdown("---")
 
-                # Função para gerar Excel em memória
+                # Função para criar Excel em memória
                 def to_excel(df):
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine="openpyxl") as w:
@@ -621,25 +560,25 @@ with tabs[1]:
                     buf.seek(0)
                     return buf
 
-                # Botões de download
+                # Downloads
                 colA, colB, colC = st.columns(3)
                 with colA:
                     st.download_button(
-                        "📥 Baixar Itens Detalhados (C170 + IVA 2026)",
+                        "📥 Itens Detalhados (C170 + IVA 2026)",
                         data=to_excel(df_itens),
                         file_name="PRICETAX_Itens_Detalhados_2026.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     )
                 with colB:
                     st.download_button(
-                        "📥 Baixar Ranking de Produtos",
+                        "📥 Ranking de Produtos",
                         data=to_excel(df_ranking),
                         file_name="PRICETAX_Ranking_Produtos_2026.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     )
                 with colC:
                     st.download_button(
-                        "📥 Baixar Erros de NCM",
+                        "📥 Erros de NCM",
                         data=to_excel(df_erros),
                         file_name="PRICETAX_Erros_NCM.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -647,7 +586,7 @@ with tabs[1]:
 
                 st.markdown("---")
 
-                # Mostra ranking no app (Top 20)
+                # Tabela ranking
                 st.subheader("Ranking de Produtos – Top 20", divider="gray")
                 st.dataframe(
                     df_ranking.head(20)[[
@@ -659,7 +598,6 @@ with tabs[1]:
                     use_container_width=True,
                 )
 
-                # Insight rápido
                 total_fat = df_itens["VL_TOTAL_ITEM"].sum()
                 total_notas = df_itens["ID_NF"].nunique()
 
@@ -669,7 +607,7 @@ with tabs[1]:
                         <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">📊 Insight PRICETAX</div>
                         <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
                             • Faturamento total analisado: <b>R$ {total_fat:,.2f}</b><br>
-                            • Total de notas fiscais na análise: <b>{total_notas}</b><br>
+                            • Total de notas de saída: <b>{total_notas}</b><br>
                             • Ranking baseado em CFOP + NCM + Descrição, cruzado com IVA 2026<br>
                         </div>
                     </div>
