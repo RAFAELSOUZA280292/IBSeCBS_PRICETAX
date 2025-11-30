@@ -17,19 +17,17 @@ st.set_page_config(
     layout="wide",
 )
 
-# Cores ajustadas para a identidade visual PriceTax (Fundo Escuro, Destaque Amarelo/Dourado)
-PRIMARY_GOLD = "#FFC300"  # Amarelo/Dourado principal
-PRIMARY_DARK = "#000000"  # Fundo preto/muito escuro
-SECONDARY_ACCENT = "#FFFFFF" # Branco para texto e elementos secundários
-CARD_BG = "#101015" # Fundo dos cards
+PRIMARY_YELLOW = "#FFC300"
+PRIMARY_BLACK = "#050608"
+PRIMARY_CYAN = "#0EB8B3"
+CARD_BG = "#101015"
 
 st.markdown(
     f"""
     <style>
-    /* Configuração geral do Streamlit */
     .stApp {{
-        background-color: {PRIMARY_DARK};
-        color: {SECONDARY_ACCENT};
+        background-color: {PRIMARY_BLACK};
+        color: #F5F5F5;
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
@@ -37,7 +35,7 @@ st.markdown(
     .pricetax-title {{
         font-size: 2.2rem;
         font-weight: 700;
-        color: {PRIMARY_GOLD};
+        color: {PRIMARY_YELLOW};
     }}
     .pricetax-subtitle {{
         font-size: 0.98rem;
@@ -48,8 +46,7 @@ st.markdown(
     .pricetax-card {{
         border-radius: 0.9rem;
         padding: 1.1rem 1.3rem;
-        /* Gradiente mais sutil e escuro */
-        background: linear-gradient(135deg, #101010 0%, #050505 100%);
+        background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
         border: 1px solid #333333;
     }}
     .pricetax-card-soft {{
@@ -70,8 +67,8 @@ st.markdown(
         display: inline-block;
         padding: 0.2rem 0.7rem;
         border-radius: 999px;
-        background: {PRIMARY_GOLD};
-        color: {PRIMARY_DARK};
+        background: {PRIMARY_YELLOW};
+        color: {PRIMARY_BLACK};
         font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -89,11 +86,10 @@ st.markdown(
         background: rgba(15,15,18,0.9);
         color: #EDEDED;
     }}
-    /* Ajuste do pill-regime para usar o amarelo/dourado */
     .pill-regime {{
-        border-color: {PRIMARY_GOLD};
-        background: rgba(255, 195, 0, 0.1); /* Fundo sutilmente dourado */
-        color: {PRIMARY_GOLD};
+        border-color: {PRIMARY_CYAN};
+        background: rgba(14,184,179,0.08);
+        color: #E5FEFC;
     }}
     .pill-tag {{
         background: rgba(0,0,0,0.4);
@@ -109,7 +105,7 @@ st.markdown(
     .pricetax-metric-value {{
         font-size: 1.05rem;
         font-weight: 600;
-        color: {PRIMARY_GOLD};
+        color: {PRIMARY_YELLOW};
     }}
 
     /* Tabs */
@@ -120,14 +116,14 @@ st.markdown(
         color: #EEEEEE;
     }}
     .stTabs [aria-selected="true"] p {{
-        color: {PRIMARY_GOLD} !important;
+        color: {PRIMARY_YELLOW} !important;
         font-weight: 600;
     }}
 
     /* Inputs */
     .stTextInput > div > div > input {{
         background-color: #111318;
-        color: {SECONDARY_ACCENT};
+        color: #FFFFFF;
         border-radius: 0.6rem;
         border: 1px solid #333333;
     }}
@@ -135,30 +131,17 @@ st.markdown(
         color: #DDDDDD;
     }}
 
-    /* Botão primário: Alterado de vermelho para um estilo mais neutro/dourado */
+    /* Botão primário */
     .stButton>button[kind="primary"] {{
-        background-color: #111318; /* Fundo escuro */
-        color: {PRIMARY_GOLD}; /* Texto dourado */
+        background-color: #ff4d4d;
+        color: #ffffff;
         border-radius: 0.6rem;
-        border: 1px solid {PRIMARY_GOLD}; /* Borda dourada */
+        border: 1px solid #ff8080;
         font-weight: 600;
     }}
     .stButton>button[kind="primary"]:hover {{
-        background-color: {PRIMARY_GOLD}; /* Fundo dourado no hover */
-        color: {PRIMARY_DARK}; /* Texto escuro no hover */
-        border-color: {PRIMARY_GOLD};
-    }}
-    
-    /* Subheader: Ajustado para usar a cor branca/secundária para um contraste mais limpo */
-    h2 {{
-        color: {SECONDARY_ACCENT};
-    }}
-    
-    /* Ajuste para o título do PIS/COFINS no display_sped_result */
-    .pis-cofins-title {{
-        font-size: 1.1rem; 
-        font-weight: 600; 
-        color: {PRIMARY_GOLD}; /* Usando o dourado para destaque */
+        background-color: #ff6666;
+        border-color: #ff9999;
     }}
     </style>
     """,
@@ -354,621 +337,586 @@ NAT_BC_CRED_DESC: Dict[str, str] = {
     "05": "Aluguéis de máquinas e equipamentos",
     "06": "Armazenagem de mercadoria e frete na venda",
     "07": "Arrendamento mercantil",
-    "08": "Encargos de depreciação e amortização",
-    "09": "Devolução de vendas",
-    "10": "Outras operações com direito a crédito",
-    "11": "Atividade de transporte de cargas",
-    "12": "Atividade imobiliária",
-    "13": "Atividade de construção civil",
-    "14": "Atividade de serviços de saúde",
-    "15": "Atividade de telecomunicações",
-    "16": "Atividade de transporte de passageiros",
-    "17": "Atividade de radiodifusão",
-    "18": "Atividade de serviços de informática",
-    "19": "Atividade de serviços de vigilância e transporte de valores",
-    "20": "Atividade de serviços de limpeza, conservação e manutenção",
-    "21": "Atividade de serviços de agenciamento de publicidade e propaganda",
-    "22": "Atividade de serviços de engenharia e arquitetura",
-    "23": "Atividade de serviços de consultoria e auditoria",
-    "24": "Atividade de serviços de advocacia",
-    "25": "Atividade de serviços de contabilidade",
-    "26": "Atividade de serviços de treinamento e capacitação",
-    "27": "Atividade de serviços de locação de bens móveis",
-    "28": "Atividade de serviços de cessão de mão de obra",
-    "29": "Atividade de serviços de corretagem de seguros",
-    "30": "Atividade de serviços de representação comercial",
-    "31": "Atividade de serviços de intermediação de negócios",
-    "32": "Atividade de serviços de propaganda e publicidade",
-    "33": "Atividade de serviços de assessoria e consultoria técnica",
-    "34": "Atividade de serviços de organização de feiras e eventos",
-    "35": "Atividade de serviços de pesquisa e desenvolvimento",
-    "36": "Atividade de serviços de tratamento de dados",
-    "37": "Atividade de serviços de logística",
-    "38": "Atividade de serviços de armazenagem",
-    "39": "Atividade de serviços de transporte rodoviário de cargas",
-    "40": "Atividade de serviços de transporte ferroviário de cargas",
-    "41": "Atividade de serviços de transporte aquaviário de cargas",
-    "42": "Atividade de serviços de transporte aéreo de cargas",
-    "43": "Atividade de serviços de transporte dutoviário de cargas",
-    "44": "Atividade de serviços de transporte multimodal de cargas",
-    "45": "Atividade de serviços de transporte de valores",
-    "46": "Atividade de serviços de segurança",
-    "47": "Atividade de serviços de vigilância",
-    "48": "Atividade de serviços de limpeza e conservação",
-    "49": "Atividade de serviços de manutenção e reparação",
-    "50": "Atividade de serviços de instalação e montagem",
-    "51": "Atividade de serviços de construção civil",
-    "52": "Atividade de serviços de engenharia",
-    "53": "Atividade de serviços de arquitetura",
-    "54": "Atividade de serviços de agronomia",
-    "55": "Atividade de serviços de geologia",
-    "56": "Atividade de serviços de meteorologia",
-    "57": "Atividade de serviços de oceanografia",
-    "58": "Atividade de serviços de cartografia",
-    "59": "Atividade de serviços de topografia",
-    "60": "Atividade de serviços de aerofotogrametria",
-    "61": "Atividade de serviços de hidrografia",
-    "62": "Atividade de serviços de batimetria",
-    "63": "Atividade de serviços de sismologia",
-    "64": "Atividade de serviços de geofísica",
-    "65": "Atividade de serviços de prospecção",
-    "66": "Atividade de serviços de perfuração",
-    "67": "Atividade de serviços de exploração",
-    "68": "Atividade de serviços de produção",
-    "69": "Atividade de serviços de refino",
-    "70": "Atividade de serviços de distribuição",
-    "71": "Atividade de serviços de comercialização",
-    "72": "Atividade de serviços de importação",
-    "73": "Atividade de serviços de exportação",
-    "74": "Atividade de serviços de armazenagem",
-    "75": "Atividade de serviços de transporte",
-    "76": "Atividade de serviços de comunicação",
-    "77": "Atividade de serviços de informática",
-    "78": "Atividade de serviços de saúde",
-    "79": "Atividade de serviços de educação",
-    "80": "Atividade de serviços de cultura",
-    "81": "Atividade de serviços de esporte",
-    "82": "Atividade de serviços de lazer",
-    "83": "Atividade de serviços de turismo",
-    "84": "Atividade de serviços de hotelaria",
-    "85": "Atividade de serviços de alimentação",
-    "86": "Atividade de serviços de bebidas",
-    "87": "Atividade de serviços de vestuário",
-    "88": "Atividade de serviços de calçados",
-    "89": "Atividade de serviços de joias",
-    "90": "Atividade de serviços de relógios",
-    "91": "Atividade de serviços de cosméticos",
-    "92": "Atividade de serviços de perfumaria",
-    "93": "Atividade de serviços de higiene",
-    "94": "Atividade de serviços de limpeza",
-    "95": "Atividade de serviços de conservação",
-    "96": "Atividade de serviços de manutenção",
-    "97": "Atividade de serviços de reparação",
-    "98": "Atividade de serviços de instalação",
-    "99": "Atividade de serviços de montagem",
+    "08": "Ativo imobilizado (depreciação)",
+    "09": "Edificações e benfeitorias",
+    "10": "Devolução de vendas",
+    "11": "Ativos intangíveis (amortização)",
+    "12": "Encargos de depreciação/amortização no custo",
+    "13": "Outras operações geradoras de crédito",
+    "18": "Crédito presumido",
+    "19": "Fretes na aquisição",
+    "20": "Armazenagem, seguros e vigilância na aquisição",
+    "21": "Outros créditos vinculados à atividade",
 }
 
 
-def parse_sped_bloco_m(file_content: bytes) -> Dict[str, Any]:
-    """
-    Analisa o arquivo SPED PIS/COFINS (Bloco M) e extrai informações relevantes.
-    """
-    try:
-        content = file_content.decode("latin-1")
-    except UnicodeDecodeError:
-        content = file_content.decode("utf-8", errors="ignore")
+def desc_cod_cont(codigo: str) -> str:
+    c = (codigo or "").strip()
+    return COD_CONT_DESC.get(c, f"(Descrição não cadastrada: {c})")
 
-    lines = content.splitlines()
-    data = {
-        "competencia": "",
-        "m200": {},
-        "m600": {},
-        "m210": [],
-        "m610": [],
-        "m400": [],
-        "m800": [],
+
+def desc_nat_rec(codigo: str) -> str:
+    c = (codigo or "").strip()
+    return NAT_REC_DESC.get(c, f"(Descrição não cadastrada: {c})")
+
+
+def norm_nat_bc(codigo: str) -> str:
+    d = only_digits((codigo or "").strip())
+    if not d:
+        return (codigo or "").strip()
+    return d.zfill(2) if len(d) == 1 else d
+
+
+def desc_nat_bc(codigo: str) -> str:
+    c = norm_nat_bc(codigo)
+    return NAT_BC_CRED_DESC.get(c, f"(Descrição não cadastrada: {c})") if c else ""
+
+
+def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
+    empresa_cnpj = ""
+    dt_ini = ""
+    dt_fin = ""
+    competencia = ""
+
+    ap_pis, credito_pis, receitas_pis, rec_isentas_pis = [], [], [], []
+    ap_cofins, credito_cofins, receitas_cofins, rec_isentas_cofins = [], [], [], []
+
+    for raw in conteudo.splitlines():
+        if not raw or raw == "|":
+            continue
+        campos = raw.rstrip("\n").split("|")
+        if len(campos) < 3:
+            continue
+        reg = (campos[1] or "").upper()
+
+        if reg == "0000":
+            datas = [c for c in campos if re.fullmatch(r"\d{8}", c or "")]
+            if len(datas) >= 2:
+                dt_ini, dt_fin = datas[0], datas[1]
+            else:
+                dt_ini = campos[4] if len(campos) > 4 else ""
+                dt_fin = campos[5] if len(campos) > 5 else ""
+            competencia = competencia_from_dt(dt_ini, dt_fin)
+            cand = [only_digits(c) for c in campos if len(only_digits(c)) == 14]
+            if cand:
+                empresa_cnpj = cand[0]
+
+        elif reg == "M200":
+            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            vals = campos[2: 2 + len(M200_HEADERS)]
+            for titulo, val in zip(M200_HEADERS, vals):
+                row[titulo] = to_float_br(val)
+            ap_pis.append(row)
+
+        elif reg == "M105":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            credito_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "NAT_BC_CRED": nat,
+                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                    "CST_PIS": (campos[3] if len(campos) > 3 else "").strip(),
+                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+                }
+            )
+
+        elif reg == "M210":
+            cod = (campos[2] if len(campos) > 2 else "").strip()
+            receitas_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "COD_CONT": cod,
+                    "DESCR_COD_CONT": desc_cod_cont(cod),
+                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "VL_BC_PIS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                    "ALIQ_PIS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+                }
+            )
+
+        elif reg == "M410":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            rec_isentas_pis.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "CODIGO_DET": nat,
+                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+                }
+            )
+
+        elif reg == "M600":
+            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            vals = campos[2: 2 + len(M600_HEADERS)]
+            for titulo, val in zip(M600_HEADERS, vals):
+                row[titulo] = to_float_br(val)
+            ap_cofins.append(row)
+
+        elif reg == "M505":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            credito_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "NAT_BC_CRED": nat,
+                    "NAT_BC_CRED_DESC": desc_nat_bc(nat),
+                    "CST_COFINS": (campos[3] if len(campos) > 3 else "").strip(),
+                    "VL_BC": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "ALIQ": to_float_br(campos[5] if len(campos) > 5 else 0),
+                    "VL_CRED": to_float_br(campos[6] if len(campos) > 6 else 0),
+                }
+            )
+
+        elif reg == "M610":
+            cod = (campos[2] if len(campos) > 2 else "").strip()
+            receitas_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "COD_CONT": cod,
+                    "DESCR_COD_CONT": desc_cod_cont(cod),
+                    "VL_REC_BRT": to_float_br(campos[3] if len(campos) > 3 else 0),
+                    "VL_BC_CONT": to_float_br(campos[4] if len(campos) > 4 else 0),
+                    "VL_BC_COFINS": to_float_br(campos[7] if len(campos) > 7 else 0),
+                    "ALIQ_COFINS": to_float_br(campos[8] if len(campos) > 8 else 0),
+                    "VL_CONT_APUR": to_float_br(campos[11] if len(campos) > 11 else 0),
+                    "VL_CONT_PER": to_float_br(campos[16] if len(campos) > 16 else 0),
+                }
+            )
+
+        elif reg == "M810":
+            nat = (campos[2] if len(campos) > 2 else "").strip()
+            rec_isentas_cofins.append(
+                {
+                    "ARQUIVO": nome_arquivo,
+                    "COMPETENCIA": competencia,
+                    "CNPJ_ARQUIVO": empresa_cnpj,
+                    "CODIGO_DET": nat,
+                    "DESCR_CODIGO_DET": desc_nat_rec(nat),
+                    "VL_REC": to_float_br(campos[3] if len(campos) > 3 else 0),
+                }
+            )
+
+    return {
+        "ap_pis": ap_pis,
+        "credito_pis": credito_pis,
+        "receitas_pis": receitas_pis,
+        "rec_isentas_pis": rec_isentas_pis,
+        "ap_cofins": ap_cofins,
+        "credito_cofins": credito_cofins,
+        "receitas_cofins": receitas_cofins,
+        "rec_isentas_cofins": rec_isentas_cofins,
     }
 
-    # 0. Busca a competência (Bloco 0000)
-    for line in lines:
-        if line.startswith("|0000|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                data["competencia"] = competencia_from_dt(parts[4], parts[5])
-            break
 
-    # 1. Busca M200 (PIS Não-Cumulativo)
-    for line in lines:
-        if line.startswith("|M200|"):
-            parts = line.split("|")
-            if len(parts) >= 14:
-                for i, header in enumerate(M200_HEADERS):
-                    data["m200"][header] = to_float_br(parts[i + 2])
-            break
+def processar_speds_uploaded(files) -> io.BytesIO:
+    ap_pis_all, cred_pis_all, rec_pis_all, rec_is_pis_all = [], [], [], []
+    ap_cof_all, cred_cof_all, rec_cof_all, rec_is_cof_all = [], [], [], []
 
-    # 2. Busca M600 (COFINS Não-Cumulativo)
-    for line in lines:
-        if line.startswith("|M600|"):
-            parts = line.split("|")
-            if len(parts) >= 14:
-                for i, header in enumerate(M600_HEADERS):
-                    data["m600"][header] = to_float_br(parts[i + 2])
-            break
+    for up in files:
+        nome = up.name
 
-    # 3. Busca M210 (Detalhamento PIS Não-Cumulativo)
-    for line in lines:
-        if line.startswith("|M210|"):
-            parts = line.split("|")
-            if len(parts) >= 10:
-                cod_cont = parts[2]
-                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
-                data["m210"].append(
-                    {
-                        "cod_cont": cod_cont,
-                        "descricao": desc,
-                        "vl_rec_bruta": to_float_br(parts[3]),
-                        "vl_bc_cont": to_float_br(parts[4]),
-                        "aliq_pis": to_float_br(parts[5]),
-                        "vl_cont": to_float_br(parts[6]),
-                        "cod_rec": parts[7],
-                        "vl_ajus_ac": to_float_br(parts[8]),
-                        "vl_ajus_red": to_float_br(parts[9]),
-                    }
-                )
+        if nome.lower().endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(up.read()), "r") as z:
+                for info in z.infolist():
+                    if info.filename.lower().endswith(".txt"):
+                        with z.open(info, "r") as ftxt:
+                            conteudo = ftxt.read().decode("utf-8", errors="replace")
+                            d = parse_sped_conteudo(info.filename, conteudo)
+                            ap_pis_all.extend(d["ap_pis"])
+                            cred_pis_all.extend(d["credito_pis"])
+                            rec_pis_all.extend(d["receitas_pis"])
+                            rec_is_pis_all.extend(d["rec_isentas_pis"])
+                            ap_cof_all.extend(d["ap_cofins"])
+                            cred_cof_all.extend(d["credito_cofins"])
+                            rec_cof_all.extend(d["receitas_cofins"])
+                            rec_is_cof_all.extend(d["rec_isentas_cofins"])
+        else:
+            conteudo = up.read().decode("utf-8", errors="replace")
+            d = parse_sped_conteudo(nome, conteudo)
+            ap_pis_all.extend(d["ap_pis"])
+            cred_pis_all.extend(d["credito_pis"])
+            rec_pis_all.extend(d["receitas_pis"])
+            rec_is_pis_all.extend(d["rec_isentas_pis"])
+            ap_cof_all.extend(d["ap_cofins"])
+            cred_cof_all.extend(d["credito_cofins"])
+            rec_cof_all.extend(d["receitas_cofins"])
+            rec_is_cof_all.extend(d["rec_isentas_cofins"])
 
-    # 4. Busca M610 (Detalhamento COFINS Não-Cumulativo)
-    for line in lines:
-        if line.startswith("|M610|"):
-            parts = line.split("|")
-            if len(parts) >= 10:
-                cod_cont = parts[2]
-                desc = COD_CONT_DESC.get(cod_cont, f"Código {cod_cont} Desconhecido")
-                data["m610"].append(
-                    {
-                        "cod_cont": cod_cont,
-                        "descricao": desc,
-                        "vl_rec_bruta": to_float_br(parts[3]),
-                        "vl_bc_cont": to_float_br(parts[4]),
-                        "aliq_cofins": to_float_br(parts[5]),
-                        "vl_cont": to_float_br(parts[6]),
-                        "cod_rec": parts[7],
-                        "vl_ajus_ac": to_float_br(parts[8]),
-                        "vl_ajus_red": to_float_br(parts[9]),
-                    }
-                )
+    df_ap_pis = pd.DataFrame(ap_pis_all)
+    df_cred_pis = pd.DataFrame(cred_pis_all)
+    df_rec_pis = pd.DataFrame(rec_pis_all)
+    df_ri_pis = pd.DataFrame(rec_is_pis_all)
+    df_ap_cof = pd.DataFrame(ap_cof_all)
+    df_cred_cof = pd.DataFrame(cred_cof_all)
+    df_rec_cof = pd.DataFrame(rec_cof_all)
+    df_ri_cof = pd.DataFrame(rec_is_cof_all)
 
-    # 5. Busca M400 (Receitas Não-Tributadas PIS)
-    for line in lines:
-        if line.startswith("|M400|"):
-            parts = line.split("|")
-            if len(parts) >= 4:
-                data["m400"].append(
-                    {
-                        "vl_rec_nao_trib": to_float_br(parts[2]),
-                        "vl_rec_cum": to_float_br(parts[3]),
-                    }
-                )
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as w:
+        if not df_ap_pis.empty:
+            df_ap_pis.to_excel(w, "AP PIS", index=False)
+        if not df_cred_pis.empty:
+            df_cred_pis.to_excel(w, "CREDITO PIS", index=False)
+        if not df_rec_pis.empty:
+            df_rec_pis.to_excel(w, "RECEITAS PIS", index=False)
+        if not df_ri_pis.empty:
+            df_ri_pis.to_excel(w, "RECEITAS ISENTAS PIS", index=False)
 
-    # 6. Busca M800 (Receitas Não-Tributadas COFINS)
-    for line in lines:
-        if line.startswith("|M800|"):
-            parts = line.split("|")
-            if len(parts) >= 4:
-                data["m800"].append(
-                    {
-                        "vl_rec_nao_trib": to_float_br(parts[2]),
-                        "vl_rec_cum": to_float_br(parts[3]),
-                    }
-                )
+        if not df_ap_cof.empty:
+            df_ap_cof.to_excel(w, "AP COFINS", index=False)
+        if not df_cred_cof.empty:
+            df_cred_cof.to_excel(w, "CREDITO COFINS", index=False)
+        if not df_rec_cof.empty:
+            df_rec_cof.to_excel(w, "RECEITAS COFINS", index=False)
+        if not df_ri_cof.empty:
+            df_ri_cof.to_excel(w, "RECEITAS ISENTAS COFINS", index=False)
 
-    # 7. Busca M410 (Detalhamento Receitas Não-Tributadas PIS)
-    for line in lines:
-        if line.startswith("|M410|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                cod_nat_rec = parts[2]
-                desc = NAT_REC_DESC.get(
-                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
-                )
-                data["m400"].append(
-                    {
-                        "cod_nat_rec": cod_nat_rec,
-                        "descricao": desc,
-                        "vl_rec_nao_trib": to_float_br(parts[3]),
-                        "cod_cta": parts[4],
-                        "desc_compl": parts[5],
-                    }
-                )
-
-    # 8. Busca M810 (Detalhamento Receitas Não-Tributadas COFINS)
-    for line in lines:
-        if line.startswith("|M810|"):
-            parts = line.split("|")
-            if len(parts) >= 6:
-                cod_nat_rec = parts[2]
-                desc = NAT_REC_DESC.get(
-                    cod_nat_rec, f"Código {cod_nat_rec} Desconhecido"
-                )
-                data["m800"].append(
-                    {
-                        "cod_nat_rec": cod_nat_rec,
-                        "descricao": desc,
-                        "vl_rec_nao_trib": to_float_br(parts[3]),
-                        "cod_cta": parts[4],
-                        "desc_compl": parts[5],
-                    }
-                )
-
-    return data
+    output.seek(0)
+    return output
 
 
 # --------------------------------------------------
-# INTERFACE STREAMLIT
+# HELPERS VISUAIS (PACK PRICETAX)
 # --------------------------------------------------
-def display_ncm_result(ncm_row: pd.Series):
+def regime_label(regime: str) -> str:
+    r = (regime or "").upper()
+    mapping = {
+        "ALIQ_ZERO_CESTA_BASICA_NACIONAL": "Alíquota zero • Cesta Básica Nacional",
+        "ALIQ_ZERO_HORTIFRUTI_OVOS": "Alíquota zero • Hortifrúti e Ovos",
+        "RED_60_ALIMENTOS": "Redução de 60% • Alimentos",
+        "RED_60_ESSENCIALIDADE": "Redução de 60% • Essencialidade",
+        "TRIBUTACAO_PADRAO": "Tributação padrão (sem benefício)",
+    }
+    return mapping.get(r, regime or "Regime não mapeado")
+
+
+emoji_sim = "🔵"
+emoji_nao = "🔴"
+
+
+def badge_flag(valor) -> str:
+    v = (str(valor or "")).strip().upper()
+    if v == "SIM":
+        return f"{emoji_sim} SIM"
+    else:
+        return f"{emoji_nao} NÃO"
+
+
+# --------------------------------------------------
+# CABEÇALHO
+# --------------------------------------------------
+st.markdown(
+    """
+    <div class="pricetax-title">PRICETAX • Classificador IBS/CBS & SPED PIS/COFINS</div>
+    <div class="pricetax-subtitle">
+        Consulte o NCM do seu produto, visualize as alíquotas de IBS e CBS para 2026 e audite o SPED PIS/COFINS.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown("")
+tabs = st.tabs([
+    "🔍 Consulta NCM → IBS/CBS 2026",
+    "📁 SPED PIS/COFINS → Excel (Bloco M)",
+])
+
+# --------------------------------------------------
+# ABA 1 – CONSULTA TIPI → IBS/CBS (ano teste 2026)
+# --------------------------------------------------
+with tabs[0]:
     st.markdown(
-        f'<div class="pricetax-card">',
+        """
+        <div class="pricetax-card">
+            <span class="pricetax-badge">Consulta de produtos</span>
+            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+                Informe o código NCM do seu produto e veja a tributação de IBS e CBS simulada para o ano de teste de 2026,
+                com base nas regras de transição da EC 132/2023 e da LC 214/2025.
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        f'<div class="pricetax-title">NCM {ncm_row["NCM_DIG"]}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="pricetax-subtitle">{ncm_row["NCM_DESCRICAO"]}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("")
 
-    col1, col2, col3 = st.columns(3)
+    df_tipi = load_tipi_base()
 
+    col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown(
-            f'<div class="pricetax-metric-label">Segmento</div>'
-            f'<div class="pricetax-metric-value">{ncm_row["SEGMENTO_PRICETAX"]}</div>',
-            unsafe_allow_html=True,
-        )
-    with col2:
-        st.markdown(
-            f'<div class="pricetax-metric-label">Subsegmento</div>'
-            f'<div class="pricetax-metric-value">{ncm_row["SUBSEGMENTO"]}</div>',
-            unsafe_allow_html=True,
-        )
-    with col3:
-        st.markdown(
-            f'<div class="pricetax-metric-label">Nível de Confiança</div>'
-            f'<div class="pricetax-metric-value">{ncm_row["NIVEL_CONFIANCA_FINAL"]}</div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("---")
-
-    st.subheader("Regime de Tributação IBS/CBS (2026)")
-
-    st.markdown(
-        f'<div class="pill pill-regime">Regime: {ncm_row["REGIME_IVA_2026_FINAL"]}</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        f'<div class="pricetax-card-soft" style="margin-top: 15px;">'
-        f'<p style="font-size: 0.9rem; color: #BBBBBB;">'
-        f'**Classificação Tributária:** {ncm_row["CLASSTRIB_IBS_CBS"]} - {ncm_row["DESCR_CLASSTRIB"]}'
-        f'</p>'
-        f'<p style="font-size: 0.8rem; color: #888888; margin-top: 5px;">'
-        f'**Fonte Legal:** {ncm_row["FONTE_LEGAL_FINAL"]}'
-        f'</p>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.subheader("Alíquotas de Teste (2026)")
-    col_ibs_uf, col_ibs_mun, col_cbs = st.columns(3)
-
-    with col_ibs_uf:
-        st.markdown(
-            f'<div class="pricetax-metric-label">IBS (Estadual)</div>'
-            f'<div class="pricetax-metric-value">{pct_str(ncm_row["IBS_UF_TESTE_2026_FINAL"])}</div>',
-            unsafe_allow_html=True,
-        )
-    with col_ibs_mun:
-        st.markdown(
-            f'<div class="pricetax-metric-label">IBS (Municipal)</div>'
-            f'<div class="pricetax-metric-value">{pct_str(ncm_row["IBS_MUN_TESTE_2026_FINAL"])}</div>',
-            unsafe_allow_html=True,
-        )
-    with col_cbs:
-        st.markdown(
-            f'<div class="pricetax-metric-label">CBS (Federal)</div>'
-            f'<div class="pricetax-metric-value">{pct_str(ncm_row["CBS_TESTE_2026_FINAL"])}</div>',
-            unsafe_allow_html=True,
-        )
-
-    if ncm_row["ALERTA_APP"]:
-        st.markdown("---")
-        st.markdown(
-            f'<div class="pricetax-card-erro">'
-            f'<p style="font-size: 0.9rem; color: #FFDCDC;">'
-            f'**ALERTA:** {ncm_row["ALERTA_APP"]}'
-            f'</p>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-    if ncm_row["OBS_ALIMENTO"]:
-        st.markdown("---")
-        st.info(f'**Observação Alimento:** {ncm_row["OBS_ALIMENTO"]}')
-
-    if ncm_row["OBS_DESTINACAO"]:
-        st.markdown("---")
-        st.info(f'**Observação Destinação:** {ncm_row["OBS_DESTINACAO"]}')
-
-    if ncm_row["OBS_REGIME_ESPECIAL"]:
-        st.markdown("---")
-        st.info(f'**Observação Regime Especial:** {ncm_row["OBS_REGIME_ESPECIAL"]}')
-
-
-def display_sped_result(sped_data: Dict[str, Any]):
-    st.markdown(
-        f'<div class="pricetax-card">',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="pricetax-title">Análise SPED PIS/COFINS</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="pricetax-subtitle">Competência: {sped_data["competencia"]}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # Resumo M200/M600
-    st.subheader("Resumo de Apuração (Blocos M200/M600)")
-    col_pis, col_cofins = st.columns(2)
-
-    with col_pis:
-        st.markdown(
-            f'<div class="pricetax-card-soft">',
-            unsafe_allow_html=True,
-        )
-        # Ajuste da cor do título para usar o dourado
-        st.markdown(
-            f'<p class="pis-cofins-title">PIS (Não-Cumulativo)</p>',
-            unsafe_allow_html=True,
-        )
-        for k, v in sped_data["m200"].items():
-            st.markdown(
-                f'<div style="display: flex; justify-content: space-between; margin-top: 5px;">'
-                f'<span style="font-size: 0.85rem; color: #BBBBBB;">{k}:</span>'
-                f'<span style="font-size: 0.9rem; font-weight: 500; color: {SECONDARY_ACCENT};">R$ {v:,.2f}'.replace(
-                    ",", "X"
-                ).replace(".", ",").replace("X", ".")
-                + "</span>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col_cofins:
-        st.markdown(
-            f'<div class="pricetax-card-soft">',
-            unsafe_allow_html=True,
-        )
-        # Ajuste da cor do título para usar o dourado
-        st.markdown(
-            f'<p class="pis-cofins-title">COFINS (Não-Cumulativo)</p>',
-            unsafe_allow_html=True,
-        )
-        for k, v in sped_data["m600"].items():
-            st.markdown(
-                f'<div style="display: flex; justify-content: space-between; margin-top: 5px;">'
-                f'<span style="font-size: 0.85rem; color: #BBBBBB;">{k}:</span>'
-                f'<span style="font-size: 0.9rem; font-weight: 500; color: {SECONDARY_ACCENT};">R$ {v:,.2f}'.replace(
-                    ",", "X"
-                ).replace(".", ",").replace("X", ".")
-                + "</span>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # Detalhamento M210/M610
-    st.subheader("Detalhamento da Contribuição (Blocos M210/M610)")
-    if sped_data["m210"] or sped_data["m610"]:
-        tab_pis, tab_cofins = st.tabs(["PIS (M210)", "COFINS (M610)"])
-
-        with tab_pis:
-            for item in sped_data["m210"]:
-                st.markdown(
-                    f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                    f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                    f'[{item["cod_cont"]}] {item["descricao"]}'
-                    f'</p>'
-                    f'<div style="margin-top: 10px;">'
-                    f'<span class="pricetax-metric-label">Receita Bruta:</span> '
-                    f'<span class="pricetax-metric-value">R$ {item["vl_rec_bruta"]:,.2f}'.replace(
-                        ",", "X"
-                    ).replace(".", ",").replace("X", ".")
-                    + "</span>"
-                    f"</div>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
-
-        with tab_cofins:
-            for item in sped_data["m610"]:
-                st.markdown(
-                    f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                    f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                    f'[{item["cod_cont"]}] {item["descricao"]}'
-                    f'</p>'
-                    f'<div style="margin-top: 10px;">'
-                    f'<span class="pricetax-metric-label">Receita Bruta:</span> '
-                    f'<span class="pricetax-metric-value">R$ {item["vl_rec_bruta"]:,.2f}'.replace(
-                        ",", "X"
-                    ).replace(".", ",").replace("X", ".")
-                    + "</span>"
-                    f"</div>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
-    else:
-        st.info("Nenhum detalhamento de contribuição (M210/M610) encontrado.")
-
-    st.markdown("---")
-
-    # Receitas Não-Tributadas M400/M800
-    st.subheader("Receitas Não-Tributadas (Blocos M400/M800)")
-    if sped_data["m400"] or sped_data["m800"]:
-        tab_pis_nt, tab_cofins_nt = st.tabs(
-            ["PIS Não-Tributado (M400/M410)", "COFINS Não-Tributado (M800/M810)"]
-        )
-
-        with tab_pis_nt:
-            for item in sped_data["m400"]:
-                if "cod_nat_rec" in item:
-                    st.markdown(
-                        f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                        f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                        f'[{item["cod_nat_rec"]}] {item["descricao"]}'
-                        f'</p>'
-                        f'<div style="margin-top: 10px;">'
-                        f'<span class="pricetax-metric-label">Valor da Receita Não-Tributada:</span> '
-                        f'<span class="pricetax-metric-value">R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(
-                            ",", "X"
-                        ).replace(".", ",").replace("X", ".")
-                        + "</span>"
-                        f"</div>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                        f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                        f'Total PIS Não-Tributado'
-                        f'</p>'
-                        f'<div style="margin-top: 10px;">'
-                        f'<span class="pricetax-metric-label">Valor da Receita Não-Tributada:</span> '
-                        f'<span class="pricetax-metric-value">R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(
-                            ",", "X"
-                        ).replace(".", ",").replace("X", ".")
-                        + "</span>"
-                        f"</div>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
-
-        with tab_cofins_nt:
-            for item in sped_data["m800"]:
-                if "cod_nat_rec" in item:
-                    st.markdown(
-                        f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                        f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                        f'[{item["cod_nat_rec"]}] {item["descricao"]}'
-                        f'</p>'
-                        f'<div style="margin-top: 10px;">'
-                        f'<span class="pricetax-metric-label">Valor da Receita Não-Tributada:</span> '
-                        f'<span class="pricetax-metric-value">R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(
-                            ",", "X"
-                        ).replace(".", ",").replace("X", ".")
-                        + "</span>"
-                        f"</div>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        f'<div class="pricetax-card-soft" style="margin-bottom: 10px;">'
-                        f'<p style="font-size: 1rem; font-weight: 600; color: {SECONDARY_ACCENT};">'
-                        f'Total COFINS Não-Tributado'
-                        f'</p>'
-                        f'<div style="margin-top: 10px;">'
-                        f'<span class="pricetax-metric-label">Valor da Receita Não-Tributada:</span> '
-                        f'<span class="pricetax-metric-value">R$ {item["vl_rec_nao_trib"]:,.2f}'.replace(
-                            ",", "X"
-                        ).replace(".", ",").replace("X", ".")
-                        + "</span>"
-                        f"</div>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
-    else:
-        st.info("Nenhuma receita não-tributada (M400/M800) encontrada.")
-
-
-def main():
-    st.title("PRICETAX • Classificador IBS/CBS & SPED PIS/COFINS")
-    st.markdown(
-        "Consulte o NCM do seu produto, visualize as alíquotas de IBS e CBS para 2026 e audite o SPED PIS/COFINS."
-    )
-
-    tab_ncm, tab_sped = st.tabs(
-        ["Consulta NCM → IBS/CBS 2026", "SPED PIS/COFINS → Excel (Bloco M)"]
-    )
-
-    with tab_ncm:
-        st.markdown(
-            f'<div class="pricetax-card-soft" style="margin-bottom: 20px;">'
-            f'<div class="pricetax-badge">CONSULTA DE PRODUTOS</div>'
-            f'<p style="font-size: 0.9rem; color: #BBBBBB; margin-top: 10px;">'
-            f'Informe o código NCM do seu produto e veja a tributação de IBS e CBS simulada para o ano de teste de 2026, com base nas regras de transição da EC 132/2023 e da LC 214/2025.'
-            f'</p>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
         ncm_input = st.text_input(
             "Informe o NCM (com ou sem pontos)",
             placeholder="Ex.: 10063021 ou 10.06.30.21",
-            key="ncm_input",
         )
+    with col2:
+        st.write("")
+        consultar = st.button("Consultar NCM", type="primary")
 
-        if st.button("Consultar NCM", type="primary"):
-            if ncm_input:
-                with st.spinner("Buscando informações..."):
-                    df_tipi = load_tipi_base()
-                    ncm_row = buscar_ncm(df_tipi, ncm_input)
-
-                    if ncm_row is not None:
-                        display_ncm_result(ncm_row)
-                    else:
-                        st.error(
-                            f"NCM **{ncm_input}** não encontrado na base de classificação IBS/CBS."
-                        )
+    if consultar and ncm_input.strip():
+        if df_tipi.empty:
+            st.error(
+                "Não foi possível consultar o NCM porque a base de classificação "
+                "(PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx) não foi encontrada no servidor."
+            )
+        else:
+            row = buscar_ncm(df_tipi, ncm_input)
+            if row is None:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-erro" style="margin-top:0.8rem;">
+                        NCM: <b>{ncm_input}</b><br>
+                        Não encontramos esse NCM na base PRICETAX. Verifique o código informado.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
             else:
-                st.warning("Por favor, informe um código NCM para consultar.")
+                # Campos principais
+                ncm_fmt = str(row.get("NCM", "")).strip()
+                desc = str(row.get("NCM_DESCRICAO", "")).strip()
 
-    with tab_sped:
-        st.markdown(
-            f'<div class="pricetax-card-soft" style="margin-bottom: 20px;">'
-            f'<div class="pricetax-badge">AUDITORIA SPED PIS/COFINS</div>'
-            f'<p style="font-size: 0.9rem; color: #BBBBBB; margin-top: 10px;">'
-            f'Faça o upload do seu arquivo SPED PIS/COFINS (bloco M) para extrair e visualizar os dados de apuração e detalhamento de receitas e créditos.'
-            f'</p>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+                regime_iva = str(row.get("REGIME_IVA_2026_FINAL", row.get("REGIME_IVA_2026", ""))).strip()
+                fonte_legal = str(row.get("FONTE_LEGAL_FINAL", row.get("FONTE_LEGAL_IVA", ""))).strip()
 
-        uploaded_file = st.file_uploader(
-            "Selecione o arquivo SPED PIS/COFINS (.txt)",
-            type=["txt"],
-            key="sped_file_uploader",
-        )
+                flag_alimento = str(row.get("FLAG_ALIMENTO", "")).strip()
+                flag_cesta = str(row.get("FLAG_CESTA_BASICA", "")).strip()
+                flag_hf = str(row.get("FLAG_HORTIFRUTI_OVOS", "")).strip()
+                flag_dep_dest = str(row.get("FLAG_DEPENDE_DESTINACAO", "")).strip()
 
-        if uploaded_file is not None:
-            with st.spinner("Analisando arquivo SPED..."):
-                file_content = uploaded_file.read()
-                sped_data = parse_sped_bloco_m(file_content)
-                display_sped_result(sped_data)
+                cst_ibs_cbs = str(row.get("CST_IBSCBS", "")).strip()
 
+                ibs_uf_final = to_float_br(row.get("IBS_UF_TESTE_2026_FINAL"))
+                ibs_mun_final = to_float_br(row.get("IBS_MUN_TESTE_2026_FINAL"))
+                cbs_final = to_float_br(row.get("CBS_TESTE_2026_FINAL"))
 
-if __name__ == "__main__":
-    main()
+                aliq_ibs_efet = ibs_uf_final + ibs_mun_final
+                aliq_cbs_efet = cbs_final
+
+                # Imposto seletivo
+                flag_is = str(row.get("FLAG_IMPOSTO_SELETIVO", "")).strip().upper()
+                tem_is = "Sim" if flag_is == "SIM" else "Não"
+
+                obs_alimento = str(row.get("OBS_ALIMENTO", "")).strip()
+                obs_dest = str(row.get("OBS_DESTINACAO", "")).strip()
+                alerta_app = str(row.get("ALERTA_APP", "")).strip()
+                obs_regime_esp = str(row.get("OBS_REGIME_ESPECIAL", "")).strip()
+
+                # Trecho sintético cliente-friendly
+                trat_sintetico = (
+                    f"<span class='pill pill-regime'>{regime_label(regime_iva)}</span> "
+                    f"&nbsp; <span class='pill pill-tag'>Cesta Básica: {badge_flag(flag_cesta)}</span> "
+                    f"&nbsp; <span class='pill pill-tag'>Hortifrúti/Ovos: {badge_flag(flag_hf)}</span>"
+                )
+
+                # Card principal
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:0.8rem;">
+                        <div style="font-size:1.05rem;font-weight:600;color:{PRIMARY_YELLOW};">
+                            NCM {ncm_fmt} – {desc}
+                        </div>
+                        <div style="margin-top:0.55rem;font-size:0.9rem;color:#E0E0E0;">
+                            <b>Tratamento IBS/CBS em 2026 (ano teste):</b><br>
+                            <div style="margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:0.35rem;">
+                                {trat_sintetico}
+                            </div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # BIG NUMBERS – ALÍQUOTAS EFETIVAS
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:0.7rem;display:flex;flex-wrap:wrap;gap:1.6rem;">
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">ALÍQUOTA IBS 2026 (EFETIVA)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_ibs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B0;margin-top:0.3rem;">
+                                Considera a alíquota de teste de 0,1% e as reduções ou alíquota zero previstas para este NCM,
+                                conforme EC 132/2023 e LC 214/2025.
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">ALÍQUOTA CBS 2026 (EFETIVA)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_cbs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B;margin-top:0.3rem;">
+                                Calculada a partir da alíquota de teste de 0,9%, aplicando redução de 60% ou alíquota zero quando cabível.
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:220px;">
+                            <div class="pricetax-metric-label">TOTAL IBS + CBS 2026 (EFETIVO)</div>
+                            <div style="font-size:2.4rem;font-weight:700;color:{PRIMARY_YELLOW};line-height:1.1;margin-top:0.15rem;">
+                                {pct_str(aliq_ibs_efet + aliq_cbs_efet)}
+                            </div>
+                            <div style="font-size:0.8rem;color:#B0B0B;margin-top:0.3rem;">
+                                Carga efetiva estimada do IVA Dual para este NCM no ano de teste, já considerando o regime de alimentos e cestas básicas.
+                            </div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown("")
+
+                # Parâmetros de classificação
+                st.subheader("Parâmetros de classificação", divider="gray")
+                c1, c2, c3, c4 = st.columns(4)
+                with c1:
+                    st.markdown("**Produto é alimento?**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_alimento)}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with c2:
+                    st.markdown("**Cesta Básica Nacional (CeNA)?**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_cesta)}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with c3:
+                    st.markdown("**Hortifrúti / Ovos (Anexo XV)?**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_hf)}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with c4:
+                    st.markdown("**Depende de destinação?**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_dep_dest)}</span>",
+                        unsafe_allow_html=True,
+                    )
+
+                c5, c6 = st.columns(2)
+                with c5:
+                    st.markdown("**CST IBS/CBS (venda)**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{cst_ibs_cbs or '—'}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with c6:
+                    st.markdown("**Imposto Seletivo (IS)**")
+                    st.markdown(
+                        f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{tem_is}</span>",
+                        unsafe_allow_html=True,
+                    )
+
+                st.markdown("")
+
+                # Alíquotas 2026 para este NCM
+                st.subheader("Alíquotas 2026 para este NCM", divider="gray")
+                a1, a2, a3 = st.columns(3)
+
+                with a1:
+                    st.markdown("**Alíquotas de referência (ano teste 2026)**")
+                    st.write(f"IBS referência (UF): **0,10%**")
+                    st.write(f"IBS referência (Mun): **0,00%**")
+                    st.write(f"IBS total referência: **0,10%**")
+                    st.write(f"CBS referência: **0,90%**")
+
+                with a2:
+                    st.markdown("**Alíquotas efetivas IBS/CBS**")
+                    st.write(f"IBS UF Efetivo: **{pct_str(ibs_uf_final)}**")
+                    st.write(f"IBS Mun Efetivo: **{pct_str(ibs_mun_final)}**")
+                    st.write(f"IBS Total Efetivo: **{pct_str(aliq_ibs_efet)}**")
+                    st.write(f"CBS Efetivo: **{pct_str(aliq_cbs_efet)}**")
+                    st.write(f"Total Efetivo IBS + CBS: **{pct_str(aliq_ibs_efet + aliq_cbs_efet)}**")
+
+                with a3:
+                    st.markdown("**Resumo executivo**")
+                    resumo = (
+                        "- Simulação com base nas alíquotas de teste de 0,1% (IBS) e 0,9% (CBS);\n"
+                        f"- Regime aplicado: **{regime_label(regime_iva)}**;\n"
+                        f"- Cesta Básica Nacional: {badge_flag(flag_cesta)}; Hortifrúti/Ovos: {badge_flag(flag_hf)};\n"
+                        "- Resultado pensado para parametrização do ERP e discussão com contabilidade/consultoria tributária."
+                    )
+                    st.write(resumo)
+
+                # --------------------------------------------------
+                # BLOCO FINAL – TEXTOS LIMPOS (SEM NAN) E AJUSTE REDUCAO 60%
+                # --------------------------------------------------
+                st.markdown("---")
+
+                def clean_txt(v):
+                    s = str(v or "").strip()
+                    return "" if s.lower() == "nan" else s
+
+                fonte_legal_fmt = clean_txt(fonte_legal)
+                alerta_fmt = clean_txt(alerta_app)
+                obs_alimento_fmt = clean_txt(obs_alimento)
+                obs_dest_fmt = clean_txt(obs_dest)
+                regime_extra_fmt = clean_txt(obs_regime_esp)
+
+                # Se o regime indicar redução de 60%, ajusta textos padrão
+                if "RED_60" in (regime_iva or "").upper():
+                    alerta_fmt = "REDUCAO 60%; conferir aderencia ao segmento do contribuinte."
+                    regime_extra_fmt = (
+                        "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. "
+                        "Aplicada reducao de 60% conforme REDUCAO 60%."
+                    )
+
+                st.markdown(f"**Base legal aplicada:** {fonte_legal_fmt or '—'}")
+                st.markdown(f"**Alerta PRICETAX:** {alerta_fmt}")
+                st.markdown(f"**Observação sobre alimentos:** {obs_alimento_fmt}")
+                st.markdown(f"**Observação sobre destinação:** {obs_dest_fmt}")
+                st.markmarkdown(f"**Regime especial / motivo adicional:** {regime_extra_fmt}")
+
+# --------------------------------------------------
+# ABA 2 – SPED PIS/COFINS → EXCEL
+# --------------------------------------------------
+with tabs[1]:
+    st.markdown(
+        """
+        <div class="pricetax-card">
+            <span class="pricetax-badge">Bloco M – PIS/COFINS</span>
+            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+                Faça o upload de um ou mais arquivos SPED Contribuições (<code>.txt</code> ou <code>.zip</code>).
+                O módulo consolida os registros do Bloco M (M200, M600, M105, M505, M210, M610, M410, M810)
+                e gera um Excel com abas analíticas para auditoria.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("")
+    uploaded = st.file_uploader(
+        "Selecione arquivos SPED Contribuições (.txt ou .zip)",
+        type=["txt", "zip"],
+        accept_multiple_files=True,
+        key="sped_upload",
+    )
+
+    if uploaded:
+        if st.button("Processar SPED PIS/COFINS → Excel"):
+            with st.spinner("Processando arquivos SPED e montando planilha de auditoria do Bloco M..."):
+                output_xlsx = processar_speds_uploaded(uploaded)
+
+            st.success("Processamento concluído. Faça o download da planilha abaixo.")
+            st.download_button(
+                "Baixar Excel do Bloco M",
+                data=output_xlsx,
+                file_name="Auditoria_SPED_PIS_COFINS_BlocoM.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+    else:
+        st.info("Nenhum arquivo selecionado ainda. Anexe um ou mais SPEDs para habilitar o processamento.")
