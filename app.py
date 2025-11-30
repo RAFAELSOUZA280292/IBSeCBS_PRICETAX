@@ -373,20 +373,42 @@ CFOP_CCLASSTRIB_MAP = {
     "5104": "000001",
     "5109": "000001",
     "5110": "000001",
+    "5116": "000001",
+    "5201": "000001",
     "5403": "000001",
     "5405": "000001",
+
     # Vendas interestaduais
     "6101": "000001",
     "6102": "000001",
     "6103": "000001",
     "6104": "000001",
+    "6107": "000001",
+    "6108": "000001",
     "6109": "000001",
     "6110": "000001",
+    "6116": "000001",
+    "6201": "000001",
     "6403": "000001",
     "6405": "000001",
+
     # Exportação
     "7101": "000001",
     "7102": "000001",
+
+    # Saídas não onerosas genéricas – sem tributação
+    "5901": "410999",
+    "6901": "410999",
+    "5902": "410999",
+    "6902": "410999",
+    "5916": "410999",
+    "6916": "410999",
+    "5959": "410999",
+    "6949": "410999",
+
+    # Saída onerosa – faturamento p/ entrega futura
+    "5922": "000001",
+    "6922": "000001",
 }
 
 
@@ -407,8 +429,8 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     if cfop_clean in CFOP_CCLASSTRIB_MAP:
         code = CFOP_CCLASSTRIB_MAP[cfop_clean]
         msg = (
-            f"Regra padrão PRICETAX: CFOP {cfop_clean} (saída onerosa) → "
-            f"cClassTrib {code} – tributação regular."
+            f"Regra padrão PRICETAX: CFOP {cfop_clean} → "
+            f"cClassTrib {code} (conforme matriz PRICETAX)."
         )
         return code, msg
 
