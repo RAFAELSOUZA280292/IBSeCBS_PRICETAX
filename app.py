@@ -33,26 +33,22 @@ st.markdown(
 
     /* Layout geral */
     .block-container {{
-        padding-top: 3.5rem;   /* mais respiro para não "comer" o cabeçalho */
+        padding-top: 2.5rem;
         padding-bottom: 2rem;
         max-width: 1200px;
     }}
 
     /* Títulos */
     .pricetax-title {{
-        font-size: 2.1rem;
+        font-size: 2.3rem;
         font-weight: 700;
         color: {PRIMARY_YELLOW};
         letter-spacing: 0.04em;
-        line-height: 1.15;
-        margin-bottom: 0.2rem;
     }}
     .pricetax-subtitle {{
-        font-size: 0.96rem;
+        font-size: 0.95rem;
         color: #CFCFCF;
-        margin-top: 0.15rem;
-        margin-bottom: 0.8rem;
-        max-width: 1000px;
+        margin-top: 0.2rem;
     }}
 
     /* Cards */
@@ -232,12 +228,9 @@ def label_from_sped_header(text: str, default_name: str) -> str:
         for line in text.splitlines():
             if line.startswith("|0000|"):
                 parts = line.split("|")
-                # Layout EFD Contribuições:
-                # |0000|COD_VER|TIPO_ESCRIT|IND_SIT_ESP|NUM_REC_ANTERIOR|
-                # DT_INI|DT_FIN|NOME|CNPJ|UF|COD_MUN|SUFRAMA|IND_NAT_PJ|IND_ATIV|
-                dt_ini = parts[6] if len(parts) > 6 else ""
-                dt_fin = parts[7] if len(parts) > 7 else ""
-                nome = parts[8] if len(parts) > 8 else ""
+                dt_ini = parts[4] if len(parts) > 4 else ""
+                dt_fin = parts[5] if len(parts) > 5 else ""
+                nome = parts[6] if len(parts) > 6 else ""
                 comp = competencia_from_dt(dt_ini, dt_fin)
                 nome_clean = nome.strip() or default_name
                 if comp:
@@ -427,7 +420,7 @@ def get_class_info_by_code(cclass_code: str) -> Optional[Dict[str, str]]:
 # REGRAS PADRÃO CFOP → cClassTrib (OPERAÇÕES "NORMAIS")
 # --------------------------------------------------
 CFOP_CCLASSTRIB_MAP = {
-    # Vendas internas
+    # Vendas internas – operações onerosas (débito normal)
     "5101": "000001",
     "5102": "000001",
     "5103": "000001",
@@ -440,7 +433,7 @@ CFOP_CCLASSTRIB_MAP = {
     "5405": "000001",
     "5411": "000001",
 
-    # Vendas interestaduais
+    # Vendas interestaduais – operações onerosas (débito normal)
     "6101": "000001",
     "6102": "000001",
     "6103": "000001",
@@ -455,22 +448,25 @@ CFOP_CCLASSTRIB_MAP = {
     "6405": "000001",
     "6411": "000001",
 
-    # Exportação
+    # Exportação – operação onerosa com débito “normal”
     "7101": "000001",
     "7102": "000001",
 
-    # Saídas não onerosas genéricas – sem tributação
+    # Saídas não onerosas genéricas – sem tributação IBS/CBS
+    # (remessas sem faturamento, ajustes, saídas simbólicas etc.)
     "5901": "410999",
-    "6901": "410999",
     "5902": "410999",
-    "6902": "410999",
     "5910": "410999",
-    "6910": "410999",
-    "5927": "410999",
-    "6927": "410999",
     "5916": "410999",
-    "6916": "410999",
+    "5927": "410999",
+    "5949": "410999",  # Outras saídas de mercadorias não especificadas – não onerosa
     "5959": "410999",
+
+    "6901": "410999",
+    "6902": "410999",
+    "6910": "410999",
+    "6916": "410999",
+    "6927": "410999",
     "6949": "410999",
 
     # Saída onerosa – faturamento p/ entrega futura
@@ -555,8 +551,8 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                 ind_oper = fields[2] if len(fields) > 2 else ""
                 if ind_oper == "1":  # Saída
                     chv_nfe = fields[9] if len(fields) > 9 else ""
-                    ser = fields[7] if len(fields) > 7 else ""      # ajuste índice
-                    num_doc = fields[8] if len(fields) > 8 else ""  # ajuste índice
+                    ser = fields[6] if len(fields) > 6 else ""
+                    num_doc = fields[7] if len(fields) > 7 else ""
 
                     if chv_nfe:
                         current_doc_key = chv_nfe
@@ -678,7 +674,7 @@ with tabs[0]:
                 • Informe o <b>NCM</b> do produto e o <b>CFOP de venda</b> atualmente utilizado;<br>
                 • A ferramenta retorna o regime de IVA, as alíquotas IBS/CBS simuladas para 2026;<br>
                 • Sugere o <b>cClassTrib</b> padrão para NFe, a partir do CFOP informado;<br>
-                • Expõe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib).
+                • Exibe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib).
             </div>
         </div>
         """,
