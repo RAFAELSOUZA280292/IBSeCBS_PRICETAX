@@ -161,6 +161,7 @@ def to_float_br(s) -> float:
     s = str(s).strip()
     if s == "":
         return 0.0
+    # Trata valores tipo "1.234,56"
     if s.count(",") == 1 and s.count(".") >= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -210,6 +211,7 @@ def load_tipi_base() -> pd.DataFrame:
         try:
             candidatos.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
         except NameError:
+            # Em ambiente Streamlit Cloud __file__ pode não estar disponível
             pass
 
         base_path = None
@@ -390,6 +392,7 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
         reg = (campos[1] or "").upper()
 
         if reg == "0000":
+            # Datas de abertura / encerramento
             datas = [c for c in campos if re.fullmatch(r"\d{8}", c or "")]
             if len(datas) >= 2:
                 dt_ini, dt_fin = datas[0], datas[1]
@@ -397,12 +400,18 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
                 dt_ini = campos[4] if len(campos) > 4 else ""
                 dt_fin = campos[5] if len(campos) > 5 else ""
             competencia = competencia_from_dt(dt_ini, dt_fin)
+
+            # CNPJ (primeiro 14 dígitos encontrados)
             cand = [only_digits(c) for c in campos if len(only_digits(c)) == 14]
             if cand:
                 empresa_cnpj = cand[0]
 
         elif reg == "M200":
-            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            row = {
+                "ARQUIVO": nome_arquivo,
+                "COMPETENCIA": competencia,
+                "CNPJ_ARQUIVO": empresa_cnpj,
+            }
             vals = campos[2: 2 + len(M200_HEADERS)]
             for titulo, val in zip(M200_HEADERS, vals):
                 row[titulo] = to_float_br(val)
@@ -456,7 +465,11 @@ def parse_sped_conteudo(nome_arquivo: str, conteudo: str) -> Dict[str, Any]:
             )
 
         elif reg == "M600":
-            row = {"ARQUIVO": nome_arquivo, "COMPETENCIA": competencia, "CNPJ_ARQUIVO": empresa_cnpj}
+            row = {
+                "ARQUIVO": nome_arquivo,
+                "COMPETENCIA": competencia,
+                "CNPJ_ARQUIVO": empresa_cnpj,
+            }
             vals = campos[2: 2 + len(M600_HEADERS)]
             for titulo, val in zip(M600_HEADERS, vals):
                 row[titulo] = to_float_br(val)
@@ -629,10 +642,12 @@ st.markdown(
 )
 
 st.markdown("")
-tabs = st.tabs([
-    "🔍 Consulta NCM → IBS/CBS 2026",
-    "📁 SPED PIS/COFINS → Excel (Bloco M)",
-])
+tabs = st.tabs(
+    [
+        "🔍 Consulta NCM → IBS/CBS 2026",
+        "📁 SPED PIS/COFINS → Excel (Bloco M)",
+    ]
+)
 
 # --------------------------------------------------
 # ABA 1 – CONSULTA TIPI → IBS/CBS (ano teste 2026)
@@ -688,8 +703,12 @@ with tabs[0]:
                 ncm_fmt = str(row.get("NCM", "")).strip()
                 desc = str(row.get("NCM_DESCRICAO", "")).strip()
 
-                regime_iva = str(row.get("REGIME_IVA_2026_FINAL", row.get("REGIME_IVA_2026", ""))).strip()
-                fonte_legal = str(row.get("FONTE_LEGAL_FINAL", row.get("FONTE_LEGAL_IVA", ""))).strip()
+                regime_iva = str(
+                    row.get("REGIME_IVA_2026_FINAL", row.get("REGIME_IVA_2026", ""))
+                ).strip()
+                fonte_legal = str(
+                    row.get("FONTE_LEGAL_FINAL", row.get("FONTE_LEGAL_IVA", ""))
+                ).strip()
 
                 flag_alimento = str(row.get("FLAG_ALIMENTO", "")).strip()
                 flag_cesta = str(row.get("FLAG_CESTA_BASICA", "")).strip()
@@ -828,10 +847,10 @@ with tabs[0]:
 
                 with a1:
                     st.markdown("**Alíquotas de referência (ano teste 2026)**")
-                    st.write(f"IBS referência (UF): **0,10%**")
-                    st.write(f"IBS referência (Mun): **0,00%**")
-                    st.write(f"IBS total referência: **0,10%**")
-                    st.write(f"CBS referência: **0,90%**")
+                    st.write("IBS referência (UF): **0,10%**")
+                    st.write("IBS referência (Mun): **0,00%**")
+                    st.write("IBS total referência: **0,10%**")
+                    st.write("CBS referência: **0,90%**")
 
                 with a2:
                     st.markdown("**Alíquotas efetivas IBS/CBS**")
@@ -839,7 +858,9 @@ with tabs[0]:
                     st.write(f"IBS Mun Efetivo: **{pct_str(ibs_mun_final)}**")
                     st.write(f"IBS Total Efetivo: **{pct_str(aliq_ibs_efet)}**")
                     st.write(f"CBS Efetivo: **{pct_str(aliq_cbs_efet)}**")
-                    st.write(f"Total Efetivo IBS + CBS: **{pct_str(aliq_ibs_efet + aliq_cbs_efet)}**")
+                    st.write(
+                        f"Total Efetivo IBS + CBS: **{pct_str(aliq_ibs_efet + aliq_cbs_efet)}**"
+                    )
 
                 with a3:
                     st.markdown("**Resumo executivo**")
@@ -868,17 +889,28 @@ with tabs[0]:
 
                 # Se o regime indicar redução de 60%, ajusta textos padrão
                 if "RED_60" in (regime_iva or "").upper():
-                    alerta_fmt = "REDUCAO 60%; conferir aderencia ao segmento do contribuinte."
-                    regime_extra_fmt = (
-                        "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. "
-                        "Aplicada reducao de 60% conforme REDUCAO 60%."
-                    )
+                    if not alerta_fmt:
+                        alerta_fmt = (
+                            "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
+                        )
+                    if not regime_extra_fmt:
+                        regime_extra_fmt = (
+                            "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. "
+                            "Carga reduzida em 60% conforme regras de essencialidade/alimentos."
+                        )
 
                 st.markdown(f"**Base legal aplicada:** {fonte_legal_fmt or '—'}")
-                st.markdown(f"**Alerta PRICETAX:** {alerta_fmt}")
-                st.markdown(f"**Observação sobre alimentos:** {obs_alimento_fmt}")
-                st.markdown(f"**Observação sobre destinação:** {obs_dest_fmt}")
-                st.markmarkdown(f"**Regime especial / motivo adicional:** {regime_extra_fmt}")
+                st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
+                st.markdown(
+                    f"**Observação sobre alimentos:** {obs_alimento_fmt or '—'}"
+                )
+                st.markdown(
+                    f"**Observação sobre destinação:** {obs_dest_fmt or '—'}"
+                )
+                # >>> AQUI ESTAVA O ERRO (markmarkdown). CORRIGIDO:
+                st.markdown(
+                    f"**Regime especial / motivo adicional:** {regime_extra_fmt or '—'}"
+                )
 
 # --------------------------------------------------
 # ABA 2 – SPED PIS/COFINS → EXCEL
@@ -908,7 +940,9 @@ with tabs[1]:
 
     if uploaded:
         if st.button("Processar SPED PIS/COFINS → Excel"):
-            with st.spinner("Processando arquivos SPED e montando planilha de auditoria do Bloco M..."):
+            with st.spinner(
+                "Processando arquivos SPED e montando planilha de auditoria do Bloco M..."
+            ):
                 output_xlsx = processar_speds_uploaded(uploaded)
 
             st.success("Processamento concluído. Faça o download da planilha abaixo.")
@@ -919,4 +953,6 @@ with tabs[1]:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
     else:
-        st.info("Nenhum arquivo selecionado ainda. Anexe um ou mais SPEDs para habilitar o processamento.")
+        st.info(
+            "Nenhum arquivo selecionado ainda. Anexe um ou mais SPEDs para habilitar o processamento."
+        )
