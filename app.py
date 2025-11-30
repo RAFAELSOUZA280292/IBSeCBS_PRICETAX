@@ -429,7 +429,16 @@ CFOP_NAO_ONEROSOS_410999 = {
     "5949",  # Outras saídas de mercadorias não especificadas
     "5959",  # Outras saídas de serviços não especificadas (quando usada sem preço)
 
-    # Interestaduais – grupo 69 (espelho)
+    # Internos – devoluções, demonstração, simbólicas, conta e ordem, transferência, devolução compra
+    "5119",  # Devolução de venda de produção própria
+    "5912",  # Remessa de mercadoria para demonstração
+    "5916",  # Remessa simbólica de mercadoria vendida/bonificação
+    "5923",  # Remessa por conta e ordem de terceiros
+    "5924",  # Remessa por conta e ordem – consignação
+    "5152",  # Transferência de produção própria entre estabelecimentos (interno)
+    "5202",  # Devolução de compra para industrialização (interno)
+
+    # Interestaduais – grupo 69 (espelho das operações do grupo 59)
     "6901",
     "6902",
     "6910",
@@ -437,6 +446,15 @@ CFOP_NAO_ONEROSOS_410999 = {
     "6927",
     "6949",
     "6959",
+
+    # Interestaduais – devoluções, demonstração, simbólicas, conta e ordem, transferência, devolução compra
+    "6119",  # Devolução de venda de produção própria (interestadual)
+    "6912",  # Remessa de mercadoria para demonstração (interestadual)
+    "6916",  # Remessa simbólica (interestadual)
+    "6923",  # Remessa por conta e ordem de terceiros (interestadual)
+    "6924",  # Remessa por conta e ordem – consignação (interestadual)
+    "6152",  # Transferência de produção própria entre estabelecimentos (interestadual)
+    "6202",  # Devolução de compra para industrialização (interestadual)
 }
 
 
@@ -452,6 +470,7 @@ CFOP_CCLASSTRIB_MAP: Dict[str, str] = {
     "5109": "000001",
     "5110": "000001",
     "5116": "000001",
+    "5123": "000001",  # Venda de mercadoria recebida para fim específico de exportação
     "5201": "000001",
     "5403": "000001",
     "5405": "000001",
@@ -467,6 +486,7 @@ CFOP_CCLASSTRIB_MAP: Dict[str, str] = {
     "6109": "000001",
     "6110": "000001",
     "6116": "000001",
+    "6123": "000001",  # Espelho interestadual da venda para exportação
     "6201": "000001",
     "6403": "000001",
     "6405": "000001",
@@ -479,6 +499,9 @@ CFOP_CCLASSTRIB_MAP: Dict[str, str] = {
     # Saída onerosa – faturamento p/ entrega futura
     "5922": "000001",
     "6922": "000001",
+
+    # Venda de sucata / resíduos – operação onerosa (gera débito)
+    "6557": "000001",
 }
 
 # Aplicar mapeamento padrão 410999 para CFOPs não onerosos (sem sobrescrever os já definidos)
