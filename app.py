@@ -177,6 +177,17 @@ def to_float_br(s) -> float:
         return 0.0
 
 
+def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
+    """
+    Extrai competência (MM/AAAA) a partir das datas do registro 0000.
+    """
+    for raw in (dt_ini or "", dt_fin or ""):
+        dig = only_digits(raw)
+        if len(dig) == 8:
+            return f"{dig[2:4]}/{dig[4:8]}"
+    return ""
+
+
 def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [str(c).strip().upper() for c in df.columns]
@@ -206,6 +217,28 @@ def regime_label(regime: str) -> str:
         "TRIBUTACAO_PADRAO": "Tributação padrão (sem benefício)",
     }
     return mapping.get(r, regime or "Regime não mapeado")
+
+
+def label_from_sped_header(text: str, default_name: str) -> str:
+    """
+    Monta rótulo "MM/AAAA - NOME DA EMPRESA" a partir do registro |0000|.
+    Se não conseguir, retorna o nome padrão (nome do arquivo).
+    """
+    try:
+        for line in text.splitlines():
+            if line.startswith("|0000|"):
+                parts = line.split("|")
+                dt_ini = parts[4] if len(parts) > 4 else ""
+                dt_fin = parts[5] if len(parts) > 5 else ""
+                nome = parts[6] if len(parts) > 6 else ""
+                comp = competencia_from_dt(dt_ini, dt_fin)
+                nome_clean = nome.strip() or default_name
+                if comp:
+                    return f"{comp} - {nome_clean}"
+                return nome_clean
+    except Exception:
+        pass
+    return default_name
 
 
 # --------------------------------------------------
@@ -349,7 +382,7 @@ def build_cclasstrib_code_index(df_class_: pd.DataFrame) -> Dict[str, Dict[str, 
             (g["Tributação Regular"].astype(str).str.lower() == "sim")
             & (g["Redução de Alíquota"].astype(str).str.lower() == "não")
             & (g["Transferência de Crédito"].astype(str).str.lower() == "não")
-            & (g["DIFERIMENTO"].astype(str).str.lower() == "não")
+            & (g["Diferimento"].astype(str).str.lower() == "não")
         )
         g_reg = g[mask_reg]
         if not g_reg.empty:
@@ -864,7 +897,7 @@ with tabs[0]:
 
             st.markdown(f"**Base legal considerada (TIPI/PRICETAX):** {fonte or '—'}")
             st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
-            st.markdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
+            st.markmarkdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
             st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
             st.markdown(
                 f"**Regime especial / observações adicionais:** {reg_extra or '—'}"
@@ -912,15 +945,15 @@ with tabs[1]:
             with st.spinner("Processando arquivos SPED..."):
                 for idx, up in enumerate(uploaded_rank, start=1):
                     nome = up.name
-                    status_text.markdown(
-                        f"**Processando arquivo {idx}/{total_files}:** `{nome}`"
-                    )
 
                     if nome.lower().endswith(".zip"):
                         z_bytes = up.read()
                         with zipfile.ZipFile(io.BytesIO(z_bytes), "r") as z:
                             for info in z.infolist():
                                 if info.filename.lower().endswith(".txt"):
+                                    status_text.markdown(
+                                        f"**Processando arquivo {idx}/{total_files}:** `{info.filename}`"
+                                    )
                                     conteudo = z.open(info).read()
                                     try:
                                         texto = conteudo.decode("latin-1")
@@ -931,9 +964,15 @@ with tabs[1]:
 
                                     df_rank = process_sped_file(texto)
                                     if not df_rank.empty:
-                                        df_rank.insert(0, "ARQUIVO", info.filename)
+                                        label = label_from_sped_header(
+                                            texto, info.filename
+                                        )
+                                        df_rank.insert(0, "ARQUIVO", label)
                                         df_list.append(df_rank)
                     else:
+                        status_text.markdown(
+                            f"**Processando arquivo {idx}/{total_files}:** `{nome}`"
+                        )
                         conteudo = up.read()
                         try:
                             texto = conteudo.decode("latin-1")
@@ -942,7 +981,8 @@ with tabs[1]:
 
                         df_rank = process_sped_file(texto)
                         if not df_rank.empty:
-                            df_rank.insert(0, "ARQUIVO", nome)
+                            label = label_from_sped_header(texto, nome)
+                            df_rank.insert(0, "ARQUIVO", label)
                             df_list.append(df_rank)
 
                     progress_bar.progress(idx / total_files)
