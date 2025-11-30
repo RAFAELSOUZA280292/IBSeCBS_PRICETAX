@@ -751,10 +751,13 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
-            # Métricas de alíquotas
+            # -----------------------------
+            # Bloco A – Alíquota padrão do produto
+            # -----------------------------
+            st.markdown("#### Alíquota padrão do produto – operações de venda onerosas", help="Válida, em regra, para CFOPs de venda como 5102/6102/7102.")
             st.markdown(
                 f"""
-                <div class="pricetax-card" style="margin-top:1rem;display:flex;gap:2rem;flex-wrap:wrap;">
+                <div class="pricetax-card" style="margin-top:0.4rem;display:flex;gap:2rem;flex-wrap:wrap;">
                     <div>
                         <div class="pricetax-metric-label">IBS 2026 (UF + Município)</div>
                         <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_uf + ibs_mun)}</div>
@@ -772,6 +775,49 @@ with tabs[0]:
                 unsafe_allow_html=True,
             )
 
+            # -----------------------------
+            # Bloco B – Tributação desta operação (CFOP informado)
+            # -----------------------------
+            cfop_clean = re.sub(r"\D+", "", cfop_input or "")
+            if cfop_clean:
+                code_from_cfop = CFOP_CCLASSTRIB_MAP.get(cfop_clean)
+
+                # Operações não onerosas (410999)
+                if code_from_cfop == "410999":
+                    st.markdown(
+                        f"#### Tributação aplicável nesta operação (CFOP {cfop_clean})"
+                    )
+                    st.markdown(
+                        f"""
+                        <div class="pricetax-card-soft" style="margin-top:0.4rem;">
+                            <div style="font-size:0.9rem;color:#EDEDED;">
+                                🔰 <b>Operação não onerosa</b> – CFOP {cfop_clean} com cClassTrib <b>{cclastrib_code or '410999'}</b><br>
+                                Nenhum débito de IBS ou CBS é gerado nesta nota, independentemente da alíquota padrão do NCM.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                # Operações onerosas padrão – só reforça que usa a alíquota do produto
+                elif code_from_cfop == "000001":
+                    st.markdown(
+                        f"#### Tributação aplicável nesta operação (CFOP {cfop_clean})"
+                    )
+                    st.markdown(
+                        """
+                        <div class="pricetax-card-soft" style="margin-top:0.4rem;">
+                            <div style="font-size:0.9rem;color:#E0E0E0;">
+                                💼 <b>Operação de venda onerosa padrão</b> — aplica a mesma alíquota IBS/CBS exibida acima
+                                para este NCM, salvo existência de regime especial ou regra específica do cliente.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+            # -----------------------------
+            # Parâmetros de classificação
+            # -----------------------------
             st.subheader("Parâmetros de classificação", divider="gray")
             c1, c2, c3, c4 = st.columns(4)
             with c1:
