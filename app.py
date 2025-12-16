@@ -248,72 +248,7 @@ st.markdown(
         font-size: 0.9rem;
     }}
     
-    /* ========================================
-       TABELAS - ESTILO GLOBAL PRICETAX
-       ======================================== */
-    
-    /* Forçar fundo escuro em todos os dataframes */
-    div[data-testid="stDataFrame"],
-    div[data-testid="stDataFrame"] *,
-    div[data-testid="stDataFrame"] > div,
-    div[data-testid="stDataFrame"] > div > div,
-    div[data-testid="stDataFrame"] table,
-    div[data-testid="stDataFrame"] table *,
-    div[data-testid="stDataFrame"] tbody,
-    div[data-testid="stDataFrame"] tbody * {{
-        background-color: {COLOR_CARD_BG} !important;
-        color: {COLOR_WHITE} !important;
-    }}
-    
-    /* CABEÇALHO DOURADO - TODOS OS ELEMENTOS */
-    div[data-testid="stDataFrame"] thead,
-    div[data-testid="stDataFrame"] thead *,
-    div[data-testid="stDataFrame"] thead tr,
-    div[data-testid="stDataFrame"] thead tr *,
-    div[data-testid="stDataFrame"] thead tr th,
-    div[data-testid="stDataFrame"] thead tr th *,
-    div[data-testid="stDataFrame"] thead tr th div,
-    div[data-testid="stDataFrame"] thead tr th div *,
-    div[data-testid="stDataFrame"] thead tr th span,
-    div[data-testid="stDataFrame"] thead tr th button,
-    div[data-testid="stDataFrame"] table thead,
-    div[data-testid="stDataFrame"] table thead *,
-    div[data-testid="stDataFrame"] table > thead,
-    div[data-testid="stDataFrame"] table > thead *,
-    div[data-testid="stDataFrame"] table > thead > tr,
-    div[data-testid="stDataFrame"] table > thead > tr *,
-    div[data-testid="stDataFrame"] table > thead > tr > th,
-    div[data-testid="stDataFrame"] table > thead > tr > th * {{
-        background: {COLOR_GOLD} !important;
-        background-color: {COLOR_GOLD} !important;
-        color: {COLOR_BLACK} !important;
-        font-weight: 700 !important;
-        border: 1px solid {COLOR_GOLD} !important;
-        padding: 0.75rem !important;
-    }}
-    
-    /* Corpo da tabela */
-    div[data-testid="stDataFrame"] tbody tr td {{
-        background-color: {COLOR_CARD_BG} !important;
-        color: {COLOR_WHITE} !important;
-        border: 1px solid {COLOR_BORDER} !important;
-        padding: 0.6rem !important;
-    }}
-    
-    /* Hover */
-    div[data-testid="stDataFrame"] tbody tr:hover td {{
-        background-color: #2a2a2a !important;
-        border-color: {COLOR_GOLD} !important;
-    }}
-    
-    /* Primeira coluna (código) */
-    div[data-testid="stDataFrame"] tbody tr td:first-child {{
-        font-family: monospace !important;
-        font-weight: 700 !important;
-        color: {COLOR_GOLD} !important;
-    }}
-    
-    /* Remover espaços brancos dos expanders */
+    /* Expanders com fundo transparente */
     .streamlit-expanderHeader,
     .streamlit-expanderContent {{
         background-color: transparent !important;
