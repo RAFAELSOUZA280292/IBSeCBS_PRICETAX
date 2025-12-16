@@ -911,6 +911,7 @@ tabs = st.tabs(
         "Consulta NCM",
         "Ranking de Saídas SPED",
         "cClassTrib",
+        "Download CFOP x cClassTrib",
     ]
 )
 
@@ -1475,8 +1476,77 @@ with tabs[2]:
                     height=min(len(df_tabela) * 35 + 38, 600),
                 )
 
+# =============================================================================
+# ABA 4 - DOWNLOAD CFOP x cClassTrib
+# =============================================================================
+with tabs[3]:
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
+            padding: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid {COLOR_GOLD};
+            margin-bottom: 2rem;
+        ">
+            <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Download: Correlação CFOP x cClassTrib</h2>
+            <p style="color: {COLOR_WHITE}; line-height: 1.8; margin-bottom: 1rem;">
+                Disponibilizamos uma planilha de referência com o DE/PARA entre CFOP e cClassTrib para facilitar a parametrização inicial do seu sistema.
+            </p>
+            <div style="
+                background-color: rgba(255, 215, 0, 0.1);
+                border: 1px solid {COLOR_GOLD};
+                border-radius: 4px;
+                padding: 1.5rem;
+                margin-top: 1.5rem;
+            ">
+                <p style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Atenção</p>
+                <p style="color: {COLOR_WHITE}; line-height: 1.6; margin: 0;">
+                    Esta planilha atende aos cenários em que <strong>não há redução de IBS e CBS</strong> para a NCM ou serviço pesquisado. 
+                    Antes de utilizar, valide se não existem regras específicas aplicáveis ao seu segmento ou operação.
+                </p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Botão de download
+    try:
+        with open("/home/ubuntu/IBSeCBS_PRICETAX/CFOP_CCLASSTRIB.xlsx", "rb") as file:
+            st.download_button(
+                label="Baixar Planilha CFOP x cClassTrib",
+                data=file,
+                file_name="PRICETAX_CFOP_x_cClassTrib.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+    except FileNotFoundError:
+        st.error("Arquivo de correlação CFOP x cClassTrib não encontrado.")
+
 # RODAPÉ
 # =============================================================================
+
+# Disclaimer profissional
+st.markdown(
+    f"""
+    <div style="
+        background-color: {COLOR_CARD_BG};
+        border: 1px solid {COLOR_BORDER};
+        border-radius: 4px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        text-align: center;
+    ">
+        <p style="color: {COLOR_GRAY_LIGHT}; line-height: 1.6; margin: 0;">
+            Esta ferramenta deve ser utilizada como <strong style="color: {COLOR_WHITE};">apoio para definição da cClassTrib</strong>, 
+            mas não elimina a necessidade de validação dos dados informados no resultado. 
+            Para uma análise aprofundada, <strong style="color: {COLOR_GOLD};">faça um diagnóstico completo com a PRICETAX</strong>.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown("---")
 st.markdown(
