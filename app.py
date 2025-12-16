@@ -1401,7 +1401,7 @@ with tabs[2]:
             cst_desc = CST_DESCRICOES.get(cst, "Descrição não disponível")
             count = len(group)
             
-            with st.expander(f"**{cst}** - {cst_desc} ({count} código{'s' if count > 1 else ''})"):
+            with st.expander(f"**{cst}** - {cst_desc} ({count} código{'s' if count > 1 else ''})", expanded=False):
                 # Exibir cada cClassTrib dentro do grupo
                 for idx, row in group.iterrows():
                     codigo = str(int(row['Código da Classificação Tributária'])).zfill(6)
@@ -1417,53 +1417,34 @@ with tabs[2]:
                     # DFes relacionados
                     dfes = str(row.get('DFes Relacionados', '')).strip()
                     
-                    # Card para cada cClassTrib
-                    st.markdown(
-                        f"""
-                        <div style="
-                            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-                            border-left: 4px solid {COLOR_GOLD};
-                            padding: 1rem;
-                            margin: 0.8rem 0;
-                            border-radius: 6px;
-                        ">
-                            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem;">
-                                <div style="
-                                    font-size:1.4rem;
-                                    font-weight:700;
-                                    color:{COLOR_GOLD};
-                                    font-family:monospace;
-                                    background:#000000;
-                                    padding:0.3rem 0.8rem;
-                                    border-radius:4px;
-                                ">{codigo}</div>
-                                <div style="font-size:1rem;color:{COLOR_WHITE};flex:1;">
-                                    {descricao}
-                                </div>
-                            </div>
-                            
-                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.8rem;font-size:0.9rem;">
-                                <div>
-                                    <span style="color:{COLOR_GRAY_LIGHT};">Redução IBS:</span>
-                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{pct_str(red_ibs)}</span>
-                                </div>
-                                <div>
-                                    <span style="color:{COLOR_GRAY_LIGHT};">Redução CBS:</span>
-                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{pct_str(red_cbs)}</span>
-                                </div>
-                                <div>
-                                    <span style="color:{COLOR_GRAY_LIGHT};">Tipo de Alíquota:</span>
-                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{tipo_aliq if tipo_aliq else '—'}</span>
-                                </div>
-                                <div>
-                                    <span style="color:{COLOR_GRAY_LIGHT};">DFes:</span>
-                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{dfes if dfes else '—'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                    # Card para cada cClassTrib usando colunas do Streamlit
+                    col_codigo, col_desc = st.columns([1, 4])
+                    
+                    with col_codigo:
+                        st.markdown(
+                            f'<div style="background:#000;color:{COLOR_GOLD};font-family:monospace;font-size:1.3rem;font-weight:700;padding:0.5rem;border-radius:6px;text-align:center;border:2px solid {COLOR_GOLD};">{codigo}</div>',
+                            unsafe_allow_html=True
+                        )
+                    
+                    with col_desc:
+                        st.markdown(f"**{descricao}**")
+                    
+                    # Informações em colunas
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.markdown(f"**Redução IBS:** {pct_str(red_ibs)}")
+                    
+                    with col2:
+                        st.markdown(f"**Redução CBS:** {pct_str(red_cbs)}")
+                    
+                    with col3:
+                        st.markdown(f"**Tipo:** {tipo_aliq if tipo_aliq else '—'}")
+                    
+                    with col4:
+                        st.markdown(f"**DFes:** {dfes if dfes else '—'}")
+                    
+                    st.markdown("---")
 
 # RODAPÉ
 # =============================================================================
