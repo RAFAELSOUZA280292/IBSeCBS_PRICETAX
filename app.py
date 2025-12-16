@@ -1415,12 +1415,12 @@ with tabs[2]:
                 color: {COLOR_BLACK} !important;
                 font-weight: 700 !important;
                 padding: 0.75rem !important;
-                border: 1px solid {COLOR_GRAY_DARK} !important;
+                border: 1px solid {COLOR_BORDER} !important;
             }}
             /* Garantir que o corpo da tabela tenha fundo escuro */
             [data-testid="stDataFrame"] tbody tr,
             [data-testid="stDataFrame"] tbody td {{
-                background-color: {COLOR_BG_DARK} !important;
+                background-color: {COLOR_CARD_BG} !important;
                 color: {COLOR_WHITE} !important;
             }}
             </style>
