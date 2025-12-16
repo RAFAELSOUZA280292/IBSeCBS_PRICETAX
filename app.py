@@ -1381,8 +1381,7 @@ with tabs[2]:
                 <div class="pricetax-card-header">Classificação Tributária (cClassTrib)</div>
                 <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
                     Navegue pelos códigos de Classificação Tributária utilizados na Reforma Tributária.<br>
-                    Clique em cada categoria para expandir e visualizar os códigos detalhados.<br><br>
-                    <strong>{len(df_class)} códigos disponíveis</strong> | Baseado no portal oficial da SEFAZ
+                    Clique em cada categoria para expandir e visualizar os códigos detalhados.
                 </div>
             </div>
             """,
@@ -1393,17 +1392,44 @@ with tabs[2]:
         st.markdown(
             f"""
             <style>
-            /* Estilo para dataframes na aba cClassTrib */
-            div[data-testid="stDataFrame"] {{
+            /* ========================================
+               ESTILO ULTRA-AGRESSIVO PARA TABELAS
+               Aplicado com múltiplos seletores para
+               garantir sobrescrita dos estilos padrão
+               ======================================== */
+            
+            /* Container principal */
+            div[data-testid="stDataFrame"],
+            div[data-testid="stDataFrame"] > div,
+            div[data-testid="stDataFrame"] > div > div {{
                 background-color: #1a1a1a !important;
             }}
             
-            div[data-testid="stDataFrame"] table {{
+            /* Tabela */
+            div[data-testid="stDataFrame"] table,
+            div[data-testid="stDataFrame"] table tbody,
+            div[data-testid="stDataFrame"] table thead {{
                 background-color: #1a1a1a !important;
                 color: {COLOR_WHITE} !important;
             }}
             
-            div[data-testid="stDataFrame"] thead tr th {{
+            /* CABEÇALHO - MÚLTIPLOS SELETORES PARA FORÇAR FUNDO DOURADO */
+            div[data-testid="stDataFrame"] thead,
+            div[data-testid="stDataFrame"] thead tr,
+            div[data-testid="stDataFrame"] thead tr th,
+            div[data-testid="stDataFrame"] thead tr th div,
+            div[data-testid="stDataFrame"] thead tr th span,
+            div[data-testid="stDataFrame"] thead tr th button,
+            div[data-testid="stDataFrame"] thead tr th *,
+            div[data-testid="stDataFrame"] table thead,
+            div[data-testid="stDataFrame"] table thead tr,
+            div[data-testid="stDataFrame"] table thead tr th,
+            div[data-testid="stDataFrame"] table thead tr th *,
+            div[data-testid="stDataFrame"] table > thead,
+            div[data-testid="stDataFrame"] table > thead > tr,
+            div[data-testid="stDataFrame"] table > thead > tr > th,
+            div[data-testid="stDataFrame"] table > thead > tr > th > * {{
+                background: {COLOR_GOLD} !important;
                 background-color: {COLOR_GOLD} !important;
                 color: #000000 !important;
                 font-weight: 700 !important;
@@ -1411,34 +1437,25 @@ with tabs[2]:
                 padding: 0.75rem !important;
             }}
             
-            /* Corrigir fundo branco do container do header */
-            div[data-testid="stDataFrame"] thead {{
-                background-color: {COLOR_GOLD} !important;
-            }}
-            
-            div[data-testid="stDataFrame"] thead tr {{
-                background-color: {COLOR_GOLD} !important;
-            }}
-            
-            /* Garantir que elementos internos do header também sejam dourados */
-            div[data-testid="stDataFrame"] thead * {{
-                background-color: {COLOR_GOLD} !important;
-                color: #000000 !important;
-            }}
-            
-            div[data-testid="stDataFrame"] tbody tr td {{
+            /* Corpo da tabela */
+            div[data-testid="stDataFrame"] tbody tr td,
+            div[data-testid="stDataFrame"] table tbody tr td {{
                 background-color: #1a1a1a !important;
                 color: {COLOR_WHITE} !important;
                 border: 1px solid #333333 !important;
                 padding: 0.6rem !important;
             }}
             
-            div[data-testid="stDataFrame"] tbody tr:hover td {{
+            /* Hover */
+            div[data-testid="stDataFrame"] tbody tr:hover td,
+            div[data-testid="stDataFrame"] table tbody tr:hover td {{
                 background-color: #2a2a2a !important;
                 border-color: {COLOR_GOLD} !important;
             }}
             
-            div[data-testid="stDataFrame"] tbody tr td:first-child {{
+            /* Primeira coluna (código) */
+            div[data-testid="stDataFrame"] tbody tr td:first-child,
+            div[data-testid="stDataFrame"] table tbody tr td:first-child {{
                 font-family: monospace !important;
                 font-weight: 700 !important;
                 color: {COLOR_GOLD} !important;
