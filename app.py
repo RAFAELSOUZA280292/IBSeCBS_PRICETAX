@@ -1,3 +1,26 @@
+"""
+PRICETAX - Sistema de Consulta e Análise IBS/CBS 2026
+========================================================
+
+Aplicação web desenvolvida em Streamlit para auxiliar empresas na transição
+para o novo sistema tributário brasileiro (IBS e CBS).
+
+Funcionalidades principais:
+1. Consulta de NCM com simulação de alíquotas IBS/CBS
+2. Ranking de vendas via análise de arquivos SPED PIS/COFINS
+3. Sugestão automática de cClassTrib baseada em NCM e CFOP
+
+Lógica de Cálculo de Alíquotas:
+- Alíquotas integrais fixas (ano teste 2026): IBS 0,10% | CBS 0,90%
+- Percentual de redução extraído do regime (ex: RED_60 = 60% de redução)
+- Alíquotas efetivas calculadas aplicando a redução sobre as integrais
+- Valores finais são obtidos da planilha de regras (já com reduções aplicadas)
+
+Autor: PRICETAX
+Versão: 2.0
+Data: Dezembro 2024
+"""
+
 import io
 import re
 import zipfile
@@ -511,10 +534,24 @@ for _cfop in CFOP_NAO_ONEROSOS_410999:
 
 def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     """
-    Sugere um cClassTrib padrão a partir do CFOP e CST
-    para operações de venda não especiais.
-
-    Retorna (codigo_cClassTrib, mensagem_explicativa).
+    Sugere um código de Classificação Tributária (cClassTrib) para NFe.
+    
+    A sugestão é baseada em:
+    1. Mapeamento fixo de CFOPs específicos (via CFOP_CCLASSTRIB_MAP)
+    2. Regras genéricas para saídas tributadas (CFOPs 5xxx/6xxx/7xxx + CST normal)
+    3. Identificação de operações não onerosas (410999)
+    
+    Parâmetros:
+        cst (Any): Código de Situação Tributária (CST) do produto
+        cfop (Any): Código Fiscal de Operações e Prestações (CFOP)
+        regime_iva (str): Regime de tributação IVA do produto (não utilizado atualmente)
+    
+    Retorna:
+        tuple[str, str]: (código_cClassTrib, mensagem_explicativa)
+    
+    Exemplos:
+        - CFOP 5102 + CST 000 → ("000001", "tributação regular")
+        - CFOP 5910 (brinde) → ("410999", "operação não onerosa")
     """
     cst_clean = re.sub(r"\D+", "", str(cst or ""))
     cfop_clean = re.sub(r"\D+", "", str(cfop or ""))
@@ -554,7 +591,24 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
 def process_sped_file(file_content: str) -> pd.DataFrame:
     """
     Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas.
-    Retorna um DataFrame com colunas: NCM, DESCRICAO, CFOP, VALOR_TOTAL_VENDAS.
+    
+    Esta função realiza as seguintes operações:
+    1. Lê registros |0200| para mapear códigos de produtos a NCMs
+    2. Identifica documentos de saída através do registro |C100| (IND_OPER = 1)
+    3. Extrai itens vendidos do registro |C170| com CFOPs de saída (5xxx, 6xxx, 7xxx)
+    4. Consolida vendas por NCM, descrição e CFOP
+    5. Ordena o resultado por valor total de vendas (decrescente)
+    
+    Parâmetros:
+        file_content (str): Conteúdo completo do arquivo SPED em formato texto
+    
+    Retorna:
+        pd.DataFrame: DataFrame com colunas NCM, DESCRICAO, CFOP, VALOR_TOTAL_VENDAS
+                      ordenado por valor de vendas (maior para menor)
+    
+    Nota:
+        - Apenas operações de saída (IND_OPER = 1) são consideradas
+        - CFOPs de entrada (1xxx, 2xxx, 3xxx) são automaticamente ignorados
     """
     produtos: Dict[str, Dict[str, str]] = {}
     documentos: Dict[str, Dict[str, Any]] = {}
@@ -706,8 +760,7 @@ with tabs[0]:
                 Use este painel como referência para parametrizar o item no ERP e no XML:
                 <br><br>
                 • Informe o <b>NCM</b> do produto e o <b>CFOP de venda</b> atualmente utilizado;<br>
-                • A ferramenta retorna o regime de IVA, as alíquotas IBS/CBS simuladas para 2026;<br>
-                • Sugere o <b>cClassTrib</b> padrão para NFe, a partir do CFOP informado;<br>
+                • A partir do NCM e CFOP informado será retornado o cClassTrib e a tributação de IBS e CBS;<br>
                 • Exibe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib).
             </div>
         </div>
@@ -788,23 +841,73 @@ with tabs[0]:
             # -----------------------------
             # Bloco A – Alíquota padrão do produto (operações onerosas)
             # -----------------------------
+            # CÁLCULO DA REDUÇÃO E ALÍQUOTAS EFETIVAS
+            # Alíquotas integrais fixas para o ano teste 2026
+            ibs_integral = 0.10  # IBS integral fixo em 0,10%
+            cbs_integral = 0.90  # CBS integral fixo em 0,90%
+            
+            # Determina o percentual de redução com base no regime
+            percentual_reducao = 0.0
+            regime_upper = (regime or "").upper()
+            
+            if "RED_60" in regime_upper:
+                percentual_reducao = 60.0
+            elif "ALIQ_ZERO" in regime_upper:
+                percentual_reducao = 100.0
+            
+            # Calcula as alíquotas efetivas aplicando a redução
+            ibs_efetivo = ibs_uf + ibs_mun  # Valor já vem calculado da planilha
+            cbs_efetivo = cbs  # Valor já vem calculado da planilha
+            total_iva = ibs_efetivo + cbs_efetivo
+            
             st.markdown(
                 "#### Alíquota padrão do produto – operações de venda onerosas",
                 help="Válida, em regra, para CFOPs de venda como 5102/6102/7102."
             )
+            
+            # Exibição das alíquotas integrais
             st.markdown(
                 f"""
                 <div class="pricetax-card" style="margin-top:0.4rem;display:flex;gap:2rem;flex-wrap:wrap;">
                     <div>
-                        <div class="pricetax-metric-label">IBS 2026 (UF + Município)</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_uf + ibs_mun)}</div>
+                        <div class="pricetax-metric-label">IBS Integral (fixo)</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_integral)}</div>
                     </div>
                     <div>
-                        <div class="pricetax-metric-label">CBS 2026</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs)}</div>
+                        <div class="pricetax-metric-label">CBS Integral (fixo)</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs_integral)}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Exibição do percentual de redução (se houver)
+            if percentual_reducao > 0:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:0.8rem;">
+                        <div class="pricetax-metric-label">Percentual de Redução Aplicado</div>
+                        <div style="font-size:1.8rem;color:{PRIMARY_YELLOW};font-weight:600;">{pct_str(percentual_reducao)}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            
+            # Exibição das alíquotas efetivas
+            st.markdown(
+                f"""
+                <div class="pricetax-card" style="margin-top:0.8rem;display:flex;gap:2rem;flex-wrap:wrap;">
+                    <div>
+                        <div class="pricetax-metric-label">IBS Efetivo (após redução)</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_efetivo)}</div>
                     </div>
                     <div>
-                        <div class="pricetax-metric-label">Carga Total IVA 2026</div>
+                        <div class="pricetax-metric-label">CBS Efetivo (após redução)</div>
+                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs_efetivo)}</div>
+                    </div>
+                    <div>
+                        <div class="pricetax-metric-label">Carga Total IVA Efetiva</div>
                         <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(total_iva)}</div>
                     </div>
                 </div>
