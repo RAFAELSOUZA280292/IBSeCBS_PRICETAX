@@ -976,249 +976,249 @@ with tabs[0]:
             cfop_input = st.text_input(
                 "CFOP (opcional)",
                 placeholder="Ex.: 5102",
-            max_chars=4,
-            help="CFOP utilizado hoje na venda do produto (quatro dígitos).",
-        )
-    with col3:
-        st.write("")
-        consultar = st.button("Consultar", type="primary")
-
-    if consultar and ncm_input.strip():
-        row = buscar_ncm(df_tipi, ncm_input)
-
-        if row is None:
-            st.markdown(
-                f"""
-                <div class="pricetax-card-error">
-                    <strong>NCM informado:</strong> {ncm_input}<br>
-                    Não localizamos esse NCM na base PRICETAX. Revise o código ou a planilha de referência.
-                </div>
-                """,
-                unsafe_allow_html=True,
+                max_chars=4,
+                help="CFOP utilizado hoje na venda do produto (quatro dígitos).",
             )
-        else:
-            ncm_fmt = row["NCM_DIG"]
-            desc = row["NCM_DESCRICAO"]
-            regime = row["REGIME_IVA_2026_FINAL"]
-            fonte = row["FONTE_LEGAL_FINAL"]
-            flag_cesta = row["FLAG_CESTA_BASICA"]
-            flag_hf = row["FLAG_HORTIFRUTI_OVOS"]
-            flag_red = row["FLAG_RED_60"]
-            flag_alim = row["FLAG_ALIMENTO"]
-            flag_dep = row["FLAG_DEPENDE_DESTINACAO"]
-            ibs_uf = to_float_br(row["IBS_UF_TESTE_2026_FINAL"])
-            ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
-            cbs = to_float_br(row["CBS_TESTE_2026_FINAL"])
-            total_iva = ibs_uf + ibs_mun + cbs
-            cst_ibscbs = row.get("CST_IBSCBS", "")
+        with col3:
+            st.write("")
+            consultar = st.button("Consultar", type="primary")
 
-            # Sugere cClassTrib
-            cclastrib_code, cclastrib_msg = guess_cclasstrib(
-                cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
-            )
-            class_info = get_class_info_by_code(cclastrib_code)
+        if consultar and ncm_input.strip():
+            row = buscar_ncm(df_tipi, ncm_input)
 
-            # Header do produto
-            st.markdown(
-                f"""
-                <div class="pricetax-card" style="margin-top:1.5rem;">
-                    <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
-                        NCM {ncm_fmt}
+            if row is None:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-error">
+                        <strong>NCM informado:</strong> {ncm_input}<br>
+                        Não localizamos esse NCM na base PRICETAX. Revise o código ou a planilha de referência.
                     </div>
-                    <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
-                        {desc}
-                    </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                        <span class="tag tag-regime">{regime_label(regime)}</span>
-                        <span class="tag tag-info">Cesta Básica: {flag_cesta or "NÃO"}</span>
-                        <span class="tag tag-info">Hortifrúti/Ovos: {flag_hf or "NÃO"}</span>
-                        <span class="tag tag-info">Redução 60%: {flag_red or "NÃO"}</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                ncm_fmt = row["NCM_DIG"]
+                desc = row["NCM_DESCRICAO"]
+                regime = row["REGIME_IVA_2026_FINAL"]
+                fonte = row["FONTE_LEGAL_FINAL"]
+                flag_cesta = row["FLAG_CESTA_BASICA"]
+                flag_hf = row["FLAG_HORTIFRUTI_OVOS"]
+                flag_red = row["FLAG_RED_60"]
+                flag_alim = row["FLAG_ALIMENTO"]
+                flag_dep = row["FLAG_DEPENDE_DESTINACAO"]
+                ibs_uf = to_float_br(row["IBS_UF_TESTE_2026_FINAL"])
+                ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
+                cbs = to_float_br(row["CBS_TESTE_2026_FINAL"])
+                total_iva = ibs_uf + ibs_mun + cbs
+                cst_ibscbs = row.get("CST_IBSCBS", "")
 
-            # Cálculo das alíquotas
-            ibs_integral = 0.10
-            cbs_integral = 0.90
-        
-            percentual_reducao = 0.0
-            regime_upper = (regime or "").upper()
-        
-            if "RED_60" in regime_upper:
-                percentual_reducao = 60.0
-            elif "ALIQ_ZERO" in regime_upper:
-                percentual_reducao = 100.0
-        
-            ibs_efetivo = ibs_uf + ibs_mun
-            cbs_efetivo = cbs
-            total_iva = ibs_efetivo + cbs_efetivo
-        
-            st.markdown("### Alíquotas do Produto")
-        
-            # Alíquotas integrais
-            st.markdown(
-                f"""
-                <div class="metric-container">
-                    <div class="metric-box">
-                        <div class="metric-label">IBS Integral (fixo)</div>
-                        <div class="metric-value">{pct_str(ibs_integral)}</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">CBS Integral (fixo)</div>
-                        <div class="metric-value">{pct_str(cbs_integral)}</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-            # Percentual de redução
-            if percentual_reducao > 0:
+                # Sugere cClassTrib
+                cclastrib_code, cclastrib_msg = guess_cclasstrib(
+                    cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                )
+                class_info = get_class_info_by_code(cclastrib_code)
+
+                # Header do produto
                 st.markdown(
                     f"""
                     <div class="pricetax-card" style="margin-top:1.5rem;">
-                        <div class="metric-label">Percentual de Redução Aplicado</div>
-                        <div class="metric-value-secondary">{pct_str(percentual_reducao)}</div>
+                        <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
+                            NCM {ncm_fmt}
+                        </div>
+                        <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                            {desc}
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                            <span class="tag tag-regime">{regime_label(regime)}</span>
+                            <span class="tag tag-info">Cesta Básica: {flag_cesta or "NÃO"}</span>
+                            <span class="tag tag-info">Hortifrúti/Ovos: {flag_hf or "NÃO"}</span>
+                            <span class="tag tag-info">Redução 60%: {flag_red or "NÃO"}</span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # Cálculo das alíquotas
+                ibs_integral = 0.10
+                cbs_integral = 0.90
+        
+                percentual_reducao = 0.0
+                regime_upper = (regime or "").upper()
+        
+                if "RED_60" in regime_upper:
+                    percentual_reducao = 60.0
+                elif "ALIQ_ZERO" in regime_upper:
+                    percentual_reducao = 100.0
+        
+                ibs_efetivo = ibs_uf + ibs_mun
+                cbs_efetivo = cbs
+                total_iva = ibs_efetivo + cbs_efetivo
+        
+                st.markdown("### Alíquotas do Produto")
+        
+                # Alíquotas integrais
+                st.markdown(
+                    f"""
+                    <div class="metric-container">
+                        <div class="metric-box">
+                            <div class="metric-label">IBS Integral (fixo)</div>
+                            <div class="metric-value">{pct_str(ibs_integral)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">CBS Integral (fixo)</div>
+                            <div class="metric-value">{pct_str(cbs_integral)}</div>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
         
-            # Alíquotas efetivas
-            st.markdown(
-                f"""
-                <div class="metric-container" style="margin-top:1.5rem;">
-                    <div class="metric-box">
-                        <div class="metric-label">IBS Efetivo (após redução)</div>
-                        <div class="metric-value">{pct_str(ibs_efetivo)}</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">CBS Efetivo (após redução)</div>
-                        <div class="metric-value">{pct_str(cbs_efetivo)}</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Carga Total IVA Efetiva</div>
-                        <div class="metric-value">{pct_str(total_iva)}</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            # Tributação da operação
-            cfop_clean = re.sub(r"\D+", "", cfop_input or "")
-            if cfop_clean:
-                code_from_cfop = CFOP_CCLASSTRIB_MAP.get(cfop_clean)
-
-                if code_from_cfop == "410999":
+                # Percentual de redução
+                if percentual_reducao > 0:
                     st.markdown(
                         f"""
-                        <div class="info-section" style="margin-top:2rem;">
-                            <div class="info-section-title">Operação Não Onerosa - CFOP {cfop_clean}</div>
-                            <div>
-                                cClassTrib: <strong>{cclastrib_code or '410999'}</strong><br>
-                                Nenhum débito de IBS ou CBS é gerado nesta nota, independentemente da alíquota padrão do NCM.
-                            </div>
+                        <div class="pricetax-card" style="margin-top:1.5rem;">
+                            <div class="metric-label">Percentual de Redução Aplicado</div>
+                            <div class="metric-value-secondary">{pct_str(percentual_reducao)}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
-                elif code_from_cfop == "000001":
-                    st.markdown(
-                        f"""
-                        <div class="info-section" style="margin-top:2rem;">
-                            <div class="info-section-title">Operação de Venda Onerosa Padrão - CFOP {cfop_clean}</div>
-                            <div>
-                                Aplica a mesma alíquota IBS/CBS exibida acima para este NCM, 
-                                salvo existência de regime especial ou regra específica do cliente.
-                            </div>
+        
+                # Alíquotas efetivas
+                st.markdown(
+                    f"""
+                    <div class="metric-container" style="margin-top:1.5rem;">
+                        <div class="metric-box">
+                            <div class="metric-label">IBS Efetivo (após redução)</div>
+                            <div class="metric-value">{pct_str(ibs_efetivo)}</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                        <div class="metric-box">
+                            <div class="metric-label">CBS Efetivo (após redução)</div>
+                            <div class="metric-value">{pct_str(cbs_efetivo)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Carga Total IVA Efetiva</div>
+                            <div class="metric-value">{pct_str(total_iva)}</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-            # Parâmetros de classificação
-            st.markdown("---")
-            st.markdown("### Parâmetros de Classificação Tributária")
-        
-            col_xml1, col_xml2, col_xml3 = st.columns(3)
-        
-            with col_xml1:
-                st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
-                st.markdown(f"**Alimento:** {flag_alim or 'NÃO'}")
-                st.markdown(f"**Depende de Destinação:** {flag_dep or 'NÃO'}")
+                # Tributação da operação
+                cfop_clean = re.sub(r"\D+", "", cfop_input or "")
+                if cfop_clean:
+                    code_from_cfop = CFOP_CCLASSTRIB_MAP.get(cfop_clean)
 
-            with col_xml2:
-                st.markdown("**cClassTrib Sugerido (venda)**")
-                if cclastrib_code:
-                    desc_class = class_info["DESC_CLASS"] if class_info else ""
-                    if desc_class:
-                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
+                    if code_from_cfop == "410999":
+                        st.markdown(
+                            f"""
+                            <div class="info-section" style="margin-top:2rem;">
+                                <div class="info-section-title">Operação Não Onerosa - CFOP {cfop_clean}</div>
+                                <div>
+                                    cClassTrib: <strong>{cclastrib_code or '410999'}</strong><br>
+                                    Nenhum débito de IBS ou CBS é gerado nesta nota, independentemente da alíquota padrão do NCM.
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    elif code_from_cfop == "000001":
+                        st.markdown(
+                            f"""
+                            <div class="info-section" style="margin-top:2rem;">
+                                <div class="info-section-title">Operação de Venda Onerosa Padrão - CFOP {cfop_clean}</div>
+                                <div>
+                                    Aplica a mesma alíquota IBS/CBS exibida acima para este NCM, 
+                                    salvo existência de regime especial ou regra específica do cliente.
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                # Parâmetros de classificação
+                st.markdown("---")
+                st.markdown("### Parâmetros de Classificação Tributária")
+        
+                col_xml1, col_xml2, col_xml3 = st.columns(3)
+        
+                with col_xml1:
+                    st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
+                    st.markdown(f"**Alimento:** {flag_alim or 'NÃO'}")
+                    st.markdown(f"**Depende de Destinação:** {flag_dep or 'NÃO'}")
+
+                with col_xml2:
+                    st.markdown("**cClassTrib Sugerido (venda)**")
+                    if cclastrib_code:
+                        desc_class = class_info["DESC_CLASS"] if class_info else ""
+                        if desc_class:
+                            st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
                     else:
-                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
-                else:
-                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
 
-                st.markdown("**Tipo de Alíquota (cClassTrib)**")
-                tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
-                tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
-                st.markdown(tipo_aliq_desc)
+                    st.markdown("**Tipo de Alíquota (cClassTrib)**")
+                    tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
+                    tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
+                    st.markdown(tipo_aliq_desc)
 
-            with col_xml3:
-                st.markdown("**Imposto Seletivo (IS)**")
-                flag_is = row.get("FLAG_IMPOSTO_SELETIVO", "")
-                st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:600;'>{flag_is or 'NÃO'}</span>", unsafe_allow_html=True)
+                with col_xml3:
+                    st.markdown("**Imposto Seletivo (IS)**")
+                    flag_is = row.get("FLAG_IMPOSTO_SELETIVO", "")
+                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:600;'>{flag_is or 'NÃO'}</span>", unsafe_allow_html=True)
             
-                if class_info:
-                    st.markdown("**Cenário da Classificação**")
-                    st.markdown(
-                        f"- Tributação Regular: **{class_info.get('TRIB_REG') or '—'}**  \n"
-                        f"- Redução de Alíquota: **{class_info.get('RED_ALIQ') or '—'}**  \n"
-                        f"- Transferência de Crédito: **{class_info.get('TRANSF_CRED') or '—'}**  \n"
-                        f"- Diferimento: **{class_info.get('DIFERIMENTO') or '—'}**  \n"
-                        f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
-                    )
+                    if class_info:
+                        st.markdown("**Cenário da Classificação**")
+                        st.markdown(
+                            f"- Tributação Regular: **{class_info.get('TRIB_REG') or '—'}**  \n"
+                            f"- Redução de Alíquota: **{class_info.get('RED_ALIQ') or '—'}**  \n"
+                            f"- Transferência de Crédito: **{class_info.get('TRANSF_CRED') or '—'}**  \n"
+                            f"- Diferimento: **{class_info.get('DIFERIMENTO') or '—'}**  \n"
+                            f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
+                        )
 
-            # Observações e alertas (apenas se houver conteúdo relevante)
-            st.markdown("---")
-            st.markdown("### Informações Complementares")
+                # Observações e alertas (apenas se houver conteúdo relevante)
+                st.markdown("---")
+                st.markdown("### Informações Complementares")
 
-            def clean_txt(v):
-                s = str(v or "").strip()
-                return "" if s.lower() == "nan" else s
+                def clean_txt(v):
+                    s = str(v or "").strip()
+                    return "" if s.lower() == "nan" else s
 
-            fonte = clean_txt(row.get("FONTE_LEGAL_FINAL"))
-            alerta_fmt = clean_txt(row.get("ALERTA_APP"))
-            obs_alim = clean_txt(row.get("OBS_ALIMENTO"))
-            obs_dest = clean_txt(row.get("OBS_DESTINACAO"))
-            reg_extra = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
+                fonte = clean_txt(row.get("FONTE_LEGAL_FINAL"))
+                alerta_fmt = clean_txt(row.get("ALERTA_APP"))
+                obs_alim = clean_txt(row.get("OBS_ALIMENTO"))
+                obs_dest = clean_txt(row.get("OBS_DESTINACAO"))
+                reg_extra = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
 
-            # Exibir apenas campos com conteúdo
-            if fonte:
-                st.markdown(f"**Base Legal:** {fonte}")
+                # Exibir apenas campos com conteúdo
+                if fonte:
+                    st.markdown(f"**Base Legal:** {fonte}")
         
-            if alerta_fmt:
-                st.markdown(f"**Alerta:** {alerta_fmt}")
+                if alerta_fmt:
+                    st.markdown(f"**Alerta:** {alerta_fmt}")
         
-            if obs_alim:
-                st.markdown(f"**Observação (Alimentos):** {obs_alim}")
+                if obs_alim:
+                    st.markdown(f"**Observação (Alimentos):** {obs_alim}")
         
-            if obs_dest:
-                st.markdown(f"**Observação (Destinação):** {obs_dest}")
+                if obs_dest:
+                    st.markdown(f"**Observação (Destinação):** {obs_dest}")
         
-            if reg_extra:
-                st.markdown(f"**Observações Adicionais:** {reg_extra}")
+                if reg_extra:
+                    st.markdown(f"**Observações Adicionais:** {reg_extra}")
         
-            # Se nenhum campo tiver conteúdo, mostrar mensagem
-            if not any([fonte, alerta_fmt, obs_alim, obs_dest, reg_extra]):
-                st.markdown("*Nenhuma observação adicional disponível para este NCM.*")
+                # Se nenhum campo tiver conteúdo, mostrar mensagem
+                if not any([fonte, alerta_fmt, obs_alim, obs_dest, reg_extra]):
+                    st.markdown("*Nenhuma observação adicional disponível para este NCM.*")
     
-    # =============================================================================
-    # MODO 2: SOMENTE CFOP
-    # =============================================================================
+        # =============================================================================
+        # MODO 2: SOMENTE CFOP
+        # =============================================================================
     elif modo_busca == "Somente CFOP":
         col1, col2 = st.columns([2, 1])
         with col1:
