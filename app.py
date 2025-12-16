@@ -501,7 +501,10 @@ CLASSIF_NAME = "classificacao_tributaria.xlsx"
 
 @st.cache_data(show_spinner=False)
 def load_classificacao_base() -> pd.DataFrame:
-    """Carrega a planilha de classificação tributária."""
+    """
+    Carrega a planilha de classificação tributária.
+    Retorna DataFrame com todos os códigos cClassTrib.
+    """
     paths = [
         Path(CLASSIF_NAME),
         Path.cwd() / CLASSIF_NAME,
@@ -512,16 +515,34 @@ def load_classificacao_base() -> pd.DataFrame:
         pass
 
     df = None
+    loaded_from = None
+    
     for p in paths:
         if p.exists():
-            df = pd.read_excel(p, sheet_name="Classificação Tributária")
-            break
+            try:
+                df = pd.read_excel(p, sheet_name="Classificação Tributária")
+                loaded_from = str(p)
+                break
+            except Exception as e:
+                continue
 
-    if df is None:
+    if df is None or df.empty:
         return pd.DataFrame()
 
-    df = df.copy()
-    return df
+    # Garantir que as colunas esperadas existem
+    required_cols = [
+        "Código da Classificação Tributária",
+        "Descrição da Classificação Tributária",
+        "Redução IBS (%)",
+        "Redução CBS (%)",
+        "Tipo de Alíquota",
+    ]
+    
+    for col in required_cols:
+        if col not in df.columns:
+            return pd.DataFrame()
+    
+    return df.copy()
 
 
 df_class = load_classificacao_base()
@@ -1316,40 +1337,52 @@ with tabs[1]:
 # =============================================================================
 
 with tabs[2]:
-    st.markdown(
-        """
-        <div class="pricetax-card">
-            <div class="pricetax-card-header">Consulta de Classificação Tributária (cClassTrib)</div>
-            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
-                Utilize este painel para consultar os códigos de Classificação Tributária (cClassTrib) 
-                utilizados na Reforma Tributária:<br><br>
-                • Busque por <strong>código</strong> (ex: 000001, 830001) ou por <strong>descrição</strong><br>
-                • Visualize detalhes completos: tipo de alíquota, percentuais de redução, indicadores<br>
-                • Baseado no portal oficial da SEFAZ
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Campo de busca
-    col_busca1, col_busca2 = st.columns([3, 1])
-    with col_busca1:
-        busca_cclasstrib = st.text_input(
-            "Buscar por código ou descrição",
-            placeholder="Ex: 830001 ou 'energia elétrica'",
-            help="Digite o código cClassTrib ou parte da descrição para buscar.",
+    # Verificar se a base foi carregada
+    if df_class.empty:
+        st.error(
+            f"""
+            Base de Classificação Tributária não carregada.
+            
+            Verifique se o arquivo `{CLASSIF_NAME}` está no mesmo diretório do aplicativo.
+            
+            Caminhos verificados:
+            - {Path(CLASSIF_NAME).absolute()}
+            - {Path.cwd() / CLASSIF_NAME}
+            """
         )
-    with col_busca2:
-        st.write("")
-        buscar_class = st.button("Buscar", type="primary", key="buscar_class")
-    
-    if buscar_class and busca_cclasstrib.strip():
-        busca_term = busca_cclasstrib.strip()
+    else:
+        st.markdown(
+            """
+            <div class="pricetax-card">
+                <div class="pricetax-card-header">Consulta de Classificação Tributária (cClassTrib)</div>
+                <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+                    Utilize este painel para consultar os códigos de Classificação Tributária (cClassTrib) 
+                    utilizados na Reforma Tributária:<br><br>
+                    • Busque por <strong>código</strong> (ex: 000001, 830001) ou por <strong>descrição</strong><br>
+                    • Visualize detalhes completos: tipo de alíquota, percentuais de redução, indicadores<br>
+                    • Baseado no portal oficial da SEFAZ<br>
+                    • <strong>{len(df_class)} códigos disponíveis</strong>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         
-        if df_class.empty:
-            st.error("Base de Classificação Tributária não carregada. Verifique se o arquivo 'classificacao_tributaria.xlsx' está disponível.")
-        else:
+        # Campo de busca
+        col_busca1, col_busca2 = st.columns([3, 1])
+        with col_busca1:
+            busca_cclasstrib = st.text_input(
+                "Buscar por código ou descrição",
+                placeholder="Ex: 830001 ou 'energia elétrica'",
+                help="Digite o código cClassTrib ou parte da descrição para buscar.",
+            )
+        with col_busca2:
+            st.write("")
+            buscar_class = st.button("Buscar", type="primary", key="buscar_class")
+        
+        if buscar_class and busca_cclasstrib.strip():
+            busca_term = busca_cclasstrib.strip()
+            
             # Tentar buscar por código numérico
             resultados = pd.DataFrame()
             try:
@@ -1446,37 +1479,37 @@ with tabs[2]:
                         st.markdown("**Créditos**")
                         st.markdown(f"Crédito Presumido ZFM: **{cred_presumido if cred_presumido != 'NAN' else '—'}**")
                     
-                    st.markdown("---")
-    
-    elif not busca_cclasstrib.strip():
-        # Mostrar lista dos principais cClassTrib
-        st.markdown("### Principais Códigos de Classificação Tributária")
+                    st.markdown("———")
         
-        principais = [
-            {"codigo": "000001", "desc": "Situações tributadas integralmente pelo IBS e CBS"},
-            {"codigo": "200001", "desc": "Aquisições realizadas entre empresas autorizadas a operar em zonas de processamento de exportação"},
-            {"codigo": "200003", "desc": "Vendas de produtos destinados à alimentação humana (Anexo I)"},
-            {"codigo": "200014", "desc": "Fornecimento dos produtos hortícolas, frutas e ovos (Anexo XV)"},
-            {"codigo": "200028", "desc": "Fornecimento dos serviços de educação (Anexo II)"},
-            {"codigo": "200029", "desc": "Fornecimento dos serviços de saúde humana (Anexo III)"},
-            {"codigo": "300001", "desc": "Isenção do IBS e CBS"},
-            {"codigo": "410999", "desc": "Outras operações sem débito de IBS ou CBS"},
-        ]
-        
-        for item in principais:
-            st.markdown(
-                f"""
-                <div class="pricetax-card" style="margin-top:1rem;">
-                    <div style="font-size:1.1rem;font-weight:600;color:{COLOR_GOLD};">
-                        {item['codigo']}
+        elif not busca_cclasstrib.strip():
+            # Mostrar lista dos principais cClassTrib
+            st.markdown("### Principais Códigos de Classificação Tributária")
+            
+            principais = [
+                {"codigo": "000001", "desc": "Situações tributadas integralmente pelo IBS e CBS"},
+                {"codigo": "200001", "desc": "Aquisições realizadas entre empresas autorizadas a operar em zonas de processamento de exportação"},
+                {"codigo": "200003", "desc": "Vendas de produtos destinados à alimentação humana (Anexo I)"},
+                {"codigo": "200014", "desc": "Fornecimento dos produtos hortícolas, frutas e ovos (Anexo XV)"},
+                {"codigo": "200028", "desc": "Fornecimento dos serviços de educação (Anexo II)"},
+                {"codigo": "200029", "desc": "Fornecimento dos serviços de saúde humana (Anexo III)"},
+                {"codigo": "300001", "desc": "Isenção do IBS e CBS"},
+                {"codigo": "410999", "desc": "Outras operações sem débito de IBS ou CBS"},
+            ]
+            
+            for item in principais:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card" style="margin-top:1rem;">
+                        <div style="font-size:1.1rem;font-weight:600;color:{COLOR_GOLD};">
+                            {item['codigo']}
+                        </div>
+                        <div style="font-size:0.9rem;color:{COLOR_GRAY_LIGHT};margin-top:0.3rem;">
+                            {item['desc']}
+                        </div>
                     </div>
-                    <div style="font-size:0.9rem;color:{COLOR_GRAY_LIGHT};margin-top:0.3rem;">
-                        {item['desc']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 # =============================================================================
 # RODAPÉ
