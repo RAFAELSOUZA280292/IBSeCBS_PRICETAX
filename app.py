@@ -1343,6 +1343,12 @@ with tabs[0]:
             st.write("")
             buscar_desc = st.button("Buscar", type="primary")
         
+        # Inicializar session_state para resultados
+        if "desc_resultados" not in st.session_state:
+            st.session_state.desc_resultados = None
+        if "desc_busca_termo" not in st.session_state:
+            st.session_state.desc_busca_termo = ""
+        
         if buscar_desc and desc_input.strip():
             # Busca semântica na descrição
             termos = desc_input.strip().lower().split()
@@ -1354,11 +1360,18 @@ with tabs[0]:
             
             resultados = df_tipi[mask]
             
+            # Salvar no session_state
+            st.session_state.desc_resultados = resultados
+            st.session_state.desc_busca_termo = desc_input
+        else:
+            resultados = st.session_state.desc_resultados
+        
+        if resultados is not None:
             if len(resultados) == 0:
                 st.markdown(
                     f"""
                     <div class="pricetax-card-error">
-                        <strong>Busca:</strong> {desc_input}<br>
+                        <strong>Busca:</strong> {st.session_state.desc_busca_termo}<br>
                         Nenhum produto encontrado com esses termos. Tente palavras-chave diferentes.
                     </div>
                     """,
