@@ -1310,15 +1310,15 @@ with tabs[0]:
                         <div class="metric-container">
                             <div class="metric-box">
                                 <div class="metric-label">IBS Padrão</div>
-                                <div class="metric-value">{pct_str(reg['ALIQ. IBS'])}</div>
+                                <div class="metric-value">{pct_str(reg['ALIQ. IBS'] * 100)}</div>
                             </div>
                             <div class="metric-box">
                                 <div class="metric-label">CBS Padrão</div>
-                                <div class="metric-value">{pct_str(reg['ALIQ.CBS'])}</div>
+                                <div class="metric-value">{pct_str(reg['ALIQ.CBS'] * 100)}</div>
                             </div>
                             <div class="metric-box">
                                 <div class="metric-label">Carga Total</div>
-                                <div class="metric-value">{pct_str(reg['ALIQ. IBS'] + reg['ALIQ.CBS'])}</div>
+                                <div class="metric-value">{pct_str((reg['ALIQ. IBS'] + reg['ALIQ.CBS']) * 100)}</div>
                             </div>
                         </div>
                         """,
