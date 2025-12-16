@@ -1389,6 +1389,50 @@ with tabs[2]:
             unsafe_allow_html=True,
         )
         
+        # CSS customizado para estilizar a tabela com tema PRICETAX
+        st.markdown(
+            f"""
+            <style>
+            /* Estilo para dataframes na aba cClassTrib */
+            div[data-testid="stDataFrame"] {{
+                background-color: #1a1a1a !important;
+            }}
+            
+            div[data-testid="stDataFrame"] table {{
+                background-color: #1a1a1a !important;
+                color: {COLOR_WHITE} !important;
+            }}
+            
+            div[data-testid="stDataFrame"] thead tr th {{
+                background-color: {COLOR_GOLD} !important;
+                color: #000000 !important;
+                font-weight: 700 !important;
+                border: 1px solid {COLOR_GOLD} !important;
+                padding: 0.75rem !important;
+            }}
+            
+            div[data-testid="stDataFrame"] tbody tr td {{
+                background-color: #1a1a1a !important;
+                color: {COLOR_WHITE} !important;
+                border: 1px solid #333333 !important;
+                padding: 0.6rem !important;
+            }}
+            
+            div[data-testid="stDataFrame"] tbody tr:hover td {{
+                background-color: #2a2a2a !important;
+                border-color: {COLOR_GOLD} !important;
+            }}
+            
+            div[data-testid="stDataFrame"] tbody tr td:first-child {{
+                font-family: monospace !important;
+                font-weight: 700 !important;
+                color: {COLOR_GOLD} !important;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        
         # Adicionar coluna CST (3 primeiros dígitos)
         df_class_copy = df_class.copy()
         df_class_copy['CST'] = df_class_copy['Código da Classificação Tributária'].astype(str).str.zfill(6).str[:3]
@@ -1402,49 +1446,35 @@ with tabs[2]:
             count = len(group)
             
             with st.expander(f"**{cst}** - {cst_desc} ({count} código{'s' if count > 1 else ''})", expanded=False):
-                # Exibir cada cClassTrib dentro do grupo
+                # Preparar dados para a tabela
+                tabela_dados = []
                 for idx, row in group.iterrows():
                     codigo = str(int(row['Código da Classificação Tributária'])).zfill(6)
                     descricao = str(row.get('Descrição da Classificação Tributária', '')).strip()
-                    
-                    # Reduções percentuais
                     red_ibs = float(row.get('Redução IBS (%)', 0.0))
                     red_cbs = float(row.get('Redução CBS (%)', 0.0))
-                    
-                    # Tipo de alíquota
                     tipo_aliq = str(row.get('Tipo de Alíquota', '')).strip()
-                    
-                    # DFes relacionados
                     dfes = str(row.get('DFes Relacionados', '')).strip()
                     
-                    # Card para cada cClassTrib usando colunas do Streamlit
-                    col_codigo, col_desc = st.columns([1, 4])
-                    
-                    with col_codigo:
-                        st.markdown(
-                            f'<div style="background:#000;color:{COLOR_GOLD};font-family:monospace;font-size:1.3rem;font-weight:700;padding:0.5rem;border-radius:6px;text-align:center;border:2px solid {COLOR_GOLD};">{codigo}</div>',
-                            unsafe_allow_html=True
-                        )
-                    
-                    with col_desc:
-                        st.markdown(f"**{descricao}**")
-                    
-                    # Informações em colunas
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.markdown(f"**Redução IBS:** {pct_str(red_ibs)}")
-                    
-                    with col2:
-                        st.markdown(f"**Redução CBS:** {pct_str(red_cbs)}")
-                    
-                    with col3:
-                        st.markdown(f"**Tipo:** {tipo_aliq if tipo_aliq else '—'}")
-                    
-                    with col4:
-                        st.markdown(f"**DFes:** {dfes if dfes else '—'}")
-                    
-                    st.markdown("---")
+                    tabela_dados.append({
+                        'Código': codigo,
+                        'Descrição Reduzida': descricao,
+                        'IBS (%)': f"{red_ibs:.2f}".replace('.', ','),
+                        'CBS (%)': f"{red_cbs:.2f}".replace('.', ','),
+                        'Tipo de Alíquota': tipo_aliq if tipo_aliq else '—',
+                        'DFes Relacionados': dfes if dfes else '—',
+                    })
+                
+                # Criar DataFrame e exibir tabela
+                df_tabela = pd.DataFrame(tabela_dados)
+                
+                # Exibir tabela com estilo
+                st.dataframe(
+                    df_tabela,
+                    use_container_width=True,
+                    hide_index=True,
+                    height=min(len(df_tabela) * 35 + 38, 600),  # Altura dinâmica
+                )
 
 # RODAPÉ
 # =============================================================================
