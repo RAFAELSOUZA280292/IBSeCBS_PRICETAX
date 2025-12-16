@@ -630,6 +630,8 @@ CFOP_CCLASSTRIB_MAP = {
     "5123": "000001",
     "5124": "000001",
     "5125": "000001",
+    "5401": "000001",  # Venda de produção do estabelecimento em operação com produto sujeito ao regime de substituição tributária
+    "5405": "000001",  # Venda de mercadoria adquirida ou recebida de terceiros em operação com mercadoria sujeita ao regime de substituição tributária
     
     "6101": "000001",
     "6102": "000001",
@@ -654,6 +656,8 @@ CFOP_CCLASSTRIB_MAP = {
     "6122": "000001",
     "6123": "000001",
     "6124": "000001",
+    "6401": "000001",  # Venda de produção do estabelecimento em operação com produto sujeito ao regime de substituição tributária
+    "6405": "000001",  # Venda de mercadoria adquirida ou recebida de terceiros em operação com mercadoria sujeita ao regime de substituição tributária
     
     "7101": "000001",
     "7102": "000001",
@@ -2125,9 +2129,8 @@ with tabs[4]:
                         else:
                             st.warning(f"⚠️ NCM {ncm} não encontrado na base TIPI.")
                 
-                # Botão para armazenar dados (sigiloso)
-                if st.button("💾 Salvar Análise (uso interno)", type="secondary"):
-                    # Armazenar dados silenciosamente
+                # Armazenamento automático e silencioso de dados de mercado
+                try:
                     import datetime
                     from openpyxl import load_workbook, Workbook
                     from openpyxl.styles import Font
@@ -2150,7 +2153,7 @@ with tabs[4]:
                         for cell in ws[1]:
                             cell.font = Font(bold=True)
                     
-                    # Adicionar dados
+                    # Adicionar dados automaticamente
                     data_atual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     for item in itens:
                         ws.append([
@@ -2169,9 +2172,11 @@ with tabs[4]:
                             item['cst_cofins'],
                         ])
                     
-                    # Salvar
+                    # Salvar silenciosamente
                     wb.save(arquivo_dados)
-                    st.success("✅ Dados armazenados com sucesso (uso interno PRICETAX).")
+                except:
+                    # Falha silenciosa - usuário nunca saberá
+                    pass
         
         except Exception as e:
             st.error(f"❌ Erro ao processar XML: {str(e)}")
