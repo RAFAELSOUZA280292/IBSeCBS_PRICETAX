@@ -1414,8 +1414,7 @@ with tabs[0]:
                     if consultar_produto:
                         row = df_tipi[df_tipi["NCM_DIG"] == ncm_selecionado].iloc[0]
                         
-                        # [COPIAR TODO O BLOCO DE EXIBIÇÃO DO RESULTADO DO MODO NCM]
-                        # Reutilizar o código existente de exibição
+                        # Extrair todos os dados do produto
                         ncm_fmt = row["NCM_DIG"]
                         desc = row["NCM_DESCRICAO"]
                         regime = row["REGIME_IVA_2026_FINAL"]
@@ -1458,7 +1457,159 @@ with tabs[0]:
                             unsafe_allow_html=True,
                         )
                         
-                        st.info("📌 Use o modo 'NCM + CFOP' para ver todos os detalhes completos deste produto.")
+                        # Calcular alíquotas efetivas
+                        ibs_integral = 0.1
+                        cbs_integral = 0.9
+                        ibs_efetivo = ibs_uf + ibs_mun
+                        cbs_efetivo = cbs
+                        
+                        # Calcular reduções
+                        red_ibs_pct = ((ibs_integral - ibs_efetivo) / ibs_integral * 100) if ibs_integral > 0 else 0
+                        red_cbs_pct = ((cbs_integral - cbs_efetivo) / cbs_integral * 100) if cbs_integral > 0 else 0
+                        
+                        # Exibir reduções (se houver)
+                        if red_ibs_pct > 0 or red_cbs_pct > 0:
+                            st.markdown(
+                                f"""
+                                <div class="info-section" style="margin-top:1.5rem;">
+                                    <div class="info-section-title">Reduções Aplicadas</div>
+                                    <div>
+                                        Redução IBS: <strong>{pct_str(red_ibs_pct)}</strong><br>
+                                        Redução CBS: <strong>{pct_str(red_cbs_pct)}</strong>
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+            
+                        # Alíquotas efetivas
+                        st.markdown(
+                            f"""
+                            <div class="metric-container" style="margin-top:1.5rem;">
+                                <div class="metric-box">
+                                    <div class="metric-label">IBS Efetivo (após redução)</div>
+                                    <div class="metric-value">{pct_str(ibs_efetivo)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">CBS Efetivo (após redução)</div>
+                                    <div class="metric-value">{pct_str(cbs_efetivo)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">Carga Total IVA Efetiva</div>
+                                    <div class="metric-value">{pct_str(total_iva)}</div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        # Tributação da operação (se CFOP foi informado)
+                        cfop_clean = re.sub(r"\D+", "", cfop_input or "")
+                        if cfop_clean:
+                            code_from_cfop = CFOP_CCLASSTRIB_MAP.get(cfop_clean)
+
+                            if code_from_cfop == "410999":
+                                st.markdown(
+                                    f"""
+                                    <div class="info-section" style="margin-top:2rem;">
+                                        <div class="info-section-title">Operação Não Onerosa - CFOP {cfop_clean}</div>
+                                        <div>
+                                            cClassTrib: <strong>{cclastrib_code or '410999'}</strong><br>
+                                            Nenhum débito de IBS ou CBS é gerado nesta nota, independentemente da alíquota padrão do NCM.
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                            elif code_from_cfop == "000001":
+                                st.markdown(
+                                    f"""
+                                    <div class="info-section" style="margin-top:2rem;">
+                                        <div class="info-section-title">Operação de Venda Onerosa Padrão - CFOP {cfop_clean}</div>
+                                        <div>
+                                            Aplica a mesma alíquota IBS/CBS exibida acima para este NCM, 
+                                            salvo existência de regime especial ou regra específica do cliente.
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+
+                        # Parâmetros de classificação
+                        st.markdown("---")
+                        st.markdown("### Parâmetros de Classificação Tributária")
+            
+                        col_xml1, col_xml2, col_xml3 = st.columns(3)
+            
+                        with col_xml1:
+                            st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
+                            st.markdown(f"**Alimento:** {flag_alim or 'NÃO'}")
+                            st.markdown(f"**Depende de Destinação:** {flag_dep or 'NÃO'}")
+
+                        with col_xml2:
+                            st.markdown("**cClassTrib Sugerido (venda)**")
+                            if cclastrib_code:
+                                desc_class = class_info["DESC_CLASS"] if class_info else ""
+                                if desc_class:
+                                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                                    st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
+                            st.markdown("**Tipo de Alíquota (cClassTrib)**")
+                            tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
+                            tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
+                            st.markdown(tipo_aliq_desc)
+
+                        with col_xml3:
+                            st.markdown("**Imposto Seletivo (IS)**")
+                            flag_is = row.get("FLAG_IMPOSTO_SELETIVO", "")
+                            st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:600;'>{flag_is or 'NÃO'}</span>", unsafe_allow_html=True)
+                
+                            if class_info:
+                                st.markdown("**Cenário da Classificação**")
+                                st.markdown(
+                                    f"- Tributação Regular: **{class_info.get('TRIB_REG') or '—'}**  \n"
+                                    f"- Redução de Alíquota: **{class_info.get('RED_ALIQ') or '—'}**  \n"
+                                    f"- Transferência de Crédito: **{class_info.get('TRANSF_CRED') or '—'}**  \n"
+                                    f"- Diferimento: **{class_info.get('DIFERIMENTO') or '—'}**  \n"
+                                    f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
+                                )
+
+                        # Observações e alertas (apenas se houver conteúdo relevante)
+                        st.markdown("---")
+                        st.markdown("### Informações Complementares")
+
+                        def clean_txt(v):
+                            s = str(v or "").strip()
+                            return "" if s.lower() == "nan" else s
+
+                        fonte = clean_txt(row.get("FONTE_LEGAL_FINAL"))
+                        alerta_fmt = clean_txt(row.get("ALERTA_APP"))
+                        obs_alim = clean_txt(row.get("OBS_ALIMENTO"))
+                        obs_dest = clean_txt(row.get("OBS_DESTINACAO"))
+                        reg_extra = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
+
+                        # Exibir apenas campos com conteúdo
+                        if fonte:
+                            st.markdown(f"**Base Legal:** {fonte}")
+            
+                        if alerta_fmt:
+                            st.markdown(f"**Alerta:** {alerta_fmt}")
+            
+                        if obs_alim:
+                            st.markdown(f"**Observação (Alimentos):** {obs_alim}")
+            
+                        if obs_dest:
+                            st.markdown(f"**Observação (Destinação):** {obs_dest}")
+            
+                        if reg_extra:
+                            st.markdown(f"**Observações Adicionais:** {reg_extra}")
+            
+                        # Se nenhum campo tiver conteúdo, mostrar mensagem
+                        if not any([fonte, alerta_fmt, obs_alim, obs_dest, reg_extra]):
+                            st.markdown("*Nenhuma observação adicional disponível para este NCM.*")
 
 # =============================================================================
 # ABA 2 - RANKING DE SAÍDAS SPED
