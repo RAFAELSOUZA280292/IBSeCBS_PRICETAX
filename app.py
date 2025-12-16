@@ -1512,8 +1512,11 @@ with tabs[3]:
     )
     
     # Botão de download
+    import os
+    arquivo_cfop = os.path.join(os.path.dirname(__file__), "CFOP_CCLASSTRIB.xlsx")
+    
     try:
-        with open("/home/ubuntu/IBSeCBS_PRICETAX/CFOP_CCLASSTRIB.xlsx", "rb") as file:
+        with open(arquivo_cfop, "rb") as file:
             st.download_button(
                 label="Baixar Planilha CFOP x cClassTrib",
                 data=file,
