@@ -912,6 +912,7 @@ tabs = st.tabs(
         "Ranking de Saídas SPED",
         "cClassTrib",
         "Download CFOP x cClassTrib",
+        "Análise de XML",
     ]
 )
 
@@ -1951,6 +1952,230 @@ with tabs[3]:
             )
     except FileNotFoundError:
         st.error("Arquivo de correlação CFOP x cClassTrib não encontrado.")
+
+# =============================================================================
+# ABA 5 - ANÁLISE DE XML
+# =============================================================================
+with tabs[4]:
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
+            padding: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid {COLOR_GOLD};
+            margin-bottom: 2rem;
+        ">
+            <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Análise de XML de NF-e</h2>
+            <p style="color: {COLOR_GRAY_LIGHT}; line-height: 1.6; margin: 0;">
+                Faça upload de um arquivo XML de NF-e para analisar a tributação IBS/CBS de cada item.
+                O sistema irá extrair automaticamente NCM, CFOP, descrição e valores, calculando as alíquotas
+                efetivas e sugerindo o cClassTrib adequado para cada produto.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Upload de arquivo XML
+    uploaded_file = st.file_uploader(
+        "Selecione o arquivo XML da NF-e",
+        type=["xml"],
+        help="Faça upload de um arquivo XML de NF-e para análise.",
+    )
+    
+    if uploaded_file is not None:
+        try:
+            # Importar o parser
+            from xml_parser import parse_nfe_xml
+            import tempfile
+            
+            # Salvar temporariamente o arquivo
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".xml") as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())
+                tmp_path = tmp_file.name
+            
+            # Parsear o XML
+            dados_xml = parse_nfe_xml(tmp_path)
+            
+            # Limpar arquivo temporário
+            import os
+            os.unlink(tmp_path)
+            
+            # Exibir dados do emitente
+            emitente = dados_xml['emitente']
+            st.markdown(
+                f"""
+                <div class="pricetax-card" style="margin-bottom: 2rem;">
+                    <h3 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Dados do Emitente</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong style="color: {COLOR_GRAY_LIGHT};">CNPJ:</strong><br>
+                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['cnpj']}</span>
+                        </div>
+                        <div>
+                            <strong style="color: {COLOR_GRAY_LIGHT};">Razão Social:</strong><br>
+                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['razao_social']}</span>
+                        </div>
+                        <div>
+                            <strong style="color: {COLOR_GRAY_LIGHT};">UF:</strong><br>
+                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['uf']}</span>
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Processar itens e calcular tributação
+            itens = dados_xml['itens']
+            
+            if len(itens) == 0:
+                st.warning("⚠️ Nenhum item encontrado no XML.")
+            else:
+                st.markdown(
+                    f"""
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: {COLOR_GOLD};">Itens da NF-e ({len(itens)} produtos)</h3>
+                        <p style="color: {COLOR_GRAY_LIGHT};">Clique em um item para ver os detalhes da tributação IBS/CBS.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                
+                # Criar lista de itens para exibição
+                for idx, item in enumerate(itens, 1):
+                    ncm = item['ncm']
+                    cfop = item['cfop']
+                    desc = item['descricao']
+                    valor_unit = item['valor_unitario']
+                    qtd = item['quantidade']
+                    valor_total = item['valor_total']
+                    
+                    # Buscar dados na TIPI
+                    ncm_clean = re.sub(r"\D+", "", ncm)
+                    resultado_tipi = df_tipi[df_tipi["NCM_DIG"] == ncm_clean]
+                    
+                    with st.expander(f"**Item {idx}:** {desc[:60]}...", expanded=False):
+                        col1, col2, col3 = st.columns([2, 1, 1])
+                        
+                        with col1:
+                            st.markdown(f"**Descrição:** {desc}")
+                            st.markdown(f"**NCM:** {ncm}")
+                            st.markdown(f"**CFOP:** {cfop}")
+                        
+                        with col2:
+                            st.markdown(f"**Quantidade:** {qtd:.2f}")
+                            st.markdown(f"**Valor Unitário:** R$ {valor_unit:.2f}")
+                            st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
+                        
+                        with col3:
+                            st.markdown(f"**CST ICMS:** {item['cst_icms']}")
+                            st.markdown(f"**CST PIS:** {item['cst_pis']}")
+                            st.markdown(f"**CST COFINS:** {item['cst_cofins']}")
+                        
+                        # Buscar tributação IBS/CBS
+                        if len(resultado_tipi) > 0:
+                            row = resultado_tipi.iloc[0]
+                            
+                            ibs_uf = to_float_br(row["IBS_UF_TESTE_2026_FINAL"])
+                            ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
+                            cbs = to_float_br(row["CBS_TESTE_2026_FINAL"])
+                            total_iva = ibs_uf + ibs_mun + cbs
+                            cst_ibscbs = row.get("CST_IBSCBS", "")
+                            regime = row["REGIME_IVA_2026_FINAL"]
+                            
+                            # Sugere cClassTrib
+                            cclastrib_code, cclastrib_msg = guess_cclasstrib(
+                                cst=cst_ibscbs, cfop=cfop, regime_iva=str(regime or "")
+                            )
+                            
+                            st.markdown("---")
+                            st.markdown("### Tributação IBS/CBS (Reforma Tributária)")
+                            
+                            # Alíquotas
+                            st.markdown(
+                                f"""
+                                <div class="metric-container" style="margin-top: 1rem;">
+                                    <div class="metric-box">
+                                        <div class="metric-label">IBS Efetivo</div>
+                                        <div class="metric-value">{pct_str(ibs_uf + ibs_mun)}</div>
+                                    </div>
+                                    <div class="metric-box">
+                                        <div class="metric-label">CBS Efetivo</div>
+                                        <div class="metric-value">{pct_str(cbs)}</div>
+                                    </div>
+                                    <div class="metric-box">
+                                        <div class="metric-label">Carga Total IVA</div>
+                                        <div class="metric-value">{pct_str(total_iva)}</div>
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                            
+                            # cClassTrib e CST
+                            col_a, col_b = st.columns(2)
+                            with col_a:
+                                st.markdown(f"**cClassTrib Sugerido:** {cclastrib_code or '—'}")
+                                st.markdown(f"**Regime IVA:** {regime_label(regime)}")
+                            with col_b:
+                                st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
+                                st.markdown(f"**Observação:** {cclastrib_msg[:100]}...")
+                        else:
+                            st.warning(f"⚠️ NCM {ncm} não encontrado na base TIPI.")
+                
+                # Botão para armazenar dados (sigiloso)
+                if st.button("💾 Salvar Análise (uso interno)", type="secondary"):
+                    # Armazenar dados silenciosamente
+                    import datetime
+                    from openpyxl import load_workbook, Workbook
+                    from openpyxl.styles import Font
+                    
+                    arquivo_dados = "DADOS_MERCADO_INTERNO.xlsx"
+                    
+                    # Criar ou carregar planilha
+                    try:
+                        wb = load_workbook(arquivo_dados)
+                        ws = wb.active
+                    except FileNotFoundError:
+                        wb = Workbook()
+                        ws = wb.active
+                        ws.title = "Dados"
+                        # Cabeçalhos
+                        headers = ["Data", "CNPJ", "Razao_Social", "UF", "NCM", "CFOP", "Descricao", 
+                                   "Valor_Unitario", "Quantidade", "Valor_Total", "CST_ICMS", "CST_PIS", "CST_COFINS"]
+                        ws.append(headers)
+                        # Formatar cabeçalhos
+                        for cell in ws[1]:
+                            cell.font = Font(bold=True)
+                    
+                    # Adicionar dados
+                    data_atual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    for item in itens:
+                        ws.append([
+                            data_atual,
+                            emitente['cnpj'],
+                            emitente['razao_social'],
+                            emitente['uf'],
+                            item['ncm'],
+                            item['cfop'],
+                            item['descricao'],
+                            item['valor_unitario'],
+                            item['quantidade'],
+                            item['valor_total'],
+                            item['cst_icms'],
+                            item['cst_pis'],
+                            item['cst_cofins'],
+                        ])
+                    
+                    # Salvar
+                    wb.save(arquivo_dados)
+                    st.success("✅ Dados armazenados com sucesso (uso interno PRICETAX).")
+        
+        except Exception as e:
+            st.error(f"❌ Erro ao processar XML: {str(e)}")
+            st.exception(e)
 
 # RODAPÉ
 # =============================================================================
