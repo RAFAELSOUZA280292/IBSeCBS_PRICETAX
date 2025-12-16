@@ -2118,14 +2118,44 @@ with tabs[4]:
                                 unsafe_allow_html=True,
                             )
                             
-                            # cClassTrib e CST
+                            # Destaque do cClassTrib
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
+                                    border: 2px solid {COLOR_GOLD};
+                                    border-radius: 8px;
+                                    padding: 1.5rem;
+                                    margin: 1.5rem 0;
+                                    text-align: center;
+                                ">
+                                    <div style="color: {COLOR_GRAY_LIGHT}; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                        cClassTrib Sugerido (NF-e)
+                                    </div>
+                                    <div style="color: {COLOR_GOLD}; font-size: 2rem; font-weight: 700; letter-spacing: 0.1em;">
+                                        {cclastrib_code or '—'}
+                                    </div>
+                                    <div style="color: {COLOR_GRAY_LIGHT}; font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
+                                        {cclastrib_msg[:120]}...
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                            
+                            # Informações complementares
                             col_a, col_b = st.columns(2)
                             with col_a:
-                                st.markdown(f"**cClassTrib Sugerido:** {cclastrib_code or '—'}")
                                 st.markdown(f"**Regime IVA:** {regime_label(regime)}")
-                            with col_b:
                                 st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
-                                st.markdown(f"**Observação:** {cclastrib_msg[:100]}...")
+                            with col_b:
+                                class_info = get_class_info_by_code(cclastrib_code)
+                                if class_info:
+                                    st.markdown(f"**Tipo de Alíquota:** {map_tipo_aliquota(class_info.get('TIPO_ALIQUOTA', ''))}")
+                                    st.markdown(f"**Descrição:** {class_info.get('DESC_CLASS', '—')[:60]}...")
+                                else:
+                                    st.markdown(f"**Tipo de Alíquota:** —")
+                                    st.markdown(f"**Descrição:** —")
                         else:
                             st.warning(f"⚠️ NCM {ncm} não encontrado na base TIPI.")
                 
