@@ -925,12 +925,28 @@ def load_cfop_cclasstrib() -> pd.DataFrame:
     Carrega a planilha de correlação CFOP x cClassTrib.
     Retorna DataFrame com CFOP, descrição, cClassTrib e alíquotas.
     """
+    paths = [
+        Path("CFOP_CCLASSTRIB.xlsx"),
+        Path.cwd() / "CFOP_CCLASSTRIB.xlsx",
+    ]
     try:
-        arquivo = os.path.join(os.path.dirname(__file__), "CFOP_CCLASSTRIB.xlsx")
-        df = pd.read_excel(arquivo, sheet_name="Correlação", skiprows=2)
-        return df
+        paths.append(Path(__file__).parent / "CFOP_CCLASSTRIB.xlsx")
     except Exception:
+        pass
+
+    df = None
+    for p in paths:
+        if p.exists():
+            try:
+                df = pd.read_excel(p, sheet_name="Correlação", skiprows=2)
+                break
+            except Exception:
+                continue
+
+    if df is None or df.empty:
         return pd.DataFrame()
+
+    return df.copy()
 
 df_cfop_class = load_cfop_cclasstrib()
 
