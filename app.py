@@ -21,6 +21,7 @@ Versão: 3.0
 Data: Dezembro 2024
 """
 
+import base64
 import io
 import re
 import zipfile
@@ -393,6 +394,21 @@ def format_flag(value: str) -> str:
         return '<span class="tag tag-success">SIM</span>'
     else:
         return '<span class="tag tag-error">NÃO</span>'
+
+
+def map_tipo_aliquota(codigo: str) -> str:
+    """
+    Mapeia código de tipo de alíquota para descrição legível.
+    Baseado no portal SEFAZ de Classificação Tributária.
+    """
+    mapping = {
+        "1": "Específica",
+        "2": "Padrão",
+        "3": "Estimada",
+        "4": "Uniforme Nacional",
+        "5": "Uniforme Setorial",
+    }
+    return mapping.get(str(codigo).strip(), codigo or "—")
 
 # =============================================================================
 # CARREGAMENTO DA BASE TIPI
@@ -839,11 +855,23 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
 # INTERFACE PRINCIPAL
 # =============================================================================
 
-# Cabeçalho PRICETAX
+# Cabeçalho PRICETAX com logo
+# Carregar logo
+logo_path = Path(__file__).parent / "logo_pricetax.png"
+if not logo_path.exists():
+    logo_path = Path("logo_pricetax.png")
+
+if logo_path.exists():
+    with open(logo_path, "rb") as f:
+        logo_data = base64.b64encode(f.read()).decode()
+    logo_html = f'<img src="data:image/png;base64,{logo_data}" style="max-width:350px;height:auto;" alt="PRICETAX">'
+else:
+    logo_html = '<div class="pricetax-logo">PRICETAX</div>'
+
 st.markdown(
-    """
+    f"""
     <div class="pricetax-header">
-        <div class="pricetax-logo">PRICETAX</div>
+        {logo_html}
         <div class="pricetax-tagline">Soluções para transição inteligente na Reforma Tributária</div>
     </div>
     """,
@@ -855,6 +883,7 @@ tabs = st.tabs(
     [
         "Consulta NCM",
         "Ranking de Saídas SPED",
+        "Consulta cClassTrib",
     ]
 )
 
@@ -1067,13 +1096,18 @@ with tabs[0]:
                 st.markdown("**cClassTrib Sugerido (venda)**")
                 if cclastrib_code:
                     desc_class = class_info["DESC_CLASS"] if class_info else ""
-                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code} – {desc_class}</span>", unsafe_allow_html=True)
+                    if desc_class:
+                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
                 else:
                     st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
 
                 st.markdown("**Tipo de Alíquota (cClassTrib)**")
-                tipo_aliq = class_info["TIPO_ALIQUOTA"] if class_info else "—"
-                st.markdown(tipo_aliq)
+                tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
+                tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
+                st.markdown(tipo_aliq_desc)
 
             with col_xml3:
                 st.markdown("**Imposto Seletivo (IS)**")
@@ -1090,41 +1124,39 @@ with tabs[0]:
                         f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
                     )
 
-            st.markdown("**Alíquotas para Parametrização no XML (pIBS / pCBS)**")
-            st.markdown(
-                f"- pIBS (UF): **{pct_str(ibs_uf)}**  \n"
-                f"- pIBS (Município): **{pct_str(ibs_mun)}**  \n"
-                f"- pCBS: **{pct_str(cbs)}**  \n"
-                f"- pIVA Total: **{pct_str(total_iva)}**"
-            )
-
-            if cfop_input:
-                st.markdown(f"**Regra Sugerida para cClassTrib (CFOP {cfop_input.strip()}):** {cclastrib_msg}")
-            else:
-                st.markdown("**Regra cClassTrib:** Informe o CFOP da operação de venda para sugerirmos o cClassTrib padrão.")
-
+            # Observações e alertas (apenas se houver conteúdo relevante)
             st.markdown("---")
+            st.markdown("### Informações Complementares")
 
             def clean_txt(v):
                 s = str(v or "").strip()
                 return "" if s.lower() == "nan" else s
 
+            fonte = clean_txt(row.get("FONTE_LEGAL_FINAL"))
             alerta_fmt = clean_txt(row.get("ALERTA_APP"))
             obs_alim = clean_txt(row.get("OBS_ALIMENTO"))
             obs_dest = clean_txt(row.get("OBS_DESTINACAO"))
             reg_extra = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
 
-            if "RED_60" in (regime or "").upper():
-                if not alerta_fmt:
-                    alerta_fmt = "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
-                if not reg_extra:
-                    reg_extra = "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. Carga reduzida em 60% conforme regras de essencialidade/alimentos."
-
-            st.markdown(f"**Base Legal Considerada (TIPI/PRICETAX):** {fonte or '—'}")
-            st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
-            st.markdown(f"**Observação sobre Alimentos:** {obs_alim or '—'}")
-            st.markdown(f"**Observação sobre Destinação:** {obs_dest or '—'}")
-            st.markdown(f"**Regime Especial / Observações Adicionais:** {reg_extra or '—'}")
+            # Exibir apenas campos com conteúdo
+            if fonte:
+                st.markdown(f"**Base Legal:** {fonte}")
+            
+            if alerta_fmt:
+                st.markdown(f"**Alerta:** {alerta_fmt}")
+            
+            if obs_alim:
+                st.markdown(f"**Observação (Alimentos):** {obs_alim}")
+            
+            if obs_dest:
+                st.markdown(f"**Observação (Destinação):** {obs_dest}")
+            
+            if reg_extra:
+                st.markdown(f"**Observações Adicionais:** {reg_extra}")
+            
+            # Se nenhum campo tiver conteúdo, mostrar mensagem
+            if not any([fonte, alerta_fmt, obs_alim, obs_dest, reg_extra]):
+                st.markdown("*Nenhuma observação adicional disponível para este NCM.*")
 
 # =============================================================================
 # ABA 2 - RANKING DE SAÍDAS SPED
@@ -1278,6 +1310,151 @@ with tabs[1]:
                     file_name="ranking_vendas_ibscbs.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
+# =============================================================================
+# ABA 3 - CONSULTA CCLASSTRIB
+# =============================================================================
+
+with tabs[2]:
+    st.markdown(
+        """
+        <div class="pricetax-card">
+            <div class="pricetax-card-header">Consulta de Classificação Tributária (cClassTrib)</div>
+            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+                Utilize este painel para consultar os códigos de Classificação Tributária (cClassTrib) 
+                utilizados na Reforma Tributária:<br><br>
+                • Busque por <strong>código</strong> (ex: 000001, 200001) ou por <strong>descrição</strong><br>
+                • Visualize detalhes completos: tipo de alíquota, percentuais de redução, indicadores<br>
+                • Baseado na planilha oficial de Classificação Tributária
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Campo de busca
+    col_busca1, col_busca2 = st.columns([3, 1])
+    with col_busca1:
+        busca_cclasstrib = st.text_input(
+            "Buscar por código ou descrição",
+            placeholder="Ex: 000001 ou 'tributação integral'",
+            help="Digite o código cClassTrib ou parte da descrição para buscar.",
+        )
+    with col_busca2:
+        st.write("")
+        buscar_class = st.button("Buscar", type="primary", key="buscar_class")
+    
+    if buscar_class and busca_cclasstrib.strip():
+        busca_term = busca_cclasstrib.strip().upper()
+        
+        if df_class.empty:
+            st.error("Base de Classificação Tributária não carregada. Verifique se o arquivo 'classificacao_tributaria.xlsx' está disponível.")
+        else:
+            # Buscar por código exato
+            resultados = df_class[
+                df_class["Código da Classificação Tributária"].astype(str).str.strip() == busca_term
+            ]
+            
+            # Se não encontrou, buscar por descrição
+            if resultados.empty:
+                resultados = df_class[
+                    df_class["Descrição da Classificação Tributária"].astype(str).str.upper().str.contains(busca_term, na=False)
+                ]
+            
+            if resultados.empty:
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card-error">
+                        <strong>Termo buscado:</strong> {busca_cclasstrib}<br>
+                        Não encontramos nenhuma classificação tributária com este código ou descrição.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.success(f"Encontrados {len(resultados)} resultado(s) para '{busca_cclasstrib}'")
+                
+                # Exibir cada resultado
+                for idx, row in resultados.iterrows():
+                    codigo = str(row.get("Código da Classificação Tributária", "")).strip()
+                    descricao = str(row.get("Descrição da Classificação Tributária", "")).strip()
+                    tipo_aliq = str(row.get("Tipo de Alíquota", "")).strip()
+                    tipo_aliq_desc = map_tipo_aliquota(tipo_aliq)
+                    
+                    # Indicadores
+                    trib_reg = str(row.get("Tributação Regular", "")).strip().upper()
+                    red_aliq = str(row.get("Redução de Alíquota", "")).strip()
+                    transf_cred = str(row.get("Transferência de Crédito", "")).strip().upper()
+                    diferimento = str(row.get("Diferimento", "")).strip().upper()
+                    monofasica = str(row.get("Tributação Monofásica Normal", "")).strip().upper()
+                    cred_presumido = str(row.get("Crédito Presumido IBS ZFM", "")).strip().upper()
+                    
+                    st.markdown(
+                        f"""
+                        <div class="pricetax-card" style="margin-top:1.5rem;">
+                            <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:0.5rem;">
+                                cClassTrib {codigo}
+                            </div>
+                            <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                                {descricao}
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+                                <span class="tag tag-regime">{tipo_aliq_desc}</span>
+                                {f'<span class="tag tag-info">Redução: {red_aliq}</span>' if red_aliq and red_aliq != '0' and red_aliq.upper() != 'NAN' else ''}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    
+                    # Detalhes em colunas
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown("**Indicadores**")
+                        st.markdown(f"Tributação Regular: **{trib_reg if trib_reg != 'NAN' else '—'}**")
+                        st.markdown(f"Transferência de Crédito: **{transf_cred if transf_cred != 'NAN' else '—'}**")
+                    
+                    with col2:
+                        st.markdown("**Regimes Especiais**")
+                        st.markdown(f"Diferimento: **{diferimento if diferimento != 'NAN' else '—'}**")
+                        st.markdown(f"Monofásica: **{monofasica if monofasica != 'NAN' else '—'}**")
+                    
+                    with col3:
+                        st.markdown("**Créditos**")
+                        st.markdown(f"Crédito Presumido ZFM: **{cred_presumido if cred_presumido != 'NAN' else '—'}**")
+                    
+                    st.markdown("---")
+    
+    elif not busca_cclasstrib.strip():
+        # Mostrar lista dos principais cClassTrib
+        st.markdown("### Principais Códigos de Classificação Tributária")
+        
+        principais = [
+            {"codigo": "000001", "desc": "Situações tributadas integralmente pelo IBS e CBS"},
+            {"codigo": "200001", "desc": "Aquisições realizadas entre empresas autorizadas a operar em zonas de processamento de exportação"},
+            {"codigo": "200003", "desc": "Vendas de produtos destinados à alimentação humana (Anexo I)"},
+            {"codigo": "200014", "desc": "Fornecimento dos produtos hortícolas, frutas e ovos (Anexo XV)"},
+            {"codigo": "200028", "desc": "Fornecimento dos serviços de educação (Anexo II)"},
+            {"codigo": "200029", "desc": "Fornecimento dos serviços de saúde humana (Anexo III)"},
+            {"codigo": "300001", "desc": "Isenção do IBS e CBS"},
+            {"codigo": "410999", "desc": "Outras operações sem débito de IBS ou CBS"},
+        ]
+        
+        for item in principais:
+            st.markdown(
+                f"""
+                <div class="pricetax-card" style="margin-top:1rem;">
+                    <div style="font-size:1.1rem;font-weight:600;color:{COLOR_GOLD};">
+                        {item['codigo']}
+                    </div>
+                    <div style="font-size:0.9rem;color:{COLOR_GRAY_LIGHT};margin-top:0.3rem;">
+                        {item['desc']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 # =============================================================================
 # RODAPÉ
