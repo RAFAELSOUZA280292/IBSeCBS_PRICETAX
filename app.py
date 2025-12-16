@@ -1336,6 +1336,30 @@ with tabs[1]:
 # ABA 3 - CONSULTA CCLASSTRIB
 # =============================================================================
 
+
+# Mapeamento CST -> Descrição (baseado no portal SEFAZ)
+CST_DESCRICOES = {
+    '000': 'Tributação integral',
+    '010': 'Tributação com alíquotas uniformes',
+    '011': 'Tributação com alíquotas uniformes reduzidas',
+    '200': 'Alíquota reduzida',
+    '220': 'Alíquota fixa',
+    '221': 'Alíquota fixa proporcional',
+    '222': 'Redução de Base de Cálculo',
+    '400': 'Isenção',
+    '410': 'Imunidade e não incidência',
+    '510': 'Diferimento',
+    '515': 'Diferimento com redução de alíquota',
+    '550': 'Suspensão',
+    '620': 'Tributação Monofásica',
+    '800': 'Transferência de crédito',
+    '810': 'Ajuste de IBS na ZFM',
+    '811': 'Ajustes',
+    '820': 'Tributação em declaração de regime específico',
+    '830': 'Exclusão da Base de Cálculo',
+}
+
+
 with tabs[2]:
     # Verificar se a base foi carregada
     if df_class.empty:
@@ -1352,166 +1376,95 @@ with tabs[2]:
         )
     else:
         st.markdown(
-            """
+            f"""
             <div class="pricetax-card">
-                <div class="pricetax-card-header">Consulta de Classificação Tributária (cClassTrib)</div>
+                <div class="pricetax-card-header">Classificação Tributária (cClassTrib)</div>
                 <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
-                    Utilize este painel para consultar os códigos de Classificação Tributária (cClassTrib) 
-                    utilizados na Reforma Tributária:<br><br>
-                    • Busque por <strong>código</strong> (ex: 000001, 830001) ou por <strong>descrição</strong><br>
-                    • Visualize detalhes completos: tipo de alíquota, percentuais de redução, indicadores<br>
-                    • Baseado no portal oficial da SEFAZ<br>
-                    • <strong>{len(df_class)} códigos disponíveis</strong>
+                    Navegue pelos códigos de Classificação Tributária utilizados na Reforma Tributária.<br>
+                    Clique em cada categoria para expandir e visualizar os códigos detalhados.<br><br>
+                    <strong>{len(df_class)} códigos disponíveis</strong> | Baseado no portal oficial da SEFAZ
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
         
-        # Campo de busca
-        col_busca1, col_busca2 = st.columns([3, 1])
-        with col_busca1:
-            busca_cclasstrib = st.text_input(
-                "Buscar por código ou descrição",
-                placeholder="Ex: 830001 ou 'energia elétrica'",
-                help="Digite o código cClassTrib ou parte da descrição para buscar.",
-            )
-        with col_busca2:
-            st.write("")
-            buscar_class = st.button("Buscar", type="primary", key="buscar_class")
+        # Adicionar coluna CST (3 primeiros dígitos)
+        df_class_copy = df_class.copy()
+        df_class_copy['CST'] = df_class_copy['Código da Classificação Tributária'].astype(str).str.zfill(6).str[:3]
         
-        if buscar_class and busca_cclasstrib.strip():
-            busca_term = busca_cclasstrib.strip()
+        # Agrupar por CST
+        cst_groups = df_class_copy.groupby('CST')
+        
+        # Exibir cada CST com expander
+        for cst, group in sorted(cst_groups, key=lambda x: x[0]):
+            cst_desc = CST_DESCRICOES.get(cst, "Descrição não disponível")
+            count = len(group)
             
-            # Tentar buscar por código numérico
-            resultados = pd.DataFrame()
-            try:
-                codigo_num = int(busca_term)
-                resultados = df_class[
-                    df_class["Código da Classificação Tributária"] == codigo_num
-                ]
-            except ValueError:
-                pass
-            
-            # Se não encontrou por código, buscar por descrição
-            if resultados.empty:
-                busca_upper = busca_term.upper()
-                resultados = df_class[
-                    df_class["Descrição da Classificação Tributária"].astype(str).str.upper().str.contains(busca_upper, na=False)
-                ]
-            
-            if resultados.empty:
-                st.markdown(
-                    f"""
-                    <div class="pricetax-card-error">
-                        <strong>Termo buscado:</strong> {busca_cclasstrib}<br>
-                        Não encontramos nenhuma classificação tributária com este código ou descrição.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.success(f"Encontrados {len(resultados)} resultado(s) para '{busca_cclasstrib}'")
-                
-                # Exibir cada resultado
-                for idx, row in resultados.iterrows():
-                    codigo = str(int(row.get("Código da Classificação Tributária", 0))).zfill(6)
-                    descricao = str(row.get("Descrição da Classificação Tributária", "")).strip()
-                    tipo_aliq = str(row.get("Tipo de Alíquota", "")).strip()
+            with st.expander(f"**{cst}** - {cst_desc} ({count} código{'s' if count > 1 else ''})"):
+                # Exibir cada cClassTrib dentro do grupo
+                for idx, row in group.iterrows():
+                    codigo = str(int(row['Código da Classificação Tributária'])).zfill(6)
+                    descricao = str(row.get('Descrição da Classificação Tributária', '')).strip()
                     
                     # Reduções percentuais
-                    red_ibs = float(row.get("Redução IBS (%)", 0.0))
-                    red_cbs = float(row.get("Redução CBS (%)", 0.0))
+                    red_ibs = float(row.get('Redução IBS (%)', 0.0))
+                    red_cbs = float(row.get('Redução CBS (%)', 0.0))
                     
-                    # Indicadores
-                    trib_reg = str(row.get("Tributação Regular", "")).strip().upper()
-                    transf_cred = str(row.get("Transferência de Crédito", "")).strip().upper()
-                    diferimento = str(row.get("Diferimento", "")).strip().upper()
-                    monofasica = str(row.get("Tributação Monofásica Normal", "")).strip().upper()
-                    cred_presumido = str(row.get("Crédito Presumido IBS ZFM", "")).strip().upper()
-                    dfes = str(row.get("DFes Relacionados", "")).strip()
+                    # Tipo de alíquota
+                    tipo_aliq = str(row.get('Tipo de Alíquota', '')).strip()
                     
+                    # DFes relacionados
+                    dfes = str(row.get('DFes Relacionados', '')).strip()
+                    
+                    # Card para cada cClassTrib
                     st.markdown(
                         f"""
-                        <div class="pricetax-card" style="margin-top:1.5rem;">
-                            <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:0.5rem;">
-                                cClassTrib {codigo}
+                        <div style="
+                            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+                            border-left: 4px solid {COLOR_GOLD};
+                            padding: 1rem;
+                            margin: 0.8rem 0;
+                            border-radius: 6px;
+                        ">
+                            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem;">
+                                <div style="
+                                    font-size:1.4rem;
+                                    font-weight:700;
+                                    color:{COLOR_GOLD};
+                                    font-family:monospace;
+                                    background:#000000;
+                                    padding:0.3rem 0.8rem;
+                                    border-radius:4px;
+                                ">{codigo}</div>
+                                <div style="font-size:1rem;color:{COLOR_WHITE};flex:1;">
+                                    {descricao}
+                                </div>
                             </div>
-                            <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
-                                {descricao}
-                            </div>
-                            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                                <span class="tag tag-regime">{tipo_aliq}</span>
-                                {f'<span class="tag tag-info">DFes: {dfes}</span>' if dfes else ''}
+                            
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.8rem;font-size:0.9rem;">
+                                <div>
+                                    <span style="color:{COLOR_GRAY_LIGHT};">Redução IBS:</span>
+                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{pct_str(red_ibs)}</span>
+                                </div>
+                                <div>
+                                    <span style="color:{COLOR_GRAY_LIGHT};">Redução CBS:</span>
+                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{pct_str(red_cbs)}</span>
+                                </div>
+                                <div>
+                                    <span style="color:{COLOR_GRAY_LIGHT};">Tipo de Alíquota:</span>
+                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{tipo_aliq if tipo_aliq else '—'}</span>
+                                </div>
+                                <div>
+                                    <span style="color:{COLOR_GRAY_LIGHT};">DFes:</span>
+                                    <span style="color:{COLOR_WHITE};font-weight:600;margin-left:0.5rem;">{dfes if dfes else '—'}</span>
+                                </div>
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
-                    
-                    # Exibir IBS e CBS
-                    st.markdown("### Alíquotas")
-                    col_ibs, col_cbs = st.columns(2)
-                    with col_ibs:
-                        st.markdown(f"**IBS:** {pct_str(red_ibs)}")
-                    with col_cbs:
-                        st.markdown(f"**CBS:** {pct_str(red_cbs)}")
-                    
-                    if red_ibs > 0 or red_cbs > 0:
-                        st.markdown(f"**Redução aplicada:** IBS {pct_str(red_ibs)} / CBS {pct_str(red_cbs)}")
-                    else:
-                        st.markdown("**Redução aplicada:** Nenhuma redução")
-                    
-                    # Detalhes em colunas
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        st.markdown("**Indicadores**")
-                        st.markdown(f"Tributação Regular: **{trib_reg if trib_reg != 'NAN' else '—'}**")
-                        st.markdown(f"Transferência de Crédito: **{transf_cred if transf_cred != 'NAN' else '—'}**")
-                    
-                    with col2:
-                        st.markdown("**Regimes Especiais**")
-                        st.markdown(f"Diferimento: **{diferimento if diferimento != 'NAN' else '—'}**")
-                        st.markdown(f"Monofásica: **{monofasica if monofasica != 'NAN' else '—'}**")
-                    
-                    with col3:
-                        st.markdown("**Créditos**")
-                        st.markdown(f"Crédito Presumido ZFM: **{cred_presumido if cred_presumido != 'NAN' else '—'}**")
-                    
-                    st.markdown("———")
-        
-        elif not busca_cclasstrib.strip():
-            # Mostrar lista dos principais cClassTrib
-            st.markdown("### Principais Códigos de Classificação Tributária")
-            
-            principais = [
-                {"codigo": "000001", "desc": "Situações tributadas integralmente pelo IBS e CBS"},
-                {"codigo": "200001", "desc": "Aquisições realizadas entre empresas autorizadas a operar em zonas de processamento de exportação"},
-                {"codigo": "200003", "desc": "Vendas de produtos destinados à alimentação humana (Anexo I)"},
-                {"codigo": "200014", "desc": "Fornecimento dos produtos hortícolas, frutas e ovos (Anexo XV)"},
-                {"codigo": "200028", "desc": "Fornecimento dos serviços de educação (Anexo II)"},
-                {"codigo": "200029", "desc": "Fornecimento dos serviços de saúde humana (Anexo III)"},
-                {"codigo": "300001", "desc": "Isenção do IBS e CBS"},
-                {"codigo": "410999", "desc": "Outras operações sem débito de IBS ou CBS"},
-            ]
-            
-            for item in principais:
-                st.markdown(
-                    f"""
-                    <div class="pricetax-card" style="margin-top:1rem;">
-                        <div style="font-size:1.1rem;font-weight:600;color:{COLOR_GOLD};">
-                            {item['codigo']}
-                        </div>
-                        <div style="font-size:0.9rem;color:{COLOR_GRAY_LIGHT};margin-top:0.3rem;">
-                            {item['desc']}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
 
-# =============================================================================
 # RODAPÉ
 # =============================================================================
 
