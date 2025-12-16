@@ -1403,6 +1403,31 @@ with tabs[2]:
         # Agrupar por CST
         cst_groups = df_class_copy.groupby('CST')
         
+        # Aplicar CSS GLOBAL para todas as tabelas da aba
+        st.markdown(
+            f"""
+            <style>
+            /* Estilo para cabeçalho das tabelas - ULTRA AGRESSIVO */
+            [data-testid="stDataFrame"] thead tr th,
+            [data-testid="stDataFrame"] thead th,
+            div[data-testid="stDataFrame"] > div > div > div > table > thead > tr > th {{
+                background-color: {COLOR_GOLD} !important;
+                color: {COLOR_BLACK} !important;
+                font-weight: 700 !important;
+                padding: 0.75rem !important;
+                border: 1px solid {COLOR_GRAY_DARK} !important;
+            }}
+            /* Garantir que o corpo da tabela tenha fundo escuro */
+            [data-testid="stDataFrame"] tbody tr,
+            [data-testid="stDataFrame"] tbody td {{
+                background-color: {COLOR_BG_DARK} !important;
+                color: {COLOR_WHITE} !important;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        
         # Exibir cada CST com expander
         for cst, group in sorted(cst_groups, key=lambda x: x[0]):
             cst_desc = CST_DESCRICOES.get(cst, "Descrição não disponível")
@@ -1441,22 +1466,6 @@ with tabs[2]:
                 
                 # Criar DataFrame e exibir tabela
                 df_tabela = pd.DataFrame(tabela_dados)
-                
-                # Aplicar CSS inline para o cabeçalho amarelo
-                st.markdown(
-                    f"""
-                    <style>
-                    /* Estilo APENAS para o cabeçalho da tabela */
-                    div[data-testid="stDataFrame"] thead tr th {{
-                        background-color: {COLOR_GOLD} !important;
-                        color: {COLOR_BLACK} !important;
-                        font-weight: 700 !important;
-                        padding: 0.75rem !important;
-                    }}
-                    </style>
-                    """,
-                    unsafe_allow_html=True
-                )
                 
                 # Exibir tabela
                 st.dataframe(
