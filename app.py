@@ -17,7 +17,7 @@ Lógica de Cálculo de Alíquotas:
 - Valores finais são obtidos da planilha de regras (já com reduções aplicadas)
 
 Autor: PRICETAX
-Versão: 2.0
+Versão: 3.0
 Data: Dezembro 2024
 """
 
@@ -32,159 +32,289 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
-# --------------------------------------------------
-# CONFIG GERAL / TEMA PRICETAX
-# --------------------------------------------------
+# =============================================================================
+# CONFIGURAÇÃO GERAL E IDENTIDADE VISUAL PRICETAX
+# =============================================================================
+
 st.set_page_config(
-    page_title="PRICETAX • IBS/CBS 2026 & Ranking SPED",
-    page_icon="💡",
+    page_title="PRICETAX - IBS/CBS 2026 & Ranking SPED",
+    page_icon="https://pricetax.com.br/favicon.ico",
     layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-PRIMARY_YELLOW = "#FFC300"
-PRIMARY_BLACK = "#050608"
-PRIMARY_CYAN = "#007BFF"  # azul normal
+# Paleta de cores PRICETAX
+COLOR_GOLD = "#FFD700"
+COLOR_BLACK = "#000000"
+COLOR_DARK_BG = "#0a0a0a"
+COLOR_CARD_BG = "#1a1a1a"
+COLOR_GREEN_NEON = "#00FF00"
+COLOR_WHITE = "#FFFFFF"
+COLOR_GRAY_LIGHT = "#CCCCCC"
+COLOR_GRAY_MEDIUM = "#666666"
+COLOR_BORDER = "#333333"
+COLOR_ERROR = "#FF4444"
 
+# Aplicação do tema PRICETAX
 st.markdown(
     f"""
     <style>
+    /* Reset e configurações globais */
     .stApp {{
-        background-color: {PRIMARY_BLACK};
-        color: #F5F5F5;
-        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: {COLOR_BLACK};
+        color: {COLOR_WHITE};
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }}
-
-    /* Layout geral */
+    
     .block-container {{
-        padding-top: 2.5rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+        max-width: 1400px;
     }}
-
-    /* Títulos */
-    .pricetax-title {{
-        font-size: 2.3rem;
+    
+    /* Cabeçalho PRICETAX */
+    .pricetax-header {{
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+        border-bottom: 1px solid {COLOR_BORDER};
+    }}
+    
+    .pricetax-logo {{
+        font-size: 2.8rem;
         font-weight: 700;
-        color: {PRIMARY_YELLOW};
-        letter-spacing: 0.04em;
+        color: {COLOR_GOLD};
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
     }}
-    .pricetax-subtitle {{
-        font-size: 0.95rem;
-        color: #CFCFCF;
-        margin-top: 0.2rem;
+    
+    .pricetax-tagline {{
+        font-size: 1.1rem;
+        color: {COLOR_GRAY_LIGHT};
+        font-weight: 300;
+        letter-spacing: 0.02em;
     }}
-
-    /* Cards */
+    
+    /* Cards profissionais */
     .pricetax-card {{
-        border-radius: 0.9rem;
-        padding: 1.1rem 1.3rem;
-        background: linear-gradient(135deg, #1C1C1C 0%, #101010 60%, #060608 100%);
-        border: 1px solid #333333;
+        background: {COLOR_CARD_BG};
+        border: 1px solid {COLOR_BORDER};
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
     }}
-    .pricetax-card-soft {{
-        border-radius: 0.9rem;
-        padding: 1.1rem 1.3rem;
-        background: #111318;
-        border: 1px solid #2B2F3A;
-    }}
-    .pricetax-card-erro {{
-        border-radius: 0.9rem;
-        padding: 1.1rem 1.3rem;
-        background: #2b1a1a;
-        border: 1px solid #ff5656;
-    }}
-
-    /* Badges e chips */
-    .pricetax-badge {{
-        display: inline-block;
-        padding: 0.18rem 0.7rem;
-        border-radius: 999px;
-        background: {PRIMARY_YELLOW};
-        color: {PRIMARY_BLACK};
-        font-size: 0.72rem;
-        font-weight: 700;
+    
+    .pricetax-card-header {{
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
+        color: {COLOR_GOLD};
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid {COLOR_BORDER};
     }}
-    .pill {{
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.18rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 500;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(15,15,18,0.9);
-        color: #EDEDED;
+    
+    .pricetax-card-error {{
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid {COLOR_ERROR};
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
     }}
-    .pill-regime {{
-        border-color: {PRIMARY_CYAN};
-        background: rgba(0,123,255,0.12);
-        color: #E5F0FF;
+    
+    /* Métricas e valores */
+    .metric-container {{
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin: 1.5rem 0;
     }}
-    .pill-tag {{
-        background: rgba(0,0,0,0.4);
+    
+    .metric-box {{
+        flex: 1;
+        min-width: 200px;
     }}
-
-    /* Métricas */
-    .pricetax-metric-label {{
-        font-size: 0.78rem;
-        color: #BBBBBB;
+    
+    .metric-label {{
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        color: {COLOR_GRAY_MEDIUM};
+        margin-bottom: 0.5rem;
     }}
-
+    
+    .metric-value {{
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: {COLOR_GOLD};
+        line-height: 1;
+    }}
+    
+    .metric-value-secondary {{
+        font-size: 2rem;
+        font-weight: 600;
+        color: {COLOR_WHITE};
+    }}
+    
+    /* Tags e badges */
+    .tag {{
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0.2rem;
+    }}
+    
+    .tag-regime {{
+        background: rgba(255, 215, 0, 0.15);
+        border: 1px solid {COLOR_GOLD};
+        color: {COLOR_GOLD};
+    }}
+    
+    .tag-info {{
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid {COLOR_BORDER};
+        color: {COLOR_GRAY_LIGHT};
+    }}
+    
+    .tag-success {{
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid {COLOR_GREEN_NEON};
+        color: {COLOR_GREEN_NEON};
+    }}
+    
+    .tag-error {{
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid {COLOR_ERROR};
+        color: {COLOR_ERROR};
+    }}
+    
+    /* Inputs e formulários */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > select {{
+        background-color: {COLOR_DARK_BG};
+        color: {COLOR_WHITE};
+        border: 1px solid {COLOR_BORDER};
+        border-radius: 4px;
+        padding: 0.6rem;
+    }}
+    
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {{
+        border-color: {COLOR_GOLD};
+        box-shadow: 0 0 0 1px {COLOR_GOLD};
+    }}
+    
+    .stFileUploader > label > div {{
+        color: {COLOR_GRAY_LIGHT};
+    }}
+    
+    /* Botões */
+    .stButton > button[kind="primary"] {{
+        background-color: {COLOR_GOLD};
+        color: {COLOR_BLACK};
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        padding: 0.6rem 2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+    }}
+    
+    .stButton > button[kind="primary"]:hover {{
+        background-color: #FFF;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    }}
+    
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
-        border-bottom: 1px solid #333333;
+        gap: 2rem;
+        border-bottom: 1px solid {COLOR_BORDER};
     }}
+    
     .stTabs [data-baseweb="tab"] {{
-        padding-top: 0.6rem;
-        padding-bottom: 0.4rem;
+        padding: 1rem 0;
+        color: {COLOR_GRAY_MEDIUM};
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.9rem;
     }}
-    .stTabs [aria-selected="true"] p {{
-        color: {PRIMARY_YELLOW} !important;
+    
+    .stTabs [aria-selected="true"] {{
+        color: {COLOR_GOLD};
+        border-bottom: 2px solid {COLOR_GOLD};
+    }}
+    
+    /* Tabelas */
+    .dataframe {{
+        background-color: {COLOR_CARD_BG} !important;
+        color: {COLOR_WHITE} !important;
+    }}
+    
+    .dataframe th {{
+        background-color: {COLOR_DARK_BG} !important;
+        color: {COLOR_GOLD} !important;
         font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
     }}
-
-    /* Inputs */
-    .stTextInput > div > div > input {{
-        background-color: #111318;
-        color: #FFFFFF;
-        border-radius: 0.6rem;
-        border: 1px solid #333333;
+    
+    .dataframe td {{
+        border-color: {COLOR_BORDER} !important;
     }}
-    .stFileUploader > label div {{
-        color: #DDDDDD;
+    
+    /* Divisores */
+    hr {{
+        border-color: {COLOR_BORDER};
+        margin: 2rem 0;
     }}
-
-    /* Botão primário - azul */
-    .stButton>button[kind="primary"] {{
-        background-color: {PRIMARY_CYAN};
-        color: #ffffff;
-        border-radius: 0.6rem;
-        border: 1px solid {PRIMARY_CYAN};
+    
+    /* Seções de informação */
+    .info-section {{
+        background: rgba(255, 215, 0, 0.05);
+        border-left: 3px solid {COLOR_GOLD};
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 0 4px 4px 0;
+    }}
+    
+    .info-section-title {{
         font-weight: 600;
-        padding: 0.4rem 1.5rem;
+        color: {COLOR_GOLD};
+        margin-bottom: 0.5rem;
     }}
-    .stButton>button[kind="primary"]:hover {{
-        background-color: #0069d9;
-        border-color: #5fa8ff;
-    }}
+    
+    /* Ocultar elementos do Streamlit */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --------------------------------------------------
-# UTILITÁRIOS
-# --------------------------------------------------
+# =============================================================================
+# FUNÇÕES UTILITÁRIAS
+# =============================================================================
+
 def only_digits(s: Optional[str]) -> str:
+    """Remove todos os caracteres não numéricos de uma string."""
     return re.sub(r"\D+", "", s or "")
 
 
 def to_float_br(s) -> float:
+    """
+    Converte string em formato brasileiro para float.
+    Aceita formatos como: 1.234,56 ou 1234.56
+    """
     if s is None:
         return 0.0
     s = str(s).strip()
@@ -200,10 +330,13 @@ def to_float_br(s) -> float:
         return 0.0
 
 
+def pct_str(v: float) -> str:
+    """Formata um número como percentual no padrão brasileiro."""
+    return f"{v:.2f}".replace(".", ",") + "%"
+
+
 def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
-    """
-    Extrai competência (MM/AAAA) a partir das datas do registro 0000.
-    """
+    """Extrai competência (MM/AAAA) a partir das datas do registro 0000."""
     for raw in (dt_ini or "", dt_fin or ""):
         dig = only_digits(raw)
         if len(dig) == 8:
@@ -212,32 +345,21 @@ def competencia_from_dt(dt_ini: str, dt_fin: str) -> str:
 
 
 def normalize_cols_upper(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza nomes de colunas para maiúsculas."""
     df = df.copy()
     df.columns = [str(c).strip().upper() for c in df.columns]
     return df
 
 
-def pct_str(v: float) -> str:
-    return f"{v:.2f}".replace(".", ",") + "%"
-
-
-emoji_sim = "🔵"
-emoji_nao = "🔴"
-
-
-def badge_flag(v):
-    v = str(v or "").strip().upper()
-    return f"{emoji_sim} SIM" if v == "SIM" else f"{emoji_nao} NÃO"
-
-
 def regime_label(regime: str) -> str:
+    """Retorna o label formatado do regime tributário."""
     r = (regime or "").upper()
     mapping = {
-        "ALIQ_ZERO_CESTA_BASICA_NACIONAL": "Alíquota zero • Cesta Básica Nacional",
-        "ALIQ_ZERO_HORTIFRUTI_OVOS": "Alíquota zero • Hortifrúti e Ovos",
-        "RED_60_ALIMENTOS": "Redução de 60% • Alimentos",
-        "RED_60_ESSENCIALIDADE": "Redução de 60% • Essencialidade",
-        "TRIBUTACAO_PADRAO": "Tributação padrão (sem benefício)",
+        "ALIQ_ZERO_CESTA_BASICA_NACIONAL": "Alíquota Zero - Cesta Básica Nacional",
+        "ALIQ_ZERO_HORTIFRUTI_OVOS": "Alíquota Zero - Hortifrúti e Ovos",
+        "RED_60_ALIMENTOS": "Redução de 60% - Alimentos",
+        "RED_60_ESSENCIALIDADE": "Redução de 60% - Essencialidade",
+        "TRIBUTACAO_PADRAO": "Tributação Padrão",
     }
     return mapping.get(r, regime or "Regime não mapeado")
 
@@ -264,15 +386,28 @@ def label_from_sped_header(text: str, default_name: str) -> str:
     return default_name
 
 
-# --------------------------------------------------
-# CARREGAR BASE TIPI (PLANILHA PRICETAX / MIND7)
-# --------------------------------------------------
+def format_flag(value: str) -> str:
+    """Formata flags SIM/NÃO de forma profissional."""
+    v = str(value or "").strip().upper()
+    if v == "SIM":
+        return '<span class="tag tag-success">SIM</span>'
+    else:
+        return '<span class="tag tag-error">NÃO</span>'
+
+# =============================================================================
+# CARREGAMENTO DA BASE TIPI
+# =============================================================================
+
 TIPI_DEFAULT_NAME = "PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx"
 ALT_TIPI_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
 
 @st.cache_data(show_spinner=False)
 def load_tipi_base() -> pd.DataFrame:
+    """
+    Carrega a planilha de regras TIPI IBS/CBS.
+    Procura em múltiplos caminhos possíveis e normaliza as colunas.
+    """
     paths = [
         Path(TIPI_DEFAULT_NAME),
         Path.cwd() / TIPI_DEFAULT_NAME,
@@ -330,6 +465,7 @@ def load_tipi_base() -> pd.DataFrame:
 
 
 def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
+    """Busca um NCM na base de dados."""
     n = only_digits(ncm_raw)
     if len(n) != 8 or df.empty:
         return None
@@ -337,16 +473,19 @@ def buscar_ncm(df: pd.DataFrame, ncm_raw: str):
     return None if row.empty or row.isnull().all().all() else row.iloc[0]
 
 
+# Carrega a base TIPI
 df_tipi = load_tipi_base()
 
-# --------------------------------------------------
-# CARREGAR BASE CLASSIFICAÇÃO TRIBUTÁRIA (por código)
-# --------------------------------------------------
+# =============================================================================
+# CARREGAMENTO DA BASE DE CLASSIFICAÇÃO TRIBUTÁRIA
+# =============================================================================
+
 CLASSIF_NAME = "classificacao_tributaria.xlsx"
 
 
 @st.cache_data(show_spinner=False)
 def load_classificacao_base() -> pd.DataFrame:
+    """Carrega a planilha de classificação tributária."""
     paths = [
         Path(CLASSIF_NAME),
         Path.cwd() / CLASSIF_NAME,
@@ -374,6 +513,7 @@ df_class = load_classificacao_base()
 
 @st.cache_data(show_spinner=False)
 def build_cclasstrib_code_index(df_class_: pd.DataFrame) -> Dict[str, Dict[str, str]]:
+    """Constrói índice de classificação tributária por código."""
     index: Dict[str, Dict[str, str]] = {}
     if df_class_.empty:
         return index
@@ -384,150 +524,120 @@ def build_cclasstrib_code_index(df_class_: pd.DataFrame) -> Dict[str, Dict[str, 
             continue
         g = grp.copy()
 
-        # Preferir NFe = "Sim"
         if "NFe" in g.columns:
             g_pref = g[g["NFe"].astype(str).str.lower() == "sim"]
             if not g_pref.empty:
                 g = g_pref
 
-        # Garantir colunas
-        for col in [
-            "Tributação Regular",
-            "Redução de Alíquota",
-            "Transferência de Crédito",
-            "Diferimento",
-        ]:
-            if col not in g.columns:
-                g[col] = ""
-
-        # Preferir cenário regular sem redução/sem diferimento/sem transf de crédito
-        mask_reg = (
-            (g["Tributação Regular"].astype(str).str.lower() == "sim")
-            & (g["Redução de Alíquota"].astype(str).str.lower() == "não")
-            & (g["Transferência de Crédito"].astype(str).str.lower() == "não")
-            & (g["Diferimento"].astype(str).str.lower() == "não")
-        )
-        g_reg = g[mask_reg]
-        if not g_reg.empty:
-            g = g_reg
-
         row = g.iloc[0]
-        code_str = str(code).strip()
-        index[code_str] = {
-            "COD_CLASS": code_str,
-            "DESC_CLASS": str(
-                row.get("Descrição do Código da Classificação Tributária", "")
-            ).strip(),
-            "TIPO_ALIQUOTA": str(row.get("Tipo de Alíquota", "")).strip(),
-            "TRIB_REG": str(row.get("Tributação Regular", "")).strip(),
-            "RED_ALIQ": str(row.get("Redução de Alíquota", "")).strip(),
-            "TRANSF_CRED": str(row.get("Transferência de Crédito", "")).strip(),
-            "DIFERIMENTO": str(row.get("Diferimento", "")).strip(),
-            "MONOFASICA": str(row.get("Monofásica", "")).strip(),
-            "URL_LEI": str(row.get("Url da Legislação", "")).strip(),
+        index[str(code).strip()] = {
+            "DESC_CLASS": str(row.get("Descrição da Classificação Tributária", "")),
+            "TIPO_ALIQUOTA": str(row.get("Tipo de Alíquota", "")),
+            "TRIB_REG": str(row.get("Tributação Regular", "")),
+            "RED_ALIQ": str(row.get("Redução de Alíquota", "")),
+            "TRANSF_CRED": str(row.get("Transferência de Crédito", "")),
+            "DIFERIMENTO": str(row.get("Diferimento", "")),
+            "MONOFASICA": str(row.get("Tributação Monofásica Normal", "")),
         }
 
     return index
 
 
-cclasstrib_code_index = build_cclasstrib_code_index(df_class)
+cclasstrib_index = build_cclasstrib_code_index(df_class)
 
 
-def get_class_info_by_code(cclass_code: str) -> Optional[Dict[str, str]]:
-    if not cclass_code:
+def get_class_info_by_code(code: str) -> Optional[Dict[str, str]]:
+    """Obtém informações de classificação tributária por código."""
+    if not code:
         return None
-    return cclasstrib_code_index.get(str(cclass_code).strip())
+    return cclasstrib_index.get(str(code).strip())
 
+# =============================================================================
+# MAPEAMENTO CFOP → cClassTrib
+# =============================================================================
 
-# --------------------------------------------------
-# CFOP NÃO ONEROSOS → cClassTrib 410999 (MODELO 1 – CONSERVADOR)
-# --------------------------------------------------
-CFOP_NAO_ONEROSOS_410999 = {
-    # Internos – grupo 59 (operações típicas sem débito IBS/CBS)
-    "5901",  # Remessa para industrialização por encomenda
-    "5902",  # Retorno de mercadoria utilizada na industrialização por encomenda
-    "5910",  # Remessa em bonificação, doação ou brinde
-    "5915",  # Remessa de mercadoria ou bem para conserto ou reparo
-    "5927",  # Lançamento efetuado a título de baixa de estoque (quebra/ajuste)
-    "5949",  # Outras saídas de mercadorias não especificadas
-    "5959",  # Outras saídas de serviços não especificadas (quando usada sem preço)
+CFOP_NAO_ONEROSOS_410999 = [
+    "5910", "6910", "7910",  # Remessa em bonificação, doação ou brinde
+    "5911", "6911", "7911",  # Remessa de amostra grátis
+    "5949", "6949", "7949",  # Outra saída não especificada
+    "5917", "6917", "7917",  # Remessa de mercadoria em consignação mercantil ou industrial
+]
 
-    # Internos – devoluções, demonstração, simbólicas, conta e ordem, transferência, devolução compra
-    "5119",  # Devolução de venda de produção própria
-    "5912",  # Remessa de mercadoria para demonstração
-    "5916",  # Remessa simbólica de mercadoria vendida/bonificação
-    "5923",  # Remessa por conta e ordem de terceiros
-    "5924",  # Remessa por conta e ordem – consignação
-    "5152",  # Transferência de produção própria entre estabelecimentos (interno)
-    "5202",  # Devolução de compra para industrialização (interno)
-
-    # Interestaduais – grupo 69 (espelho das operações do grupo 59)
-    "6901",
-    "6902",
-    "6910",
-    "6915",
-    "6927",
-    "6949",
-    "6959",
-
-    # Interestaduais – devoluções, demonstração, simbólicas, conta e ordem, transferência, devolução compra
-    "6119",  # Devolução de venda de produção própria (interestadual)
-    "6912",  # Remessa de mercadoria para demonstração (interestadual)
-    "6916",  # Remessa simbólica (interestadual)
-    "6923",  # Remessa por conta e ordem de terceiros (interestadual)
-    "6924",  # Remessa por conta e ordem – consignação (interestadual)
-    "6152",  # Transferência de produção própria entre estabelecimentos (interestadual)
-    "6202",  # Devolução de compra para industrialização (interestadual)
-}
-
-
-# --------------------------------------------------
-# REGRAS PADRÃO CFOP → cClassTrib (OPERAÇÕES "NORMAIS")
-# --------------------------------------------------
-CFOP_CCLASSTRIB_MAP: Dict[str, str] = {
-    # Vendas internas – operações onerosas
+CFOP_CCLASSTRIB_MAP = {
+    # Vendas padrão (tributação regular)
     "5101": "000001",
     "5102": "000001",
     "5103": "000001",
     "5104": "000001",
+    "5105": "000001",
+    "5106": "000001",
     "5109": "000001",
     "5110": "000001",
+    "5111": "000001",
+    "5112": "000001",
+    "5113": "000001",
+    "5114": "000001",
+    "5115": "000001",
     "5116": "000001",
-    "5123": "000001",  # Venda de mercadoria recebida para fim específico de exportação
-    "5201": "000001",
-    "5403": "000001",
-    "5405": "000001",
-    "5411": "000001",
-
-    # Vendas interestaduais – operações onerosas
+    "5117": "000001",
+    "5118": "000001",
+    "5119": "000001",
+    "5120": "000001",
+    "5122": "000001",
+    "5123": "000001",
+    "5124": "000001",
+    "5125": "000001",
+    
     "6101": "000001",
     "6102": "000001",
     "6103": "000001",
     "6104": "000001",
+    "6105": "000001",
+    "6106": "000001",
     "6107": "000001",
     "6108": "000001",
     "6109": "000001",
     "6110": "000001",
+    "6111": "000001",
+    "6112": "000001",
+    "6113": "000001",
+    "6114": "000001",
+    "6115": "000001",
     "6116": "000001",
-    "6123": "000001",  # Espelho interestadual da venda para exportação
-    "6201": "000001",
-    "6403": "000001",
-    "6405": "000001",
-    "6411": "000001",
-
-    # Exportação – operações onerosas (venda)
+    "6117": "000001",
+    "6118": "000001",
+    "6119": "000001",
+    "6120": "000001",
+    "6122": "000001",
+    "6123": "000001",
+    "6124": "000001",
+    
     "7101": "000001",
     "7102": "000001",
-
-    # Saída onerosa – faturamento p/ entrega futura
+    "7105": "000001",
+    "7106": "000001",
+    "7127": "000001",
+    
+    # Operações não onerosas
+    "5910": "410999",
+    "6910": "410999",
+    "7910": "410999",
+    "5911": "410999",
+    "6911": "410999",
+    "7911": "410999",
+    "5949": "410999",
+    "6949": "410999",
+    "7949": "410999",
+    "5917": "410999",
+    "6917": "410999",
+    "7917": "410999",
+    
+    # Operações específicas
     "5922": "000001",
     "6922": "000001",
-
-    # Venda de sucata / resíduos – operação onerosa (gera débito)
     "6557": "000001",
 }
 
-# Aplicar mapeamento padrão 410999 para CFOPs não onerosos (sem sobrescrever os já definidos)
 for _cfop in CFOP_NAO_ONEROSOS_410999:
     CFOP_CCLASSTRIB_MAP.setdefault(_cfop, "410999")
 
@@ -578,16 +688,16 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         )
         return code, msg
 
-    # 3) Não consegui sugerir nada com segurança
+    # 3) Não conseguiu sugerir nada com segurança
     return "", (
         "Não foi possível localizar um cClassTrib padrão para o CFOP informado. "
         "Provável operação especial (devolução, bonificação, remessa, teste, garantia etc.) – revisar manualmente."
     )
 
+# =============================================================================
+# PROCESSADOR SPED - RANKING DE SAÍDAS
+# =============================================================================
 
-# --------------------------------------------------
-# PROCESSADOR SPED – RANKING DE SAÍDAS (C100/C170, CFOP 5/6/7)
-# --------------------------------------------------
 def process_sped_file(file_content: str) -> pd.DataFrame:
     """
     Processa o conteúdo do arquivo SPED PIS/COFINS para extrair dados de vendas.
@@ -628,7 +738,6 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
             registro = fields[1]
 
             if registro == "0200":
-                # |0200|COD_ITEM|DESCR_ITEM|...|COD_NCM(8)|...
                 if len(fields) >= 9:
                     cod_item = fields[2]
                     descr_item = fields[3]
@@ -637,7 +746,7 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
 
             elif registro == "C100":
                 ind_oper = fields[2] if len(fields) > 2 else ""
-                if ind_oper == "1":  # Saída
+                if ind_oper == "1":
                     chv_nfe = fields[9] if len(fields) > 9 else ""
                     ser = fields[6] if len(fields) > 6 else ""
                     num_doc = fields[7] if len(fields) > 7 else ""
@@ -659,7 +768,6 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                 and current_doc_key
                 and documentos.get(current_doc_key, {}).get("IND_OPER") == "1"
             ):
-                # |C170|NUM_ITEM|COD_ITEM(3)|DESCR_COMPL|QTD|UNID|VL_ITEM(7)|...|CFOP(11)|...
                 if len(fields) >= 12:
                     cod_item = fields[3]
                     vl_item_str = fields[7].replace(",", ".")
@@ -727,46 +835,49 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
     df = df.sort_values("VALOR_TOTAL_VENDAS", ascending=False).reset_index(drop=True)
     return df
 
+# =============================================================================
+# INTERFACE PRINCIPAL
+# =============================================================================
 
-# --------------------------------------------------
-# CABEÇALHO / TABS
-# --------------------------------------------------
+# Cabeçalho PRICETAX
 st.markdown(
     """
-    <div class="pricetax-title">PRICETAX • IBS/CBS 2026 & Ranking SPED</div>
-    <div class="pricetax-subtitle">
-        Ferramenta de apoio para parametrização do XML NFe com base no NCM, CFOP e nas regras IBS/CBS 2026, além de ranking de saídas a partir do SPED PIS/COFINS.
+    <div class="pricetax-header">
+        <div class="pricetax-logo">PRICETAX</div>
+        <div class="pricetax-tagline">Soluções para transição inteligente na Reforma Tributária</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+# Tabs principais
 tabs = st.tabs(
     [
-        "🔍 Consulta NCM → IBS/CBS 2026 + cClassTrib",
-        "📊 Ranking de Saídas (SPED PIS/COFINS → IBS/CBS + cClassTrib)",
+        "Consulta NCM",
+        "Ranking de Saídas SPED",
     ]
 )
 
-# --------------------------------------------------
-# ABA 1 – CONSULTA NCM (com cClassTrib via CFOP)
-# --------------------------------------------------
+# =============================================================================
+# ABA 1 - CONSULTA NCM
+# =============================================================================
+
 with tabs[0]:
     st.markdown(
         """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Consulta por NCM</span>
-            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
-                Use este painel como referência para parametrizar o item no ERP e no XML:
-                <br><br>
-                • Informe o <b>NCM</b> do produto e o <b>CFOP de venda</b> atualmente utilizado;<br>
-                • A partir do NCM e CFOP informado será retornado o cClassTrib e a tributação de IBS e CBS;<br>
-                • Exibe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib).
+            <div class="pricetax-card-header">Consulta por NCM e CFOP</div>
+            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+                Utilize este painel como referência para parametrizar o item no ERP e no XML:<br><br>
+                • Informe o <strong>NCM</strong> do produto e o <strong>CFOP de venda</strong> atualmente utilizado<br>
+                • A partir do NCM e CFOP informado será retornado o cClassTrib e a tributação de IBS e CBS<br>
+                • Exibe os principais campos para configuração do XML (pIBS, pCBS, cClassTrib)
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+    
     col1, col2, col3 = st.columns([3, 1.4, 1])
     with col1:
         ncm_input = st.text_input(
@@ -783,7 +894,7 @@ with tabs[0]:
         )
     with col3:
         st.write("")
-        consultar = st.button("Consultar parâmetros", type="primary")
+        consultar = st.button("Consultar", type="primary")
 
     if consultar and ncm_input.strip():
         row = buscar_ncm(df_tipi, ncm_input)
@@ -791,8 +902,8 @@ with tabs[0]:
         if row is None:
             st.markdown(
                 f"""
-                <div class="pricetax-card-erro" style="margin-top:0.8rem;">
-                    NCM informado: <b>{ncm_input}</b><br>
+                <div class="pricetax-card-error">
+                    <strong>NCM informado:</strong> {ncm_input}<br>
                     Não localizamos esse NCM na base PRICETAX. Revise o código ou a planilha de referência.
                 </div>
                 """,
@@ -814,7 +925,7 @@ with tabs[0]:
             total_iva = ibs_uf + ibs_mun + cbs
             cst_ibscbs = row.get("CST_IBSCBS", "")
 
-            # Sugere cClassTrib a partir do CFOP informado
+            # Sugere cClassTrib
             cclastrib_code, cclastrib_msg = guess_cclasstrib(
                 cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
             )
@@ -823,30 +934,28 @@ with tabs[0]:
             # Header do produto
             st.markdown(
                 f"""
-                <div class="pricetax-card" style="margin-top:1rem;">
-                    <div style="font-size:1.05rem;font-weight:600;color:{PRIMARY_YELLOW};">
-                        NCM {ncm_fmt} – {desc}
+                <div class="pricetax-card" style="margin-top:1.5rem;">
+                    <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
+                        NCM {ncm_fmt}
                     </div>
-                    <div style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
-                        <span class="pill pill-regime">{regime_label(regime)}</span>
-                        <span class="pill pill-tag">Cesta Básica: {badge_flag(flag_cesta)}</span>
-                        <span class="pill pill-tag">Hortifrúti/Ovos: {badge_flag(flag_hf)}</span>
-                        <span class="pill pill-tag">Redução 60%: {badge_flag(flag_red)}</span>
+                    <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                        {desc}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                        <span class="tag tag-regime">{regime_label(regime)}</span>
+                        <span class="tag tag-info">Cesta Básica: {flag_cesta or "NÃO"}</span>
+                        <span class="tag tag-info">Hortifrúti/Ovos: {flag_hf or "NÃO"}</span>
+                        <span class="tag tag-info">Redução 60%: {flag_red or "NÃO"}</span>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # -----------------------------
-            # Bloco A – Alíquota padrão do produto (operações onerosas)
-            # -----------------------------
-            # CÁLCULO DA REDUÇÃO E ALÍQUOTAS EFETIVAS
-            # Alíquotas integrais fixas para o ano teste 2026
-            ibs_integral = 0.10  # IBS integral fixo em 0,10%
-            cbs_integral = 0.90  # CBS integral fixo em 0,90%
+            # Cálculo das alíquotas
+            ibs_integral = 0.10
+            cbs_integral = 0.90
             
-            # Determina o percentual de redução com base no regime
             percentual_reducao = 0.0
             regime_upper = (regime or "").upper()
             
@@ -855,83 +964,74 @@ with tabs[0]:
             elif "ALIQ_ZERO" in regime_upper:
                 percentual_reducao = 100.0
             
-            # Calcula as alíquotas efetivas aplicando a redução
-            ibs_efetivo = ibs_uf + ibs_mun  # Valor já vem calculado da planilha
-            cbs_efetivo = cbs  # Valor já vem calculado da planilha
+            ibs_efetivo = ibs_uf + ibs_mun
+            cbs_efetivo = cbs
             total_iva = ibs_efetivo + cbs_efetivo
             
-            st.markdown(
-                "#### Alíquota padrão do produto – operações de venda onerosas",
-                help="Válida, em regra, para CFOPs de venda como 5102/6102/7102."
-            )
+            st.markdown("### Alíquotas do Produto")
             
-            # Exibição das alíquotas integrais
+            # Alíquotas integrais
             st.markdown(
                 f"""
-                <div class="pricetax-card" style="margin-top:0.4rem;display:flex;gap:2rem;flex-wrap:wrap;">
-                    <div>
-                        <div class="pricetax-metric-label">IBS Integral (fixo)</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_integral)}</div>
+                <div class="metric-container">
+                    <div class="metric-box">
+                        <div class="metric-label">IBS Integral (fixo)</div>
+                        <div class="metric-value">{pct_str(ibs_integral)}</div>
                     </div>
-                    <div>
-                        <div class="pricetax-metric-label">CBS Integral (fixo)</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs_integral)}</div>
+                    <div class="metric-box">
+                        <div class="metric-label">CBS Integral (fixo)</div>
+                        <div class="metric-value">{pct_str(cbs_integral)}</div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
             
-            # Exibição do percentual de redução (se houver)
+            # Percentual de redução
             if percentual_reducao > 0:
                 st.markdown(
                     f"""
-                    <div class="pricetax-card" style="margin-top:0.8rem;">
-                        <div class="pricetax-metric-label">Percentual de Redução Aplicado</div>
-                        <div style="font-size:1.8rem;color:{PRIMARY_YELLOW};font-weight:600;">{pct_str(percentual_reducao)}</div>
+                    <div class="pricetax-card" style="margin-top:1.5rem;">
+                        <div class="metric-label">Percentual de Redução Aplicado</div>
+                        <div class="metric-value-secondary">{pct_str(percentual_reducao)}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
             
-            # Exibição das alíquotas efetivas
+            # Alíquotas efetivas
             st.markdown(
                 f"""
-                <div class="pricetax-card" style="margin-top:0.8rem;display:flex;gap:2rem;flex-wrap:wrap;">
-                    <div>
-                        <div class="pricetax-metric-label">IBS Efetivo (após redução)</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(ibs_efetivo)}</div>
+                <div class="metric-container" style="margin-top:1.5rem;">
+                    <div class="metric-box">
+                        <div class="metric-label">IBS Efetivo (após redução)</div>
+                        <div class="metric-value">{pct_str(ibs_efetivo)}</div>
                     </div>
-                    <div>
-                        <div class="pricetax-metric-label">CBS Efetivo (após redução)</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(cbs_efetivo)}</div>
+                    <div class="metric-box">
+                        <div class="metric-label">CBS Efetivo (após redução)</div>
+                        <div class="metric-value">{pct_str(cbs_efetivo)}</div>
                     </div>
-                    <div>
-                        <div class="pricetax-metric-label">Carga Total IVA Efetiva</div>
-                        <div style="font-size:2.2rem;color:{PRIMARY_YELLOW};">{pct_str(total_iva)}</div>
+                    <div class="metric-box">
+                        <div class="metric-label">Carga Total IVA Efetiva</div>
+                        <div class="metric-value">{pct_str(total_iva)}</div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # -----------------------------
-            # Bloco B – Tributação desta operação (CFOP informado)
-            # -----------------------------
+            # Tributação da operação
             cfop_clean = re.sub(r"\D+", "", cfop_input or "")
             if cfop_clean:
                 code_from_cfop = CFOP_CCLASSTRIB_MAP.get(cfop_clean)
 
                 if code_from_cfop == "410999":
-                    # Operações não onerosas
-                    st.markdown(
-                        f"#### Tributação aplicável nesta operação (CFOP {cfop_clean})"
-                    )
                     st.markdown(
                         f"""
-                        <div class="pricetax-card-soft" style="margin-top:0.4rem;">
-                            <div style="font-size:0.9rem;color:#EDEDED;">
-                                🔰 <b>Operação não onerosa</b> – CFOP {cfop_clean} com cClassTrib <b>{cclastrib_code or '410999'}</b><br>
+                        <div class="info-section" style="margin-top:2rem;">
+                            <div class="info-section-title">Operação Não Onerosa - CFOP {cfop_clean}</div>
+                            <div>
+                                cClassTrib: <strong>{cclastrib_code or '410999'}</strong><br>
                                 Nenhum débito de IBS ou CBS é gerado nesta nota, independentemente da alíquota padrão do NCM.
                             </div>
                         </div>
@@ -939,112 +1039,58 @@ with tabs[0]:
                         unsafe_allow_html=True,
                     )
                 elif code_from_cfop == "000001":
-                    # Operações onerosas padrão – reforça que aplica a alíquota do produto
                     st.markdown(
-                        f"#### Tributação aplicável nesta operação (CFOP {cfop_clean})"
-                    )
-                    st.markdown(
-                        """
-                        <div class="pricetax-card-soft" style="margin-top:0.4rem;">
-                            <div style="font-size:0.9rem;color:#E0E0E0;">
-                                💼 <b>Operação de venda onerosa padrão</b> — aplica a mesma alíquota IBS/CBS exibida acima
-                                para este NCM, salvo existência de regime especial ou regra específica do cliente.
+                        f"""
+                        <div class="info-section" style="margin-top:2rem;">
+                            <div class="info-section-title">Operação de Venda Onerosa Padrão - CFOP {cfop_clean}</div>
+                            <div>
+                                Aplica a mesma alíquota IBS/CBS exibida acima para este NCM, 
+                                salvo existência de regime especial ou regra específica do cliente.
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
-            # -----------------------------
             # Parâmetros de classificação
-            # -----------------------------
-            st.subheader("Parâmetros de classificação", divider="gray")
-            c1, c2, c3, c4 = st.columns(4)
-            with c1:
-                st.markdown("**Produto é alimento?**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_alim)}</span>",
-                    unsafe_allow_html=True,
-                )
-            with c2:
-                st.markdown("**Cesta Básica Nacional?**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_cesta)}</span>",
-                    unsafe_allow_html=True,
-                )
-            with c3:
-                st.markdown("**Hortifrúti / Ovos?**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_hf)}</span>",
-                    unsafe_allow_html=True,
-                )
-            with c4:
-                st.markdown("**Depende de destinação?**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_dep)}</span>",
-                    unsafe_allow_html=True,
-                )
-
-            # Bloco XML / cClassTrib
-            st.subheader("Parâmetros para XML 2026 – NFe (venda padrão)", divider="gray")
+            st.markdown("---")
+            st.markdown("### Parâmetros de Classificação Tributária")
+            
             col_xml1, col_xml2, col_xml3 = st.columns(3)
-
+            
             with col_xml1:
-                st.markdown("**CST IBS/CBS (venda)**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{cst_ibscbs or '—'}</span>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown("**CFOP informado (venda)**")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{(cfop_input or '—').strip()}</span>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
+                st.markdown(f"**Alimento:** {flag_alim or 'NÃO'}")
+                st.markdown(f"**Depende de Destinação:** {flag_dep or 'NÃO'}")
 
             with col_xml2:
-                st.markdown("**cClassTrib sugerido (venda)**")
+                st.markdown("**cClassTrib Sugerido (venda)**")
                 if cclastrib_code:
                     desc_class = class_info["DESC_CLASS"] if class_info else ""
-                    st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:700;'>"
-                        f"{cclastrib_code} – {desc_class}"
-                        f"</span>",
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code} – {desc_class}</span>", unsafe_allow_html=True)
                 else:
-                    st.markdown(
-                        f"<span style='color:{PRIMARY_YELLOW};font-weight:700;'>—</span>",
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
 
-                st.markdown("**Tipo de alíquota (cClassTrib)**")
+                st.markdown("**Tipo de Alíquota (cClassTrib)**")
                 tipo_aliq = class_info["TIPO_ALIQUOTA"] if class_info else "—"
                 st.markdown(tipo_aliq)
 
             with col_xml3:
                 st.markdown("**Imposto Seletivo (IS)**")
                 flag_is = row.get("FLAG_IMPOSTO_SELETIVO", "")
-                st.markdown(
-                    f"<span style='color:{PRIMARY_YELLOW};font-weight:600;'>{badge_flag(flag_is)}</span>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:600;'>{flag_is or 'NÃO'}</span>", unsafe_allow_html=True)
+                
                 if class_info:
-                    st.markdown("**Cenário da classificação**")
+                    st.markdown("**Cenário da Classificação**")
                     st.markdown(
-                        "- Tributação Regular: **{}**  \n"
-                        "- Redução de Alíquota: **{}**  \n"
-                        "- Transferência de Crédito: **{}**  \n"
-                        "- Diferimento: **{}**  \n"
-                        "- Monofásica: **{}**".format(
-                            class_info.get("TRIB_REG") or "—",
-                            class_info.get("RED_ALIQ") or "—",
-                            class_info.get("TRANSF_CRED") or "—",
-                            class_info.get("DIFERIMENTO") or "—",
-                            class_info.get("MONOFASICA") or "—",
-                        )
+                        f"- Tributação Regular: **{class_info.get('TRIB_REG') or '—'}**  \n"
+                        f"- Redução de Alíquota: **{class_info.get('RED_ALIQ') or '—'}**  \n"
+                        f"- Transferência de Crédito: **{class_info.get('TRANSF_CRED') or '—'}**  \n"
+                        f"- Diferimento: **{class_info.get('DIFERIMENTO') or '—'}**  \n"
+                        f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
                     )
 
-            st.markdown("**Alíquotas para parametrização no XML (pIBS / pCBS)**")
+            st.markdown("**Alíquotas para Parametrização no XML (pIBS / pCBS)**")
             st.markdown(
                 f"- pIBS (UF): **{pct_str(ibs_uf)}**  \n"
                 f"- pIBS (Município): **{pct_str(ibs_mun)}**  \n"
@@ -1052,15 +1098,10 @@ with tabs[0]:
                 f"- pIVA Total: **{pct_str(total_iva)}**"
             )
 
-            # Mensagem explicando a regra aplicada
             if cfop_input:
-                st.markdown(
-                    f"**Regra sugerida para cClassTrib (CFOP {cfop_input.strip()}):** {cclastrib_msg}"
-                )
+                st.markdown(f"**Regra Sugerida para cClassTrib (CFOP {cfop_input.strip()}):** {cclastrib_msg}")
             else:
-                st.markdown(
-                    "**Regra cClassTrib:** informe o CFOP da operação de venda para sugerirmos o cClassTrib padrão."
-                )
+                st.markdown("**Regra cClassTrib:** Informe o CFOP da operação de venda para sugerirmos o cClassTrib padrão.")
 
             st.markdown("---")
 
@@ -1075,41 +1116,34 @@ with tabs[0]:
 
             if "RED_60" in (regime or "").upper():
                 if not alerta_fmt:
-                    alerta_fmt = (
-                        "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
-                    )
+                    alerta_fmt = "Redução de 60% aplicada; conferir aderência ao segmento e às condições legais."
                 if not reg_extra:
-                    reg_extra = (
-                        "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. "
-                        "Carga reduzida em 60% conforme regras de essencialidade/alimentos."
-                    )
+                    reg_extra = "Ano teste 2026 – IBS 0,1% (UF) e CBS 0,9%. Carga reduzida em 60% conforme regras de essencialidade/alimentos."
 
-            st.markdown(f"**Base legal considerada (TIPI/PRICETAX):** {fonte or '—'}")
+            st.markdown(f"**Base Legal Considerada (TIPI/PRICETAX):** {fonte or '—'}")
             st.markdown(f"**Alerta PRICETAX:** {alerta_fmt or '—'}")
-            st.markdown(f"**Observação sobre alimentos:** {obs_alim or '—'}")
-            st.markdown(f"**Observação sobre destinação:** {obs_dest or '—'}")
-            st.markdown(
-                f"**Regime especial / observações adicionais:** {reg_extra or '—'}"
-            )
+            st.markdown(f"**Observação sobre Alimentos:** {obs_alim or '—'}")
+            st.markdown(f"**Observação sobre Destinação:** {obs_dest or '—'}")
+            st.markdown(f"**Regime Especial / Observações Adicionais:** {reg_extra or '—'}")
 
-# --------------------------------------------------
-# ABA 2 – RANKING DE SAÍDAS (SPED → IBS/CBS + cClassTrib)
-# --------------------------------------------------
+# =============================================================================
+# ABA 2 - RANKING DE SAÍDAS SPED
+# =============================================================================
+
 with tabs[1]:
     st.markdown(
         """
         <div class="pricetax-card">
-            <span class="pricetax-badge">Ranking de vendas – SPED PIS/COFINS</span>
-            <div style="margin-top:0.5rem;font-size:0.9rem;color:#DDDDDD;">
+            <div class="pricetax-card-header">Ranking de Vendas - SPED PIS/COFINS</div>
+            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
                 Utilize este painel para identificar os itens mais relevantes na receita e preparar a base
-                para IBS/CBS 2026:
-                <br><br>
-                • Importa arquivos SPED PIS/COFINS (<b>.txt</b> ou <b>.zip</b>);<br>
-                • Lê o Bloco C (C100/C170) e considera apenas saídas (IND_OPER = 1);<br>
-                • Consolida vendas por NCM, descrição do item e CFOP (5.xxx, 6.xxx, 7.xxx);<br>
-                • Cruza automaticamente com a TIPI IBS/CBS PRICETAX 2026;<br>
-                • Sugere o <b>cClassTrib</b> para cada combinação NCM + CFOP;<br>
-                • Gera um ranking exportável em Excel, pronto para trabalho em ERP e BI.
+                para IBS/CBS 2026:<br><br>
+                • Importa arquivos SPED PIS/COFINS (<strong>.txt</strong> ou <strong>.zip</strong>)<br>
+                • Lê o Bloco C (C100/C170) e considera apenas saídas (IND_OPER = 1)<br>
+                • Consolida vendas por NCM, descrição do item e CFOP (5.xxx, 6.xxx, 7.xxx)<br>
+                • Cruza automaticamente com a TIPI IBS/CBS PRICETAX 2026<br>
+                • Sugere o <strong>cClassTrib</strong> para cada combinação NCM + CFOP<br>
+                • Gera um ranking exportável em Excel, pronto para trabalho em ERP e BI
             </div>
         </div>
         """,
@@ -1125,7 +1159,7 @@ with tabs[1]:
     )
 
     if uploaded_rank:
-        if st.button("Processar SPED e gerar ranking", type="primary"):
+        if st.button("Processar SPED e Gerar Ranking", type="primary"):
             df_list = []
             total_files = len(uploaded_rank)
             progress_bar = st.progress(0)
@@ -1147,15 +1181,11 @@ with tabs[1]:
                                     try:
                                         texto = conteudo.decode("latin-1")
                                     except UnicodeDecodeError:
-                                        texto = conteudo.decode(
-                                            "utf-8", errors="ignore"
-                                        )
+                                        texto = conteudo.decode("utf-8", errors="ignore")
 
                                     df_rank = process_sped_file(texto)
                                     if not df_rank.empty:
-                                        label = label_from_sped_header(
-                                            texto, info.filename
-                                        )
+                                        label = label_from_sped_header(texto, info.filename)
                                         df_rank.insert(0, "ARQUIVO", label)
                                         df_list.append(df_rank)
                     else:
@@ -1180,17 +1210,13 @@ with tabs[1]:
             progress_bar.empty()
 
             if not df_list:
-                st.error(
-                    "Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada nos arquivos enviados."
-                )
+                st.error("Nenhuma nota fiscal de saída com CFOP 5.xxx, 6.xxx ou 7.xxx foi encontrada nos arquivos enviados.")
             else:
                 df_total = pd.concat(df_list, ignore_index=True)
 
-                # CRUZAMENTO COM TIPI IBS/CBS
+                # Cruzamento com TIPI IBS/CBS
                 if df_tipi.empty:
-                    st.warning(
-                        "Base TIPI IBS/CBS 2026 não carregada. O ranking será exibido sem os campos de IBS/CBS/cClassTrib."
-                    )
+                    st.warning("Base TIPI IBS/CBS 2026 não carregada. O ranking será exibido sem os campos de IBS/CBS/cClassTrib.")
                 else:
                     df_total["NCM_DIG"] = (
                         df_total["NCM"]
@@ -1201,238 +1227,69 @@ with tabs[1]:
 
                     cols_tipi_merge = [
                         "NCM_DIG",
+                        "NCM_DESCRICAO",
                         "REGIME_IVA_2026_FINAL",
                         "IBS_UF_TESTE_2026_FINAL",
                         "IBS_MUN_TESTE_2026_FINAL",
                         "CBS_TESTE_2026_FINAL",
                         "CST_IBSCBS",
+                        "FLAG_ALIMENTO",
+                        "FLAG_CESTA_BASICA",
+                        "FLAG_HORTIFRUTI_OVOS",
+                        "FLAG_RED_60",
                     ]
-                    for c in cols_tipi_merge:
-                        if c not in df_tipi.columns:
-                            df_tipi[c] = ""
+                    
+                    df_tipi_mini = df_tipi[cols_tipi_merge].copy()
 
                     df_total = df_total.merge(
-                        df_tipi[cols_tipi_merge],
-                        on="NCM_DIG",
-                        how="left",
+                        df_tipi_mini, on="NCM_DIG", how="left"
                     )
 
-                    df_total["IBS_UF_2026"] = df_total[
-                        "IBS_UF_TESTE_2026_FINAL"
-                    ].apply(to_float_br)
-                    df_total["IBS_MUN_2026"] = df_total[
-                        "IBS_MUN_TESTE_2026_FINAL"
-                    ].apply(to_float_br)
-                    df_total["CBS_2026"] = df_total["CBS_TESTE_2026_FINAL"].apply(
-                        to_float_br
-                    )
-                    df_total["ALIQ_IVA_TOTAL_2026"] = (
-                        df_total["IBS_UF_2026"]
-                        + df_total["IBS_MUN_2026"]
-                        + df_total["CBS_2026"]
-                    )
-
-                    # Sugere cClassTrib por CFOP/CST
-                    def apply_guess(row):
-                        code, msg = guess_cclasstrib(
-                            cst=row.get("CST_IBSCBS", ""),
-                            cfop=row.get("CFOP", ""),
-                            regime_iva=row.get("REGIME_IVA_2026_FINAL", ""),
+                    # Sugere cClassTrib para cada linha
+                    def row_cclasstrib(row):
+                        code, _ = guess_cclasstrib(
+                            cst=row.get("CST_IBSCBS"),
+                            cfop=row.get("CFOP"),
+                            regime_iva=row.get("REGIME_IVA_2026_FINAL", "")
                         )
-                        return pd.Series([code, msg])
+                        return code
 
-                    df_total[["CCLASSTRIB_SUGERIDO", "CCLASSTRIB_MSG"]] = df_total.apply(
-                        apply_guess, axis=1
+                    df_total["CCLASSTRIB_SUGERIDO"] = df_total.apply(row_cclasstrib, axis=1)
+
+                    # Formata valores
+                    df_total["VALOR_TOTAL_VENDAS"] = df_total["VALOR_TOTAL_VENDAS"].apply(
+                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                    # Descrição / tipo da classificação, se existir código
-                    def map_desc(code):
-                        info = get_class_info_by_code(code)
-                        return info["DESC_CLASS"] if info else ""
+                st.success(f"Processamento concluído! Total de {len(df_total)} linhas consolidadas.")
+                
+                st.markdown("### Ranking de Vendas")
+                st.dataframe(df_total, use_container_width=True, height=600)
 
-                    def map_tipo(code):
-                        info = get_class_info_by_code(code)
-                        return info["TIPO_ALIQUOTA"] if info else ""
-
-                    df_total["DESC_CCLASSTRIB"] = df_total["CCLASSTRIB_SUGERIDO"].apply(
-                        map_desc
-                    )
-                    df_total["TIPO_ALIQUOTA_CCLASSTRIB"] = df_total[
-                        "CCLASSTRIB_SUGERIDO"
-                    ].apply(map_tipo)
-
-                df_total = df_total.sort_values(
-                    "VALOR_TOTAL_VENDAS", ascending=False
-                ).reset_index(drop=True)
-
-                # VISUALIZAÇÃO – preparando DF de tela
-                df_vis = df_total.copy()
-                df_vis["VALOR_TOTAL_VENDAS"] = df_vis["VALOR_TOTAL_VENDAS"].apply(
-                    lambda v: f"{v:,.2f}"
-                    .replace(",", "X")
-                    .replace(".", ",")
-                    .replace("X", ".")
-                )
-
-                for col in [
-                    "IBS_UF_2026",
-                    "IBS_MUN_2026",
-                    "CBS_2026",
-                    "ALIQ_IVA_TOTAL_2026",
-                ]:
-                    if col in df_vis.columns:
-                        df_vis[col] = df_vis[col].apply(
-                            lambda v: pct_str(v) if pd.notnull(v) else ""
-                        )
-
-                # Organiza colunas principais para o usuário
-                preferred_cols = [
-                    "ARQUIVO",
-                    "NCM",
-                    "DESCRICAO",
-                    "CFOP",
-                    "VALOR_TOTAL_VENDAS",
-                    "IBS_UF_2026",
-                    "IBS_MUN_2026",
-                    "CBS_2026",
-                    "ALIQ_IVA_TOTAL_2026",
-                    "CST_IBSCBS",
-                    "CCLASSTRIB_SUGERIDO",
-                    "DESC_CCLASSTRIB",
-                    "TIPO_ALIQUOTA_CCLASSTRIB",
-                ]
-                other_cols = [c for c in df_vis.columns if c not in preferred_cols]
-                df_vis = df_vis[preferred_cols + other_cols]
-
-                st.success("Processamento concluído.")
-                st.markdown("---")
-
-                # Exportação Excel formatada
-                def to_excel(df: pd.DataFrame) -> bytes:
-                    buf = io.BytesIO()
-                    with pd.ExcelWriter(buf, engine="openpyxl") as w:
-                        sheet_name = "RANKING_SAIDAS_2026"
-                        df.to_excel(
-                            w, index=False, sheet_name=sheet_name
-                        )
-                        ws = w.sheets[sheet_name]
-
-                        # Formatação básica do cabeçalho
-                        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-
-                        header_font = Font(bold=True, color="FFFFFF")
-                        header_fill = PatternFill("solid", fgColor="1F2933")
-                        thin = Side(border_style="thin", color="444444")
-                        border = Border(top=thin, left=thin, right=thin, bottom=thin)
-
-                        for cell in ws[1]:
-                            cell.font = header_font
-                            cell.fill = header_fill
-                            cell.border = border
-                            cell.alignment = Alignment(vertical="center")
-
-                        # Congela cabeçalho
-                        ws.freeze_panes = "A2"
-
-                        # Ajusta largura das colunas
-                        for col_cells in ws.columns:
-                            max_length = 0
-                            col_letter = col_cells[0].column_letter
-                            for cell in col_cells:
-                                try:
-                                    value = str(cell.value) if cell.value is not None else ""
-                                    if len(value) > max_length:
-                                        max_length = len(value)
-                                except Exception:
-                                    pass
-                            adjusted_width = min(max_length + 2, 50)
-                            ws.column_dimensions[col_letter].width = adjusted_width
-
-                        # Formato monetário para valor total de vendas
-                        for cell in ws[1]:
-                            if cell.value == "VALOR_TOTAL_VENDAS":
-                                col_letter = cell.column_letter
-                                for data_cell in ws[col_letter][1:]:
-                                    data_cell.number_format = "R$ #,##0.00"
-
-                    buf.seek(0)
-                    return buf.read()
+                # Download
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                    df_total.to_excel(writer, index=False, sheet_name="Ranking")
+                buffer.seek(0)
 
                 st.download_button(
-                    "📥 Baixar Ranking de Saídas 2026 (Excel formatado)",
-                    data=to_excel(df_total),
-                    file_name="PRICETAX_Ranking_Saidas_Sped_2026.xlsx",
+                    label="Download Excel",
+                    data=buffer,
+                    file_name="ranking_vendas_ibscbs.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
-                st.markdown(
-                    "### Ranking de saídas – visão IBS/CBS 2026 + cClassTrib"
-                )
-                st.dataframe(df_vis, use_container_width=True)
+# =============================================================================
+# RODAPÉ
+# =============================================================================
 
-                total_vendas = df_total["VALOR_TOTAL_VENDAS"].sum()
-                total_vendas_fmt = (
-                    f"{total_vendas:,.2f}"
-                    .replace(",", "X")
-                    .replace(".", ",")
-                    .replace("X", ".")
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="pricetax-card-soft" style="margin-top:1rem;">
-                        <div style="font-size:1rem;color:{PRIMARY_YELLOW};font-weight:600;">Resumo da análise</div>
-                        <div style="margin-top:0.4rem;font-size:0.9rem;color:#E0E0E0;">
-                            • Total geral de vendas (CFOP 5/6/7): <b>R$ {total_vendas_fmt}</b><br>
-                            • Arquivos SPED analisados: <b>{total_files}</b><br>
-                            • Ranking consolidado por NCM + descrição + CFOP, já com visão IBS/CBS 2026 e cClassTrib sugerido.<br>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                st.markdown(
-                    "### TOP 10 – Distribuição percentual por NCM (vendas de saída)"
-                )
-                df_top10 = (
-                    df_total.groupby("NCM")["VALOR_TOTAL_VENDAS"]
-                    .sum()
-                    .sort_values(ascending=False)
-                    .head(10)
-                )
-
-                if not df_top10.empty:
-                    df_top10 = df_top10.reset_index()
-                    df_top10.rename(
-                        columns={
-                            "NCM": "NCM",
-                            "VALOR_TOTAL_VENDAS": "VALOR_TOTAL_VENDAS",
-                        },
-                        inplace=True,
-                    )
-
-                    chart = (
-                        alt.Chart(df_top10)
-                        .mark_arc(innerRadius=60)
-                        .encode(
-                            theta="VALOR_TOTAL_VENDAS:Q",
-                            color="NCM:N",
-                            tooltip=["NCM:N", "VALOR_TOTAL_VENDAS:Q"],
-                        )
-                        .properties(
-                            width=500,
-                            height=400,
-                            title="TOP 10 – Percentual por NCM (Vendas de Saída)",
-                        )
-                    )
-
-                    st.altair_chart(chart, use_container_width=True)
-                else:
-                    st.info(
-                        "Não há dados suficientes para montar o gráfico TOP 10 por NCM."
-                    )
-    else:
-        st.info(
-            "Selecione um ou mais arquivos SPED PIS/COFINS para gerar o ranking de saídas."
-        )
+st.markdown("---")
+st.markdown(
+    f"""
+    <div style="text-align:center;color:{COLOR_GRAY_MEDIUM};font-size:0.85rem;padding:2rem 0;">
+        <strong style="color:{COLOR_GOLD};">PRICETAX</strong> - Soluções para transição inteligente na Reforma Tributária<br>
+        Simplificando o complexo, potencializando os seus resultados.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
