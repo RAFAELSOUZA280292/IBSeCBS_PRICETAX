@@ -19,8 +19,6 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
     
     # Extrair dados do emitente
     emit = root.find('.//nfe:emit', ns)
-    if emit is None:
-        emit = root.find('.//emit')  # Tentar sem namespace
     
     emitente = {}
     if emit is not None:
@@ -34,6 +32,29 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             'uf': uf_elem.text if uf_elem is not None else ''
         }
     
+    # Extrair dados do destinatário
+    dest = root.find('.//nfe:dest', ns)
+    
+    destinatario = {}
+    if dest is not None:
+        cnpj_dest_elem = dest.find('nfe:CNPJ', ns)
+        cpf_dest_elem = dest.find('nfe:CPF', ns)
+        razao_dest_elem = dest.find('nfe:xNome', ns)
+        uf_dest_elem = dest.find('nfe:enderDest/nfe:UF', ns)
+        
+        destinatario = {
+            'cnpj': cnpj_dest_elem.text if cnpj_dest_elem is not None else (cpf_dest_elem.text if cpf_dest_elem is not None else ''),
+            'razao_social': razao_dest_elem.text if razao_dest_elem is not None else '',
+            'uf': uf_dest_elem.text if uf_dest_elem is not None else ''
+        }
+    
+    # Extrair data de emissão
+    ide = root.find('.//nfe:ide', ns)
+    data_emissao = ''
+    if ide is not None:
+        dhemi_elem = ide.find('nfe:dhEmi', ns)
+        if dhemi_elem is not None:
+            data_emissao = dhemi_elem.text    
     # Extrair itens
     itens = []
     det_list = root.findall('.//nfe:det', ns)
@@ -125,6 +146,8 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
     
     return {
         'emitente': emitente,
+        'destinatario': destinatario,
+        'data_emissao': data_emissao,
         'itens': itens
     }
 

