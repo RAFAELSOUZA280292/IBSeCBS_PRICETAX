@@ -883,7 +883,7 @@ tabs = st.tabs(
     [
         "Consulta NCM",
         "Ranking de Saídas SPED",
-        "Consulta cClassTrib",
+        "cClassTrib",
     ]
 )
 
@@ -1323,9 +1323,9 @@ with tabs[2]:
             <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
                 Utilize este painel para consultar os códigos de Classificação Tributária (cClassTrib) 
                 utilizados na Reforma Tributária:<br><br>
-                • Busque por <strong>código</strong> (ex: 000001, 200001) ou por <strong>descrição</strong><br>
+                • Busque por <strong>código</strong> (ex: 000001, 830001) ou por <strong>descrição</strong><br>
                 • Visualize detalhes completos: tipo de alíquota, percentuais de redução, indicadores<br>
-                • Baseado na planilha oficial de Classificação Tributária
+                • Baseado no portal oficial da SEFAZ
             </div>
         </div>
         """,
@@ -1337,7 +1337,7 @@ with tabs[2]:
     with col_busca1:
         busca_cclasstrib = st.text_input(
             "Buscar por código ou descrição",
-            placeholder="Ex: 000001 ou 'tributação integral'",
+            placeholder="Ex: 830001 ou 'energia elétrica'",
             help="Digite o código cClassTrib ou parte da descrição para buscar.",
         )
     with col_busca2:
@@ -1345,20 +1345,26 @@ with tabs[2]:
         buscar_class = st.button("Buscar", type="primary", key="buscar_class")
     
     if buscar_class and busca_cclasstrib.strip():
-        busca_term = busca_cclasstrib.strip().upper()
+        busca_term = busca_cclasstrib.strip()
         
         if df_class.empty:
             st.error("Base de Classificação Tributária não carregada. Verifique se o arquivo 'classificacao_tributaria.xlsx' está disponível.")
         else:
-            # Buscar por código exato
-            resultados = df_class[
-                df_class["Código da Classificação Tributária"].astype(str).str.strip() == busca_term
-            ]
-            
-            # Se não encontrou, buscar por descrição
-            if resultados.empty:
+            # Tentar buscar por código numérico
+            resultados = pd.DataFrame()
+            try:
+                codigo_num = int(busca_term)
                 resultados = df_class[
-                    df_class["Descrição da Classificação Tributária"].astype(str).str.upper().str.contains(busca_term, na=False)
+                    df_class["Código da Classificação Tributária"] == codigo_num
+                ]
+            except ValueError:
+                pass
+            
+            # Se não encontrou por código, buscar por descrição
+            if resultados.empty:
+                busca_upper = busca_term.upper()
+                resultados = df_class[
+                    df_class["Descrição da Classificação Tributária"].astype(str).str.upper().str.contains(busca_upper, na=False)
                 ]
             
             if resultados.empty:
@@ -1376,18 +1382,21 @@ with tabs[2]:
                 
                 # Exibir cada resultado
                 for idx, row in resultados.iterrows():
-                    codigo = str(row.get("Código da Classificação Tributária", "")).strip()
+                    codigo = str(int(row.get("Código da Classificação Tributária", 0))).zfill(6)
                     descricao = str(row.get("Descrição da Classificação Tributária", "")).strip()
                     tipo_aliq = str(row.get("Tipo de Alíquota", "")).strip()
-                    tipo_aliq_desc = map_tipo_aliquota(tipo_aliq)
+                    
+                    # Reduções percentuais
+                    red_ibs = float(row.get("Redução IBS (%)", 0.0))
+                    red_cbs = float(row.get("Redução CBS (%)", 0.0))
                     
                     # Indicadores
                     trib_reg = str(row.get("Tributação Regular", "")).strip().upper()
-                    red_aliq = str(row.get("Redução de Alíquota", "")).strip()
                     transf_cred = str(row.get("Transferência de Crédito", "")).strip().upper()
                     diferimento = str(row.get("Diferimento", "")).strip().upper()
                     monofasica = str(row.get("Tributação Monofásica Normal", "")).strip().upper()
                     cred_presumido = str(row.get("Crédito Presumido IBS ZFM", "")).strip().upper()
+                    dfes = str(row.get("DFes Relacionados", "")).strip()
                     
                     st.markdown(
                         f"""
@@ -1399,13 +1408,26 @@ with tabs[2]:
                                 {descricao}
                             </div>
                             <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-                                <span class="tag tag-regime">{tipo_aliq_desc}</span>
-                                {f'<span class="tag tag-info">Redução: {red_aliq}</span>' if red_aliq and red_aliq != '0' and red_aliq.upper() != 'NAN' else ''}
+                                <span class="tag tag-regime">{tipo_aliq}</span>
+                                {f'<span class="tag tag-info">DFes: {dfes}</span>' if dfes else ''}
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
+                    
+                    # Exibir IBS e CBS
+                    st.markdown("### Alíquotas")
+                    col_ibs, col_cbs = st.columns(2)
+                    with col_ibs:
+                        st.markdown(f"**IBS:** {pct_str(red_ibs)}")
+                    with col_cbs:
+                        st.markdown(f"**CBS:** {pct_str(red_cbs)}")
+                    
+                    if red_ibs > 0 or red_cbs > 0:
+                        st.markdown(f"**Redução aplicada:** IBS {pct_str(red_ibs)} / CBS {pct_str(red_cbs)}")
+                    else:
+                        st.markdown("**Redução aplicada:** Nenhuma redução")
                     
                     # Detalhes em colunas
                     col1, col2, col3 = st.columns(3)
