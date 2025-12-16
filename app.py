@@ -1442,12 +1442,28 @@ with tabs[2]:
                 # Criar DataFrame e exibir tabela
                 df_tabela = pd.DataFrame(tabela_dados)
                 
-                # Exibir tabela com estilo
+                # Aplicar CSS inline para o cabeçalho amarelo
+                st.markdown(
+                    f"""
+                    <style>
+                    /* Estilo APENAS para o cabeçalho da tabela */
+                    div[data-testid="stDataFrame"] thead tr th {{
+                        background-color: {COLOR_GOLD} !important;
+                        color: {COLOR_BLACK} !important;
+                        font-weight: 700 !important;
+                        padding: 0.75rem !important;
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Exibir tabela
                 st.dataframe(
                     df_tabela,
                     use_container_width=True,
                     hide_index=True,
-                    height=min(len(df_tabela) * 35 + 38, 600),  # Altura dinâmica
+                    height=min(len(df_tabela) * 35 + 38, 600),
                 )
 
 # RODAPÉ
