@@ -1411,6 +1411,21 @@ with tabs[2]:
                 padding: 0.75rem !important;
             }}
             
+            /* Corrigir fundo branco do container do header */
+            div[data-testid="stDataFrame"] thead {{
+                background-color: {COLOR_GOLD} !important;
+            }}
+            
+            div[data-testid="stDataFrame"] thead tr {{
+                background-color: {COLOR_GOLD} !important;
+            }}
+            
+            /* Garantir que elementos internos do header também sejam dourados */
+            div[data-testid="stDataFrame"] thead * {{
+                background-color: {COLOR_GOLD} !important;
+                color: #000000 !important;
+            }}
+            
             div[data-testid="stDataFrame"] tbody tr td {{
                 background-color: #1a1a1a !important;
                 color: {COLOR_WHITE} !important;
@@ -1456,11 +1471,22 @@ with tabs[2]:
                     tipo_aliq = str(row.get('Tipo de Alíquota', '')).strip()
                     dfes = str(row.get('DFes Relacionados', '')).strip()
                     
+                    # Calcular alíquotas efetivas
+                    # Alíquota base: IBS = 0,1% | CBS = 0,9%
+                    aliq_ibs_base = 0.1
+                    aliq_cbs_base = 0.9
+                    
+                    # Alíquota efetiva = base × (1 - redução/100)
+                    aliq_ibs_efetiva = aliq_ibs_base * (1 - red_ibs / 100)
+                    aliq_cbs_efetiva = aliq_cbs_base * (1 - red_cbs / 100)
+                    
                     tabela_dados.append({
                         'Código': codigo,
                         'Descrição Reduzida': descricao,
-                        'IBS (%)': f"{red_ibs:.2f}".replace('.', ','),
-                        'CBS (%)': f"{red_cbs:.2f}".replace('.', ','),
+                        '% Redução IBS': f"{red_ibs:.2f}".replace('.', ','),
+                        '% Redução CBS': f"{red_cbs:.2f}".replace('.', ','),
+                        'Alíquota IBS Efetiva': f"{aliq_ibs_efetiva:.4f}%".replace('.', ','),
+                        'Alíquota CBS Efetiva': f"{aliq_cbs_efetiva:.4f}%".replace('.', ','),
                         'Tipo de Alíquota': tipo_aliq if tipo_aliq else '—',
                         'DFes Relacionados': dfes if dfes else '—',
                     })
