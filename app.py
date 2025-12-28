@@ -1357,6 +1357,7 @@ with tabs[0]:
         if buscar_desc and desc_input.strip():
             # Dicionário de sinônimos (termos populares → termos técnicos TIPI)
             sinonimos = {
+                # Animais vivos
                 'bezerro': ['bovinos', 'bezerro'],
                 'bezerros': ['bovinos', 'bezerro'],
                 'boi': ['bovinos', 'boi'],
@@ -1384,6 +1385,16 @@ with tabs[0]:
                 'cavalo': ['cavalos'],
                 'égua': ['cavalos', 'égua'],
                 'éguas': ['cavalos', 'égua'],
+                # Produtos alimentícios
+                'linguiça': ['enchidos', 'preparações', 'linguiça'],
+                'linguica': ['enchidos', 'preparações', 'linguica'],
+                'salsicha': ['enchidos', 'preparações', 'salsicha'],
+                'salsichas': ['enchidos', 'preparações', 'salsicha'],
+                'mortadela': ['enchidos', 'preparações', 'mortadela'],
+                'presunto': ['preparações', 'presunto'],
+                'bacon': ['preparações', 'bacon', 'toucinho'],
+                'hamburguer': ['preparações', 'hamburguer'],
+                'hambúrguer': ['preparações', 'hamburguer'],
             }
             
             # Busca semântica na descrição com expansão de sinônimos
