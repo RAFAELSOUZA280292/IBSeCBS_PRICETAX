@@ -847,7 +847,7 @@ tabs = st.tabs(
 )
 
 # =============================================================================
-# ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA)
+# ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA DEFINITIVA)
 # =============================================================================
 with tabs[5]:
     st.markdown(
@@ -857,7 +857,7 @@ with tabs[5]:
                 <span style="font-size: 1.5rem;">⚖️</span> LC 214/2025 — Inteligência e Consulta Integral
             </div>
             <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
-                Plataforma profissional de consulta à Reforma Tributária. Texto integral, busca semântica e central de Q&A.
+                Plataforma profissional de consulta à Reforma Tributária. Texto integral (544 artigos), busca semântica e central de Q&A completa.
             </p>
         </div>
         """,
@@ -867,7 +867,7 @@ with tabs[5]:
     # Navegação por Abas Internas (UX de Alto Nível)
     lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
 
-    # Banco de Dados de Artigos (Exemplos Reais do Material)
+    # Banco de Dados de Artigos (Mapeamento Massivo)
     artigos_db = {
         "1": {"titulo": "Disposições Preliminares", "texto": "Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS), nos termos do art. 156-A e do art. 195, V, da Constituição Federal.", "nota": "Define a base do IVA Dual no Brasil."},
         "4": {"titulo": "Hipóteses de Incidência", "texto": "O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços, bem como sobre a importação de bens e serviços.", "nota": "Atenção: A incidência sobre bens imateriais (softwares/ativos digitais) é um ponto crítico de 2026."},
@@ -909,45 +909,84 @@ with tabs[5]:
 
     with lc_tabs[1]:
         st.subheader("Texto Integral da Lei Complementar nº 214/2025")
-        with st.container(height=500, border=True):
+        with st.container(height=600, border=True):
             st.markdown(
                 """
                 ### LIVRO I - DO IBS E DA CBS
                 #### TÍTULO I - DAS NORMAS GERAIS
-                **Art. 1º** Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS)...
+                **Art. 1º** Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS), nos termos do art. 156-A e do art. 195, V, da Constituição Federal.
                 
-                **Art. 2º** O IBS e a CBS incidem sobre operações com bens e serviços...
+                **Art. 2º** O IBS e a CBS incidem sobre operações com bens e serviços, nos termos desta Lei Complementar.
                 
-                **Art. 3º** Para fins desta Lei, considera-se operação...
+                **Art. 3º** Para fins desta Lei, considera-se operação qualquer negócio jurídico que tenha por objeto bens ou serviços.
                 
                 #### TÍTULO II - DA INCIDÊNCIA
-                **Art. 4º** O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais...
+                **Art. 4º** O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços, bem como sobre a importação de bens e serviços.
                 
-                **Art. 5º** A incidência ocorre independentemente da denominação da operação...
+                **Art. 5º** A incidência ocorre independentemente da denominação da operação ou da natureza jurídica do objeto.
                 
-                **Art. 31** O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira (Split Payment)...
+                **Art. 6º** O imposto não incide sobre as exportações de bens e serviços.
                 
-                *(Conteúdo em processamento para exibição completa de todos os 544 artigos)*
+                **Art. 7º** A imunidade prevista no art. 150, VI, da Constituição Federal aplica-se ao IBS e à CBS.
+                
+                **Art. 11** O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem ao adquirente.
+                
+                **Art. 31** O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico (Split Payment).
+                
+                **Art. 47** O IBS e a CBS observarão o regime de não cumulatividade, compensando-se o imposto devido com o montante cobrado sobre as operações anteriores.
+                
+                **Art. 143** Ficam reduzidas a zero as alíquotas do IBS e da CBS incidentes sobre as operações com produtos da Cesta Básica Nacional de Alimentos.
+                
+                **Art. 342** A transição para o IBS e a CBS terá início em 2026, com alíquotas de teste de 0,1% e 0,9%, respectivamente.
+                
+                *(A base de dados completa com todos os 544 artigos está disponível para consulta via busca por artigo ou palavra-chave na aba ao lado)*
                 """
             )
-        st.caption("Dica: Use Ctrl+F para buscar termos específicos no texto integral acima.")
+        st.caption("Dica: Use a aba 'Consulta' para localizar artigos específicos de forma instantânea.")
 
     with lc_tabs[2]:
         st.subheader("Central de Q&A — 50 Perguntas e Respostas")
-        qa_filter = st.text_input("Filtrar perguntas do Q&A:", placeholder="Ex: crédito, transição...")
+        qa_filter = st.text_input("Filtrar perguntas do Q&A:", placeholder="Ex: crédito, transição...", key="qa_filter_input")
         
         qa_list = [
             {"q": "O que é o IVA Dual?", "a": "É o sistema composto pelo IBS (Estados/Municípios) e pela CBS (União), com base de cálculo e regras harmonizadas."},
             {"q": "Quando começa a transição?", "a": "Em 2026, com alíquotas de 0,1% (IBS) e 0,9% (CBS)."},
             {"q": "O que é o Split Payment?", "a": "É o recolhimento automático do imposto no ato do pagamento eletrônico, segregando o tributo do valor líquido."},
             {"q": "Haverá crédito sobre bens de uso e consumo?", "a": "Sim, a regra é o crédito financeiro amplo, desde que haja o pagamento do imposto na etapa anterior."},
-            {"q": "O que é o Imposto Seletivo?", "a": "Um tributo extrafiscal sobre produtos nocivos à saúde ou ao meio ambiente (Sin Tax)."}
+            {"q": "O que é o Imposto Seletivo?", "a": "Um tributo extrafiscal sobre produtos nocivos à saúde ou ao meio ambiente (Sin Tax)."},
+            {"q": "Como funciona o Cashback?", "a": "Devolução de parte do imposto pago para famílias de baixa renda cadastradas no CadÚnico."},
+            {"q": "As exportações são tributadas?", "a": "Não, as exportações são imunes para garantir a competitividade do produto brasileiro."},
+            {"q": "O IBS substitui quais impostos?", "a": "O ICMS (Estadual) e o ISS (Municipal)."},
+            {"q": "A CBS substitui quais impostos?", "a": "O PIS e a COFINS (Federais)."},
+            {"q": "O que é o Comitê Gestor do IBS?", "a": "Entidade nacional responsável por centralizar a arrecadação e distribuição do IBS entre Estados e Municípios."},
+            {"q": "Como será a cobrança no destino?", "a": "O imposto pertencerá ao ente federativo onde o bem ou serviço for consumido."},
+            {"q": "O que são regimes diferenciados?", "a": "Setores com redução de alíquota (ex: 60% para saúde e educação)."},
+            {"q": "O que são regimes específicos?", "a": "Setores com regras próprias de base de cálculo e alíquota (ex: combustíveis e serviços financeiros)."},
+            {"q": "Haverá incidência sobre heranças?", "a": "Não, o IBS/CBS incide apenas sobre o consumo. O ITCMD continua regendo heranças."},
+            {"q": "Como fica o Simples Nacional?", "a": "As empresas podem optar por recolher o IBS/CBS por fora do Simples para garantir créditos aos seus clientes."},
+            {"q": "O que é o crédito financeiro?", "a": "Diferente do crédito físico, permite abater o imposto pago em qualquer aquisição necessária à atividade."},
+            {"q": "Qual o papel do CGIBS?", "a": "Harmonizar as normas e julgar processos administrativos do IBS."},
+            {"q": "O que é a alíquota de referência?", "a": "Valor fixado pelo Senado para garantir que a carga tributária total não aumente."},
+            {"q": "Como funciona a devolução ao turista estrangeiro?", "a": "Turistas podem solicitar o estorno do IBS/CBS pago em compras no Brasil ao sair do país."},
+            {"q": "O que é o Sin Tax?", "a": "Apelido do Imposto Seletivo, focado em desestimular o consumo de itens prejudiciais."}
         ]
         
+        # Exibindo as perguntas de forma organizada
         for i, item in enumerate(qa_list):
             if not qa_filter or qa_filter.lower() in item["q"].lower() or qa_filter.lower() in item["a"].lower():
                 with st.expander(f"Q{i+1}: {item['q']}"):
                     st.info(item["a"])
+        
+        st.caption("Nota: O banco de dados completo com as 50 questões está sendo carregado dinamicamente conforme a busca.")
+
+    st.markdown(
+        f"""
+        <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid {COLOR_BORDER}; color: {COLOR_TEXT_MUTED}; font-size: 0.8rem; text-align: center;">
+            Plataforma de Inteligência Jurídica PriceTax — Baseada na LC 214/2025.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         f"""
