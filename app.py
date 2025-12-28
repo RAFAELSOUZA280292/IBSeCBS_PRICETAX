@@ -847,112 +847,117 @@ tabs = st.tabs(
 )
 
 # =============================================================================
-# ABA: LC 214/2025 (DASHBOARD DE ESTUDO COMPLETO)
+# ABA: LC 214/2025 (CONSULTA TÉCNICA AVANÇADA)
 # =============================================================================
 with tabs[5]:
     st.markdown(
         f"""
         <div class="pricetax-card">
             <div class="pricetax-card-header">
-                <span style="font-size: 1.5rem;">📚</span> Dashboard de Estudos — IBS, CBS e Imposto Seletivo (LC 214/2025)
+                <span style="font-size: 1.5rem;">⚖️</span> Lei Complementar nº 214/2025 — Consulta Técnica
             </div>
             <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
-                Guia completo de aplicação prática da <strong>LC 214/2025</strong>. Explore capítulos, tabelas técnicas, glossário e banco de questões.
+                Sistema de consulta estruturada da legislação do IBS, CBS e Imposto Seletivo. 
+                Navegue pelo índice sistemático ou utilize a busca por artigo.
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Menu de Navegação Interno
-    sub_tabs = st.tabs(["📖 Capítulos", "📊 Tabelas Técnicas", "❓ Q&A (50 Questões)", "📝 Glossário"])
+    # Busca por Artigo (Funcionalidade inspirada no modelo de referência)
+    c1, c2 = st.columns([1, 3])
+    with c1:
+        art_num = st.number_input("Ir para o Artigo:", min_value=1, max_value=544, value=1)
+    with c2:
+        st.text_input("Busca por palavra-chave na Lei:", placeholder="Ex: split payment, cashback, alíquota zero...")
 
-    with sub_tabs[0]:
-        search_cap = st.text_input("🔍 Buscar nos capítulos...", placeholder="Ex: split, crédito, local...")
-        
-        capitulos = [
-            {"id": "1", "tag": "visão geral", "title": "1. Fundamentos do IVA Dual", "content": "IBS e CBS formam o modelo IVA dual, com lógica de crédito/débito e neutralidade.", "points": [{"type": "ok", "label": "Ponto central", "text": "Neutralidade: evitar distorções econômicas."}, {"type": "warn", "label": "Atenção", "text": "Fatos geradores idênticos, gestões distintas."}]},
-            {"id": "2", "tag": "conceitos", "title": "2. Conceitos Essenciais", "content": "Incidência sobre operações onerosas com bens, serviços e direitos.", "points": [{"type": "ok", "label": "Bens Imateriais", "text": "Softwares e ativos digitais inclusos."}, {"type": "warn", "label": "Operação", "text": "Remessas podem gerar tributo."}]},
-            {"id": "5", "tag": "local", "title": "5. Local da Operação (Destino)", "content": "Regra de ouro: tributação onde ocorre o consumo.", "points": [{"type": "ok", "label": "Bens Móveis", "text": "Local da entrega."}, {"type": "ok", "label": "Serviços", "text": "Local do adquirente ou consumo."}]},
-            {"id": "9", "tag": "como paga", "title": "9. Split Payment", "content": "Recolhimento na liquidação financeira eletrônica.", "points": [{"type": "ok", "label": "Efeito", "text": "Garante recolhimento, impacta caixa."}, {"type": "warn", "label": "Gestão", "text": "Exige conciliação ERP x Banco."}]},
-            {"id": "10", "tag": "coração do iva", "title": "10. Não Cumulatividade", "content": "Apropriação de créditos nas aquisições para compensar débitos.", "points": [{"type": "ok", "label": "Crédito Amplo", "text": "Condicionado ao destaque e pagamento."}, {"type": "warn", "label": "Vedações", "text": "Uso pessoal não gera crédito."}]},
-            {"id": "16", "tag": "ano teste", "title": "16. Transição (2026–2035)", "content": "Início em 2026 com alíquotas de teste.", "points": [{"type": "ok", "label": "2026", "text": "IBS 0,1% e CBS 0,9%."}, {"type": "warn", "label": "Risco", "text": "Treinar o erro em 2026 é perigoso."}]}
-        ]
-        
-        for cap in capitulos:
-            if not search_cap or search_cap.lower() in cap["title"].lower() or search_cap.lower() in cap["content"].lower():
-                with st.expander(f"{cap['title']} ({cap['tag']})"):
-                    st.write(cap["content"])
-                    c1, c2 = st.columns(2)
-                    for i, p in enumerate(cap["points"]):
-                        col = c1 if i % 2 == 0 else c2
-                        border = COLOR_SUCCESS if p["type"] == "ok" else COLOR_GOLD
-                        col.markdown(f'<div style="border-left:3px solid {border}; padding:8px; background:rgba(0,0,0,0.02); margin-bottom:5px;"><strong>{p["label"]}</strong><br>{p["text"]}</div>', unsafe_allow_html=True)
+    # Índice Sistemático (Estrutura de Alta Performance)
+    st.markdown("### Índice Sistemático")
+    
+    indice_data = [
+        {"Livro": "LIVRO I - DO IBS E DA CBS", "Titulos": [
+            {"Titulo": "TÍTULO I - DAS NORMAS GERAIS", "Capitulos": [
+                {"Cap": "CAPÍTULO I - DISPOSIÇÕES PRELIMINARES", "Arts": "1 a 3"},
+                {"Cap": "CAPÍTULO II - OPERAÇÕES COM BENS E SERVIÇOS", "Secoes": [
+                    {"Sec": "Seção I - Hipóteses de Incidência", "Arts": "4 a 7"},
+                    {"Sec": "Seção II - Imunidades", "Arts": "8 a 9"},
+                    {"Sec": "Seção III - Fato Gerador", "Arts": "10"},
+                    {"Sec": "Seção IV - Local da Operação", "Arts": "11"},
+                    {"Sec": "Seção V - Base de Cálculo", "Arts": "12 a 13"},
+                    {"Sec": "Seção VI - Alíquotas", "Arts": "14 a 20"}
+                ]},
+                {"Cap": "CAPÍTULO III - OPERACIONALIZAÇÃO", "Arts": "58 a 62"}
+            ]},
+            {"Titulo": "TÍTULO IV - REGIMES DIFERENCIADOS", "Capitulos": [
+                {"Cap": "CAPÍTULO II - REDUÇÃO DE 30% (PROFISSÕES REGULAMENTADAS)", "Arts": "127"},
+                {"Cap": "CAPÍTULO III - REDUÇÃO DE 60%", "Arts": "128 a 142"},
+                {"Cap": "CAPÍTULO IV - ALÍQUOTA ZERO", "Arts": "143 a 156"}
+            ]}
+        ]},
+        {"Livro": "LIVRO II - DO IMPOSTO SELETIVO", "Titulos": [
+            {"Titulo": "TÍTULO I - DISPOSIÇÕES PRELIMINARES", "Arts": "409 a 411"},
+            {"Titulo": "TÍTULO II - NORMAS GERAIS DO IS", "Arts": "412 a 433"}
+        ]}
+    ]
 
-    with sub_tabs[1]:
-        st.subheader("Tabelas de Referência Técnica")
-        
-        st.markdown("**A. Tipos de Bens × Local da Operação**")
-        data_bens = {
-            "Tipo de Bem": ["Imóveis", "Móveis (Corpóreos)", "Imateriais/Direitos", "Energia Elétrica"],
-            "Critério de Local": ["Local do imóvel", "Local da entrega/disponibilização", "Local do domicílio do adquirente", "Local do consumo/entrega"]
-        }
-        st.table(data_bens)
-        
-        st.markdown("**B. Critérios para Serviços**")
-        data_serv = {
-            "Natureza do Serviço": ["Regra Geral", "Transporte de Cargas", "Telecomunicações", "Serviços Digitais"],
-            "Local do Destino": ["Domicílio do adquirente", "Local do destino da carga", "Local do terminal/domicílio", "Local do domicílio do adquirente"]
-        }
-        st.table(data_serv)
+    for livro in indice_data:
+        with st.expander(f"📘 {livro['Livro']}", expanded=True):
+            for titulo in livro['Titulos']:
+                st.markdown(f"#### {titulo['Titulo']}")
+                if "Arts" in titulo:
+                    st.markdown(f"**Artigos:** {titulo['Arts']}")
+                
+                if "Capitulos" in titulo:
+                    for cap in titulo['Capitulos']:
+                        c_col1, c_col2 = st.columns([3, 1])
+                        c_col1.markdown(f"**{cap['Cap']}**")
+                        if "Arts" in cap:
+                            c_col2.markdown(f"`Arts. {cap['Arts']}`")
+                        
+                        if "Secoes" in cap:
+                            for sec in cap['Secoes']:
+                                s_col1, s_col2 = st.columns([3, 1])
+                                s_col1.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;{sec['Sec']}")
+                                s_col2.markdown(f"`Arts. {sec['Arts']}`")
+                st.markdown("---")
 
-    with sub_tabs[2]:
-        st.subheader("Banco de Questões (Q&A)")
-        qa_search = st.text_input("🔍 Filtrar perguntas...", placeholder="Ex: crédito, alíquota...")
-        
-        qa_data = [
-            {"q": "O que é o IVA Dual?", "a": "É a composição do IBS (Estados/Municípios) e da CBS (União) com regras harmonizadas."},
-            {"q": "Qual a alíquota de 2026?", "a": "IBS 0,1% e CBS 0,9% (total 1%)."},
-            {"q": "O que é Split Payment?", "a": "Recolhimento automático do imposto no momento da liquidação financeira do pagamento."},
-            {"q": "Bens imateriais são tributados?", "a": "Sim, a LC 214/2025 inclui expressamente direitos e ativos digitais."},
-            {"q": "Como funciona o crédito financeiro?", "a": "O crédito é permitido sobre qualquer aquisição, desde que o imposto tenha sido pago na etapa anterior."},
-            {"q": "O que é o Imposto Seletivo?", "a": "Imposto extrafiscal sobre produtos prejudiciais à saúde ou meio ambiente."},
-            {"q": "O que é o Cashback?", "a": "Devolução de parte do imposto pago para famílias de baixa renda."},
-            {"q": "Exportações são tributadas?", "a": "Não, há imunidade total nas exportações para garantir competitividade."},
-            {"q": "Importações pagam IBS/CBS?", "a": "Sim, para garantir isonomia com o produto nacional."},
-            {"q": "O que acontece com o PIS/COFINS?", "a": "Serão extintos e substituídos pela CBS em 2027."}
-        ]
-        
-        for i, item in enumerate(qa_data):
-            if not qa_search or qa_search.lower() in item["q"].lower() or qa_search.lower() in item["a"].lower():
-                with st.expander(f"Pergunta {i+1}: {item['q']}"):
-                    st.info(item["a"])
-        
-        st.caption("Nota: O banco completo contém 50 questões. Use a busca para navegar.")
-
-    with sub_tabs[3]:
-        st.subheader("Glossário de Termos Técnicos")
-        glossario = [
-            {"Termo": "IBS", "Definição": "Imposto sobre Bens e Serviços (Substitui ICMS e ISS)."},
-            {"Termo": "CBS", "Definição": "Contribuição sobre Bens e Serviços (Substitui PIS e COFINS)."},
-            {"Termo": "Split Payment", "Definição": "Separação do imposto no ato do pagamento eletrônico."},
-            {"Termo": "Cashback", "Definição": "Devolução de tributo ao consumidor de baixa renda."},
-            {"Termo": "IVA Dual", "Definição": "Sistema composto por dois tributos com base comum."},
-            {"Termo": "Neutralidade", "Definição": "Princípio de que o imposto não deve influenciar decisões econômicas."},
-            {"Termo": "Não Cumulatividade", "Definição": "Sistema de débitos e créditos ao longo da cadeia."},
-            {"Termo": "Imposto Seletivo", "Definição": "Tributo sobre itens nocivos (Sin Tax)."},
-            {"Termo": "CGIBS", "Definição": "Comitê Gestor do IBS."},
-            {"Termo": "Ano Teste", "Definição": "Período de 2026 com alíquotas simbólicas para ajuste de sistemas."}
-        ]
-        st.table(glossario)
+    # Área de Conteúdo do Artigo (Simulação de Consulta)
+    st.markdown(f"### Detalhamento: Artigo {art_num}")
+    st.info(f"Exibindo as notas técnicas e correlações para o Artigo {art_num} da LC 214/2025...")
+    
+    # Cards de Notas Técnicas (Estilo White Label)
+    nc1, nc2 = st.columns(2)
+    with nc1:
+        st.markdown(
+            f"""
+            <div style="border-left: 4px solid {COLOR_BLUE_PORTAL}; background: rgba(0,86,179,0.05); padding: 15px; border-radius: 8px;">
+                <strong style="color: {COLOR_BLUE_PORTAL};">Nota Técnica PriceTax</strong><br>
+                <p style="font-size: 0.9rem; margin-top: 5px;">
+                    Análise operacional do Artigo {art_num} focada em impactos no ERP e compliance fiscal.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with nc2:
+        st.markdown(
+            f"""
+            <div style="border-left: 4px solid {COLOR_GOLD}; background: rgba(255,221,0,0.05); padding: 15px; border-radius: 8px;">
+                <strong style="color: {COLOR_SECONDARY};">Correlações Legais</strong><br>
+                <p style="font-size: 0.9rem; margin-top: 5px;">
+                    Dispositivos da CF/88 e regulamentos do Comitê Gestor vinculados a este artigo.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     st.markdown(
         f"""
-        <div style="margin-top: 2rem; padding: 1.5rem; border: 1px solid {COLOR_BORDER}; border-radius: 8px; background: rgba(0,86,179,0.05);">
-            <h4 style="color: {COLOR_BLUE_PORTAL}; margin-top: 0;">🎓 Desafio Dissertativo</h4>
-            <p style="color: {COLOR_TEXT_MAIN}; font-size: 0.95rem;">
-                <strong>Questão:</strong> Explique como o <em>Split Payment</em> altera a dinâmica de fluxo de caixa das empresas e quais os principais desafios de compliance para o setor de TI/ERP em 2026.
-            </p>
+        <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid {COLOR_BORDER}; color: {COLOR_TEXT_MUTED}; font-size: 0.8rem; text-align: center;">
+            Conteúdo técnico estruturado para suporte à transição tributária. 
+            Proibida a reprodução sem autorização.
         </div>
         """,
         unsafe_allow_html=True
