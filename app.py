@@ -5,19 +5,8 @@ PRICETAX - Sistema de Consulta e Análise IBS/CBS 2026
 Aplicação web desenvolvida em Streamlit para auxiliar empresas na transição
 para o novo sistema tributário brasileiro (IBS e CBS).
 
-Funcionalidades principais:
-1. Consulta de NCM com simulação de alíquotas IBS/CBS
-2. Ranking de vendas via análise de arquivos SPED PIS/COFINS
-3. Sugestão automática de cClassTrib baseada em NCM e CFOP
-
-Lógica de Cálculo de Alíquotas:
-- Alíquotas integrais fixas (ano teste 2026): IBS 0,10% | CBS 0,90%
-- Percentual de redução extraído do regime (ex: RED_60 = 60% de redução)
-- Alíquotas efetivas calculadas aplicando a redução sobre as integrais
-- Valores finais são obtidos da planilha de regras (já com reduções aplicadas)
-
 Autor: PRICETAX
-Versão: 3.0
+Versão: 4.0 (Modern Enterprise UI)
 Data: Dezembro 2024
 """
 
@@ -34,283 +23,196 @@ import streamlit as st
 import altair as alt
 
 # =============================================================================
-# CONFIGURAÇÃO GERAL E IDENTIDADE VISUAL PRICETAX
+# CONFIGURAÇÃO GERAL E IDENTIDADE VISUAL PRICETAX (MODERNA)
 # =============================================================================
 
 st.set_page_config(
-    page_title="PRICETAX - IBS/CBS 2026 & Ranking SPED",
+    page_title="PRICETAX - IBS/CBS 2026",
     page_icon="https://pricetax.com.br/favicon.ico",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Paleta de cores PRICETAX
-COLOR_GOLD = "#FFD700"
-COLOR_BLACK = "#000000"
-COLOR_DARK_BG = "#0a0a0a"
-COLOR_CARD_BG = "#1a1a1a"
-COLOR_GREEN_NEON = "#00FF00"
-COLOR_WHITE = "#FFFFFF"
-COLOR_GRAY_LIGHT = "#CCCCCC"
-COLOR_GRAY_MEDIUM = "#666666"
-COLOR_BORDER = "#333333"
-COLOR_ERROR = "#FF4444"
+# Paleta de Cores Sênior (Foco em Contraste e Usabilidade)
+COLOR_PRIMARY = "#FFDD00"    # Amarelo PRICETAX (Ação)
+COLOR_SECONDARY = "#0D141A"  # Azul Marinho Profundo (Texto/Cabeçalhos)
+COLOR_BG_MAIN = "#F8FAFC"    # Fundo Cinza Ultra Claro (Conforto)
+COLOR_BG_CARD = "#FFFFFF"    # Fundo Branco (Destaque)
+COLOR_TEXT_MAIN = "#1E293B"  # Texto Principal (Cinza Escuro)
+COLOR_TEXT_MUTED = "#64748B" # Texto Secundário (Labels)
+COLOR_BORDER = "#E2E8F0"     # Bordas Suaves
+COLOR_SUCCESS = "#10B981"    # Verde Sucesso
+COLOR_ERROR = "#EF4444"      # Vermelho Erro
 
-# Aplicação do tema PRICETAX
 st.markdown(
     f"""
     <style>
-    /* Reset e configurações globais */
+    /* Reset e Base */
     .stApp {{
-        background-color: {COLOR_BLACK};
-        color: {COLOR_WHITE};
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: {COLOR_BG_MAIN};
+        color: {COLOR_TEXT_MAIN};
+        font-family: 'Inter', -apple-system, sans-serif;
     }}
-    
+
     .block-container {{
-        padding-top: 3rem;
-        padding-bottom: 3rem;
-        max-width: 1400px;
+        padding-top: 2rem;
+        max-width: 1200px;
     }}
-    
-    /* Cabeçalho PRICETAX */
+
+    /* Cabeçalho Limpo */
     .pricetax-header {{
-        text-align: center;
-        margin-bottom: 3rem;
-        padding: 2rem 0;
-        border-bottom: 1px solid {COLOR_BORDER};
-    }}
-    
-    .pricetax-logo {{
-        font-size: 2.8rem;
-        font-weight: 700;
-        color: {COLOR_GOLD};
-        letter-spacing: 0.1em;
-        margin-bottom: 0.5rem;
-    }}
-    
-    .pricetax-tagline {{
-        font-size: 1.1rem;
-        color: {COLOR_GRAY_LIGHT};
-        font-weight: 300;
-        letter-spacing: 0.02em;
-    }}
-    
-    /* Cards profissionais */
-    .pricetax-card {{
-        background: {COLOR_CARD_BG};
-        border: 1px solid {COLOR_BORDER};
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }}
-    
-    .pricetax-card-header {{
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: {COLOR_GOLD};
-        font-weight: 600;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid {COLOR_BORDER};
-    }}
-    
-    .pricetax-card-error {{
-        background: rgba(255, 68, 68, 0.1);
-        border: 1px solid {COLOR_ERROR};
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }}
-    
-    /* Métricas e valores */
-    .metric-container {{
         display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
-        margin: 1.5rem 0;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid {COLOR_PRIMARY};
     }}
-    
-    .metric-box {{
-        flex: 1;
-        min-width: 200px;
+
+    .pricetax-logo {{
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: {COLOR_SECONDARY};
+        letter-spacing: -0.03em;
     }}
-    
-    .metric-label {{
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: {COLOR_GRAY_MEDIUM};
-        margin-bottom: 0.5rem;
-    }}
-    
-    .metric-value {{
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: {COLOR_GOLD};
-        line-height: 1;
-    }}
-    
-    .metric-value-secondary {{
-        font-size: 2rem;
-        font-weight: 600;
-        color: {COLOR_WHITE};
-    }}
-    
-    /* Tags e badges */
-    .tag {{
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin: 0.2rem;
-    }}
-    
-    .tag-regime {{
-        background: rgba(255, 215, 0, 0.15);
-        border: 1px solid {COLOR_GOLD};
-        color: {COLOR_GOLD};
-    }}
-    
-    .tag-info {{
-        background: rgba(255, 255, 255, 0.05);
+
+    /* Cards de Conteúdo */
+    .pricetax-card {{
+        background: {COLOR_BG_CARD};
         border: 1px solid {COLOR_BORDER};
-        color: {COLOR_GRAY_LIGHT};
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }}
-    
-    .tag-success {{
-        background: rgba(0, 255, 0, 0.1);
-        border: 1px solid {COLOR_GREEN_NEON};
-        color: {COLOR_GREEN_NEON};
-    }}
-    
-    .tag-error {{
-        background: rgba(255, 68, 68, 0.1);
-        border: 1px solid {COLOR_ERROR};
-        color: {COLOR_ERROR};
-    }}
-    
-    /* Inputs e formulários */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > select {{
-        background-color: {COLOR_DARK_BG};
-        color: {COLOR_WHITE};
-        border: 1px solid {COLOR_BORDER};
-        border-radius: 4px;
-        padding: 0.6rem;
-    }}
-    
-    .stTextInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {{
-        border-color: {COLOR_GOLD};
-        box-shadow: 0 0 0 1px {COLOR_GOLD};
-    }}
-    
-    .stFileUploader > label > div {{
-        color: {COLOR_GRAY_LIGHT};
-    }}
-    
-    /* Botões */
-    .stButton > button[kind="primary"] {{
-        background-color: {COLOR_GOLD};
-        color: {COLOR_BLACK};
-        border: none;
-        border-radius: 4px;
-        font-weight: 600;
-        padding: 0.6rem 2rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        transition: all 0.3s ease;
-    }}
-    
-    .stButton > button[kind="primary"]:hover {{
-        background-color: #FFF;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-    }}
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 2rem;
-        border-bottom: 1px solid {COLOR_BORDER};
-    }}
-    
-    .stTabs [data-baseweb="tab"] {{
-        padding: 1rem 0;
-        color: {COLOR_GRAY_MEDIUM};
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+
+    .pricetax-card-header {{
         font-size: 0.9rem;
-    }}
-    
-    /* Expanders com fundo transparente */
-    .streamlit-expanderHeader,
-    .streamlit-expanderContent {{
-        background-color: transparent !important;
-    }}
-    
-    .stTabs [aria-selected="true"] {{
-        color: {COLOR_GOLD};
-        border-bottom: 2px solid {COLOR_GOLD};
-    }}
-    
-    /* Tabelas */
-    .dataframe {{
-        background-color: {COLOR_CARD_BG} !important;
-        color: {COLOR_WHITE} !important;
-    }}
-    
-    .dataframe th {{
-        background-color: {COLOR_DARK_BG} !important;
-        color: {COLOR_GOLD} !important;
-        font-weight: 600;
+        font-weight: 700;
+        color: {COLOR_SECONDARY};
         text-transform: uppercase;
-        font-size: 0.75rem;
         letter-spacing: 0.05em;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }}
-    
-    .dataframe td {{
-        border-color: {COLOR_BORDER} !important;
+
+    /* Labels e Textos de Formulário (Correção de Ofuscamento) */
+    label, .stMarkdown p, .stText {{
+        color: {COLOR_TEXT_MAIN} !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
     }}
-    
-    /* Divisores */
-    hr {{
-        border-color: {COLOR_BORDER};
-        margin: 2rem 0;
+
+    .stMarkdown small {{
+        color: {COLOR_TEXT_MUTED} !important;
     }}
-    
-    /* Seções de informação */
-    .info-section {{
-        background: rgba(255, 215, 0, 0.05);
-        border-left: 3px solid {COLOR_GOLD};
-        padding: 1rem 1.5rem;
-        margin: 1rem 0;
-        border-radius: 0 4px 4px 0;
+
+    /* Radio Buttons e Checkboxes */
+    .stRadio > label {{
+        color: {COLOR_SECONDARY} !important;
+        font-weight: 600 !important;
     }}
-    
-    .info-section-title {{
+
+    /* Inputs e Selects */
+    .stTextInput > div > div > input, 
+    .stSelectbox > div > div > div {{
+        background-color: #FFFFFF !important;
+        border: 1px solid {COLOR_BORDER} !important;
+        border-radius: 8px !important;
+        color: {COLOR_TEXT_MAIN} !important;
+        padding: 0.5rem 1rem !important;
+    }}
+
+    .stTextInput > div > div > input:focus {{
+        border-color: {COLOR_PRIMARY} !important;
+        box-shadow: 0 0 0 2px rgba(255, 221, 0, 0.2) !important;
+    }}
+
+    /* Botões de Ação */
+    .stButton > button {{
+        width: 100%;
+        background-color: {COLOR_PRIMARY} !important;
+        color: {COLOR_SECONDARY} !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.025em !important;
+        transition: all 0.2s ease !important;
+    }}
+
+    .stButton > button:hover {{
+        background-color: #FACC15 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }}
+
+    /* Tabs Modernas */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 1rem;
+        background-color: transparent;
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        height: 45px;
+        background-color: #FFFFFF;
+        border: 1px solid {COLOR_BORDER};
+        border-radius: 8px 8px 0 0;
+        padding: 0 1.5rem;
+        color: {COLOR_TEXT_MUTED};
         font-weight: 600;
-        color: {COLOR_GOLD};
-        margin-bottom: 0.5rem;
     }}
-    
-    /* Ocultar elementos do Streamlit */
+
+    .stTabs [aria-selected="true"] {{
+        background-color: {COLOR_PRIMARY} !important;
+        color: {COLOR_SECONDARY} !important;
+        border-color: {COLOR_PRIMARY} !important;
+    }}
+
+    /* Tabelas e Dataframes */
+    .dataframe {{
+        border: 1px solid {COLOR_BORDER} !important;
+        border-radius: 8px !important;
+    }}
+
+    .dataframe th {{
+        background-color: {COLOR_SECONDARY} !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        padding: 12px !important;
+    }}
+
+    .dataframe td {{
+        padding: 10px !important;
+        color: {COLOR_TEXT_MAIN} !important;
+    }}
+
+    /* Mensagens de Feedback */
+    .stAlert {{
+        border-radius: 8px !important;
+        border: none !important;
+        background-color: #FFFFFF !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }}
+
+    /* Ocultar elementos desnecessários */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # =============================================================================
-# FUNÇÕES UTILITÁRIAS
+# RECONSTRUÇÃO DA LÓGICA (MANTENDO 100% DAS FUNÇÕES)
 # =============================================================================
+
+# (O restante do código original deve ser mantido aqui para não quebrar nada)
+# Vou ler o backup para restaurar as funções originais e apenas aplicar o novo CSS.
 
 def only_digits(s: Optional[str]) -> str:
     """Remove todos os caracteres não numéricos de uma string."""
