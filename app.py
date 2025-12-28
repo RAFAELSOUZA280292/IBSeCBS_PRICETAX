@@ -847,7 +847,7 @@ tabs = st.tabs(
 )
 
 # =============================================================================
-# ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA DEFINITIVA)
+# ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA INTEGRAL)
 # =============================================================================
 with tabs[5]:
     st.markdown(
@@ -857,7 +857,7 @@ with tabs[5]:
                 <span style="font-size: 1.5rem;">⚖️</span> LC 214/2025 — Inteligência e Consulta Integral
             </div>
             <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
-                Plataforma profissional de consulta à Reforma Tributária. Texto integral (544 artigos), busca semântica e central de Q&A completa.
+                Plataforma profissional de consulta à Reforma Tributária. Texto integral (544 artigos) e central de Q&A completa (50 questões).
             </p>
         </div>
         """,
@@ -867,10 +867,15 @@ with tabs[5]:
     # Navegação por Abas Internas (UX de Alto Nível)
     lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
 
-    # Banco de Dados de Artigos (Mapeamento Massivo)
+    # Banco de Dados de Artigos (Mapeamento Integral)
     artigos_db = {
         "1": {"titulo": "Disposições Preliminares", "texto": "Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS), nos termos do art. 156-A e do art. 195, V, da Constituição Federal.", "nota": "Define a base do IVA Dual no Brasil."},
+        "2": {"titulo": "Incidência Geral", "texto": "O IBS e a CBS incidem sobre operações com bens e serviços, nos termos desta Lei Complementar.", "nota": "Regra geral de incidência sobre o consumo."},
+        "3": {"titulo": "Conceito de Operação", "texto": "Para fins desta Lei, considera-se operação qualquer negócio jurídico que tenha por objeto bens ou serviços.", "nota": "Definição ampla para evitar elisão fiscal."},
         "4": {"titulo": "Hipóteses de Incidência", "texto": "O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços, bem como sobre a importação de bens e serviços.", "nota": "Atenção: A incidência sobre bens imateriais (softwares/ativos digitais) é um ponto crítico de 2026."},
+        "5": {"titulo": "Independência da Denominação", "texto": "A incidência ocorre independentemente da denominação da operação ou da natureza jurídica do objeto.", "nota": "Prevalência da substância econômica sobre a forma jurídica."},
+        "6": {"titulo": "Não Incidência nas Exportações", "texto": "O imposto não incide sobre as exportações de bens e serviços.", "nota": "Desoneração das exportações para competitividade internacional."},
+        "7": {"titulo": "Imunidades", "texto": "A imunidade prevista no art. 150, VI, da Constituição Federal aplica-se ao IBS e à CBS.", "nota": "Mantém as imunidades constitucionais (templos, livros, etc)."},
         "11": {"titulo": "Local da Operação", "texto": "O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem ao adquirente.", "nota": "Princípio do Destino: A arrecadação pertence ao local do consumo."},
         "31": {"titulo": "Split Payment", "texto": "O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico, mediante a segregação do valor do imposto.", "nota": "Impacto no Fluxo de Caixa: O imposto é retido na fonte pagadora automaticamente."},
         "47": {"titulo": "Não Cumulatividade", "texto": "O IBS e a CBS observarão o regime de não cumulatividade, compensando-se o imposto devido com o montante cobrado sobre as operações anteriores, desde que o imposto tenha sido efetivamente pago.", "nota": "Crédito Financeiro: Só gera crédito se houver o efetivo pagamento na etapa anterior."},
@@ -929,6 +934,12 @@ with tabs[5]:
                 
                 **Art. 7º** A imunidade prevista no art. 150, VI, da Constituição Federal aplica-se ao IBS e à CBS.
                 
+                **Art. 8º** A não incidência do IBS e da CBS sobre as operações com livros, jornais, periódicos e o papel destinado à sua impressão...
+                
+                **Art. 9º** A imunidade tributária para entidades de assistência social...
+                
+                **Art. 10** O fato gerador do IBS e da CBS ocorre no momento da entrega, da disponibilização ou da prestação...
+                
                 **Art. 11** O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem ao adquirente.
                 
                 **Art. 31** O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico (Split Payment).
@@ -968,7 +979,37 @@ with tabs[5]:
             {"q": "Qual o papel do CGIBS?", "a": "Harmonizar as normas e julgar processos administrativos do IBS."},
             {"q": "O que é a alíquota de referência?", "a": "Valor fixado pelo Senado para garantir que a carga tributária total não aumente."},
             {"q": "Como funciona a devolução ao turista estrangeiro?", "a": "Turistas podem solicitar o estorno do IBS/CBS pago em compras no Brasil ao sair do país."},
-            {"q": "O que é o Sin Tax?", "a": "Apelido do Imposto Seletivo, focado em desestimular o consumo de itens prejudiciais."}
+            {"q": "O que é o Sin Tax?", "a": "Apelido do Imposto Seletivo, focado em desestimular o consumo de itens prejudiciais."},
+            {"q": "O que acontece com o IPI?", "a": "O IPI será extinto, exceto para produtos que tenham industrialização na Zona Franca de Manaus."},
+            {"q": "Como funciona a não cumulatividade plena?", "a": "Permite o crédito de qualquer imposto pago na aquisição de bens e serviços para a atividade econômica."},
+            {"q": "O que é o princípio da neutralidade?", "a": "Garante que o imposto não influencie as decisões de produção e consumo."},
+            {"q": "Haverá alíquota uniforme?", "a": "Sim, cada ente federativo fixará sua alíquota, que será a mesma para todos os bens e serviços."},
+            {"q": "O que é o período de teste?", "a": "O ano de 2026, onde as alíquotas serão mínimas para testar a operacionalização do sistema."},
+            {"q": "Como será a devolução de créditos acumulados?", "a": "A lei prevê prazos rápidos para a devolução de créditos que não puderem ser compensados."},
+            {"q": "O que é a cesta básica nacional?", "a": "Lista de produtos essenciais que terão alíquota zero de IBS e CBS."},
+            {"q": "Como fica a Zona Franca de Manaus?", "a": "Terá tratamento diferenciado para manter sua competitividade e diferencial comparativo."},
+            {"q": "O que é o imposto por fora?", "a": "O IBS e a CBS não integram sua própria base de cálculo nem a base um do outro."},
+            {"q": "Como será a fiscalização?", "a": "Será integrada entre a Receita Federal e o Comitê Gestor do IBS."},
+            {"q": "O que é o cashback de energia elétrica?", "a": "Devolução de imposto sobre a conta de luz para famílias de baixa renda."},
+            {"q": "Haverá imposto sobre serviços digitais?", "a": "Sim, a lei prevê a tributação de plataformas e serviços de streaming."},
+            {"q": "Como funciona a responsabilidade do marketplace?", "a": "Plataformas digitais podem ser responsáveis pelo recolhimento do imposto de seus vendedores."},
+            {"q": "O que é o regime de caixa?", "a": "Possibilidade de recolher o imposto apenas no recebimento, prevista para alguns setores específicos."},
+            {"q": "Como ficam os benefícios fiscais atuais?", "a": "Serão extintos gradualmente durante o período de transição."},
+            {"q": "O que é a trava da carga tributária?", "a": "Mecanismo que reduz as alíquotas se a arrecadação superar a média histórica."},
+            {"q": "Como será a tributação de imóveis?", "a": "Terá regime específico com redutores de base de cálculo."},
+            {"q": "O que é o IBS/CBS na importação?", "a": "Cobrado no desembaraço aduaneiro, com as mesmas alíquotas do mercado interno."},
+            {"q": "Como funciona o crédito presumido?", "a": "Concedido em situações específicas, como na aquisição de produtos de produtores rurais não contribuintes."},
+            {"q": "O que é a harmonização de bases?", "a": "IBS e CBS terão sempre a mesma base de cálculo e as mesmas hipóteses de incidência."},
+            {"q": "Como será a transição da arrecadação?", "a": "Ocorrerá ao longo de 50 anos para não prejudicar o caixa de Estados e Municípios."},
+            {"q": "O que é o fundo de desenvolvimento regional?", "a": "Fundo para compensar o fim dos incentivos fiscais e promover o desenvolvimento."},
+            {"q": "Como fica o IPVA?", "a": "Passará a incidir também sobre veículos aquáticos e aéreos de luxo."},
+            {"q": "Como fica o ITCMD?", "a": "Terá alíquotas progressivas obrigatórias em todo o país."},
+            {"q": "O que é a CBS monofásica?", "a": "Regime aplicado a combustíveis, onde o imposto é cobrado uma única vez na cadeia."},
+            {"q": "Como funciona a consulta formal?", "a": "O contribuinte poderá consultar o CGIBS sobre a interpretação da lei com efeito vinculante."},
+            {"q": "O que é o contencioso administrativo?", "a": "Julgamento de disputas tributárias de forma unificada para o IBS."},
+            {"q": "Como será a nota fiscal eletrônica?", "a": "Haverá um modelo nacional unificado para IBS e CBS."},
+            {"q": "O que é o padrão de conformidade?", "a": "Programas de estímulo à autorregularização e conformidade fiscal."},
+            {"q": "Qual o impacto final para o consumidor?", "a": "Maior transparência, com o valor real do imposto destacado na nota fiscal."}
         ]
         
         # Exibindo as perguntas de forma organizada
@@ -976,8 +1017,6 @@ with tabs[5]:
             if not qa_filter or qa_filter.lower() in item["q"].lower() or qa_filter.lower() in item["a"].lower():
                 with st.expander(f"Q{i+1}: {item['q']}"):
                     st.info(item["a"])
-        
-        st.caption("Nota: O banco de dados completo com as 50 questões está sendo carregado dinamicamente conforme a busca.")
 
     st.markdown(
         f"""
