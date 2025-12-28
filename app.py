@@ -86,6 +86,18 @@ st.markdown(
         margin-bottom: 0.2rem;
     }}
 
+    .pricetax-tagline {{
+        font-size: 1.15rem;
+        color: #FFFFFF;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        opacity: 0.85;
+        border-left: 3px solid {COLOR_GOLD};
+        padding-left: 1.2rem;
+        margin-top: 0.8rem;
+        line-height: 1.4;
+    }}
+
     /* Cards de Conteúdo */
     .pricetax-card {{
         background: {COLOR_CARD_BG};
