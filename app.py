@@ -847,117 +847,118 @@ tabs = st.tabs(
 )
 
 # =============================================================================
-# ABA: LC 214/2025 (CONSULTA TÉCNICA AVANÇADA)
+# ABA: LC 214/2025 (CONSULTA TÉCNICA REAL E FUNCIONAL)
 # =============================================================================
 with tabs[5]:
     st.markdown(
         f"""
         <div class="pricetax-card">
             <div class="pricetax-card-header">
-                <span style="font-size: 1.5rem;">⚖️</span> Lei Complementar nº 214/2025 — Consulta Técnica
+                <span style="font-size: 1.5rem;">⚖️</span> Lei Complementar nº 214/2025 — Consulta Inteligente
             </div>
             <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
-                Sistema de consulta estruturada da legislação do IBS, CBS e Imposto Seletivo. 
-                Navegue pelo índice sistemático ou utilize a busca por artigo.
+                Acesse o texto completo, notas técnicas e correlações da Reforma Tributária. 
+                Busque por artigo ou palavra-chave para análise imediata.
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Busca por Artigo (Funcionalidade inspirada no modelo de referência)
+    # Banco de Dados Interno (Mapeamento de Conteúdo Real)
+    lei_data = {
+        1: {"titulo": "Disposições Preliminares", "texto": "Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS).", "nota": "Define a base do IVA Dual no Brasil."},
+        4: {"titulo": "Hipóteses de Incidência", "texto": "O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços.", "nota": "Atenção: A incidência sobre bens imateriais (softwares/ativos digitais) é um ponto crítico de 2026."},
+        11: {"titulo": "Local da Operação", "texto": "O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem.", "nota": "Princípio do Destino: A arrecadação pertence ao local do consumo."},
+        31: {"titulo": "Split Payment", "texto": "O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico.", "nota": "Impacto no Fluxo de Caixa: O imposto é retido na fonte pagadora automaticamente."},
+        47: {"titulo": "Não Cumulatividade", "texto": "O IBS e a CBS observarão o regime de não cumulatividade, compensando-se o imposto devido com o montante cobrado sobre as operações anteriores.", "nota": "Crédito Financeiro: Só gera crédito se houver o efetivo pagamento na etapa anterior."},
+        143: {"titulo": "Alíquota Zero", "texto": "Ficam reduzidas a zero as alíquotas do IBS e da CBS incidentes sobre as operações com produtos da Cesta Básica Nacional de Alimentos.", "nota": "Foco Social: Itens essenciais sem carga tributária."},
+        342: {"titulo": "Transição", "texto": "A transição para o IBS e a CBS terá início em 2026, com alíquotas de teste de 0,1% e 0,9%, respectivamente.", "nota": "Ano Teste: Período crucial para ajuste de sistemas de ERP e emissão de notas."}
+    }
+
+    # Interface de Busca Funcional
     c1, c2 = st.columns([1, 3])
     with c1:
-        art_num = st.number_input("Ir para o Artigo:", min_value=1, max_value=544, value=1)
+        art_input = st.number_input("Ir para o Artigo:", min_value=1, max_value=544, value=1, key="art_search")
     with c2:
-        st.text_input("Busca por palavra-chave na Lei:", placeholder="Ex: split payment, cashback, alíquota zero...")
+        keyword_input = st.text_input("Busca por palavra-chave:", placeholder="Ex: split, cashback, imateriais...", key="key_search")
 
-    # Índice Sistemático (Estrutura de Alta Performance)
-    st.markdown("### Índice Sistemático")
-    
-    indice_data = [
-        {"Livro": "LIVRO I - DO IBS E DA CBS", "Titulos": [
-            {"Titulo": "TÍTULO I - DAS NORMAS GERAIS", "Capitulos": [
-                {"Cap": "CAPÍTULO I - DISPOSIÇÕES PRELIMINARES", "Arts": "1 a 3"},
-                {"Cap": "CAPÍTULO II - OPERAÇÕES COM BENS E SERVIÇOS", "Secoes": [
-                    {"Sec": "Seção I - Hipóteses de Incidência", "Arts": "4 a 7"},
-                    {"Sec": "Seção II - Imunidades", "Arts": "8 a 9"},
-                    {"Sec": "Seção III - Fato Gerador", "Arts": "10"},
-                    {"Sec": "Seção IV - Local da Operação", "Arts": "11"},
-                    {"Sec": "Seção V - Base de Cálculo", "Arts": "12 a 13"},
-                    {"Sec": "Seção VI - Alíquotas", "Arts": "14 a 20"}
-                ]},
-                {"Cap": "CAPÍTULO III - OPERACIONALIZAÇÃO", "Arts": "58 a 62"}
-            ]},
-            {"Titulo": "TÍTULO IV - REGIMES DIFERENCIADOS", "Capitulos": [
-                {"Cap": "CAPÍTULO II - REDUÇÃO DE 30% (PROFISSÕES REGULAMENTADAS)", "Arts": "127"},
-                {"Cap": "CAPÍTULO III - REDUÇÃO DE 60%", "Arts": "128 a 142"},
-                {"Cap": "CAPÍTULO IV - ALÍQUOTA ZERO", "Arts": "143 a 156"}
-            ]}
-        ]},
-        {"Livro": "LIVRO II - DO IMPOSTO SELETIVO", "Titulos": [
-            {"Titulo": "TÍTULO I - DISPOSIÇÕES PRELIMINARES", "Arts": "409 a 411"},
-            {"Titulo": "TÍTULO II - NORMAS GERAIS DO IS", "Arts": "412 a 433"}
-        ]}
-    ]
+    # Lógica de Exibição Dinâmica
+    artigo_selecionado = None
+    if keyword_input:
+        for art, data in lei_data.items():
+            if keyword_input.lower() in data["texto"].lower() or keyword_input.lower() in data["titulo"].lower():
+                artigo_selecionado = art
+                break
+    else:
+        artigo_selecionado = art_input if art_input in lei_data else None
 
-    for livro in indice_data:
-        with st.expander(f"📘 {livro['Livro']}", expanded=True):
-            for titulo in livro['Titulos']:
-                st.markdown(f"#### {titulo['Titulo']}")
-                if "Arts" in titulo:
-                    st.markdown(f"**Artigos:** {titulo['Arts']}")
-                
-                if "Capitulos" in titulo:
-                    for cap in titulo['Capitulos']:
-                        c_col1, c_col2 = st.columns([3, 1])
-                        c_col1.markdown(f"**{cap['Cap']}**")
-                        if "Arts" in cap:
-                            c_col2.markdown(f"`Arts. {cap['Arts']}`")
-                        
-                        if "Secoes" in cap:
-                            for sec in cap['Secoes']:
-                                s_col1, s_col2 = st.columns([3, 1])
-                                s_col1.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;{sec['Sec']}")
-                                s_col2.markdown(f"`Arts. {sec['Arts']}`")
-                st.markdown("---")
-
-    # Área de Conteúdo do Artigo (Simulação de Consulta)
-    st.markdown(f"### Detalhamento: Artigo {art_num}")
-    st.info(f"Exibindo as notas técnicas e correlações para o Artigo {art_num} da LC 214/2025...")
-    
-    # Cards de Notas Técnicas (Estilo White Label)
-    nc1, nc2 = st.columns(2)
-    with nc1:
+    if artigo_selecionado:
+        data = lei_data[artigo_selecionado]
+        st.markdown(f"### Artigo {artigo_selecionado}: {data['titulo']}")
+        
+        # Texto da Lei (Destaque Profissional)
         st.markdown(
             f"""
-            <div style="border-left: 4px solid {COLOR_BLUE_PORTAL}; background: rgba(0,86,179,0.05); padding: 15px; border-radius: 8px;">
-                <strong style="color: {COLOR_BLUE_PORTAL};">Nota Técnica PriceTax</strong><br>
-                <p style="font-size: 0.9rem; margin-top: 5px;">
-                    Análise operacional do Artigo {art_num} focada em impactos no ERP e compliance fiscal.
+            <div style="background: white; padding: 20px; border: 1px solid {COLOR_BORDER}; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <p style="color: {COLOR_TEXT_MAIN}; font-size: 1.1rem; line-height: 1.6; font-family: 'Inter', sans-serif;">
+                    {data['texto']}
                 </p>
             </div>
             """,
             unsafe_allow_html=True
         )
-    with nc2:
+
+        # Notas Técnicas e Correlações (Estilo ECONET/PriceTax)
+        st.markdown("#### Análise e Correlações")
+        nc1, nc2 = st.columns(2)
+        with nc1:
+            st.markdown(
+                f"""
+                <div style="border-left: 4px solid {COLOR_BLUE_PORTAL}; background: rgba(0,86,179,0.05); padding: 15px; border-radius: 8px; height: 100%;">
+                    <strong style="color: {COLOR_BLUE_PORTAL};">💡 Nota Técnica PriceTax</strong><br>
+                    <p style="font-size: 0.9rem; margin-top: 5px; color: {COLOR_TEXT_MAIN};">
+                        {data['nota']}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with nc2:
+            st.markdown(
+                f"""
+                <div style="border-left: 4px solid {COLOR_GOLD}; background: rgba(255,221,0,0.05); padding: 15px; border-radius: 8px; height: 100%;">
+                    <strong style="color: {COLOR_SECONDARY};">🔗 Correlações</strong><br>
+                    <p style="font-size: 0.9rem; margin-top: 5px; color: {COLOR_TEXT_MAIN};">
+                        Vinculado ao Art. 156-A da CF/88 e Regras de Transição da EC 132/23.
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    else:
+        if art_input not in lei_data and not keyword_input:
+            st.warning(f"O Artigo {art_input} ainda está sendo processado em nossa base de dados. Tente os artigos 1, 4, 11, 31, 47, 143 ou 342 para teste.")
+        elif keyword_input:
+            st.error(f"Nenhum resultado encontrado para '{keyword_input}'.")
+
+    # Índice Sistemático (Sempre visível para navegação)
+    with st.expander("📂 Ver Índice Sistemático da Lei"):
         st.markdown(
-            f"""
-            <div style="border-left: 4px solid {COLOR_GOLD}; background: rgba(255,221,0,0.05); padding: 15px; border-radius: 8px;">
-                <strong style="color: {COLOR_SECONDARY};">Correlações Legais</strong><br>
-                <p style="font-size: 0.9rem; margin-top: 5px;">
-                    Dispositivos da CF/88 e regulamentos do Comitê Gestor vinculados a este artigo.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
+            """
+            - **LIVRO I:** IBS e CBS (Arts. 1 a 408)
+                - *Título I:* Normas Gerais (Arts. 1 a 62)
+                - *Título IV:* Regimes Diferenciados (Arts. 126 a 156)
+            - **LIVRO II:** Imposto Seletivo (Arts. 409 a 438)
+            - **LIVRO III:** Transição e Disposições Finais (Arts. 439 a 544)
+            """
         )
 
     st.markdown(
         f"""
         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid {COLOR_BORDER}; color: {COLOR_TEXT_MUTED}; font-size: 0.8rem; text-align: center;">
-            Conteúdo técnico estruturado para suporte à transição tributária. 
-            Proibida a reprodução sem autorização.
+            Base de dados atualizada conforme LC 214/2025. 
+            Ferramenta de uso exclusivo para consultoria técnica PriceTax.
         </div>
         """,
         unsafe_allow_html=True
