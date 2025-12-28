@@ -424,7 +424,7 @@ TIPI_DEFAULT_NAME = "PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx"
 ALT_TIPI_NAME = "TIPI_IBS_CBS_CLASSIFICADA_MIND7.xlsx"
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)  # Cache por 5 minutos apenas
 def load_tipi_base() -> pd.DataFrame:
     """
     Carrega a planilha de regras TIPI IBS/CBS.
