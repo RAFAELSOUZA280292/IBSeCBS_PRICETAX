@@ -847,85 +847,135 @@ tabs = st.tabs(
 )
 
 # =============================================================================
-# ABA: LC 214/2025 (GUIA OPERACIONAL)
+# ABA: LC 214/2025 (GUIA INTERATIVO)
 # =============================================================================
 with tabs[5]:
     st.markdown(
         f"""
         <div class="pricetax-card">
             <div class="pricetax-card-header">
-                <span style="font-size: 1.5rem;">📘</span> Guia Operacional IBS & CBS – PriceTax (LC 214/2025)
+                <span style="font-size: 1.5rem;">🚀</span> Guia de Estudos — IBS, CBS e Imposto Seletivo (LC 214/2025)
             </div>
-            <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 2rem;">
-                Lei Complementar nº 214/2025 aplicada à prática empresarial. Explore os capítulos abaixo para entender os impactos na sua operação.
+            <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
+                Conteúdo organizado para estudo e aplicação prática da <strong>LC 214/2025</strong>. 
+                Utilize a busca abaixo para filtrar tópicos específicos.
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    col1, col2 = st.columns([1, 2])
+    # Campo de busca funcional
+    search_query = st.text_input("🔍 O que você deseja consultar na LC 214/2025?", placeholder="Ex: split payment, créditos, alíquotas, transição...")
 
-    with col1:
-        st.markdown(
-            f"""
-            <div class="pricetax-card" style="position: sticky; top: 2rem;">
-                <div style="font-weight: 700; color: {COLOR_BLUE_PORTAL}; margin-bottom: 1rem; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em;">
-                    Sumário Executivo
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <a href="#conceitos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">1. Conceitos Fundamentais</a>
-                    <a href="#incidencia" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">2. Hipóteses de Incidência</a>
-                    <a href="#imunidades" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">3. Imunidades e Não Incidência</a>
-                    <a href="#local" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">4. Local da Operação</a>
-                    <a href="#base" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">5. Base de Cálculo</a>
-                    <a href="#aliquotas" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">6. Alíquotas na Prática</a>
-                    <a href="#creditos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">7. Não Cumulatividade</a>
-                    <a href="#regimes" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">8. Regimes Diferenciados</a>
-                    <a href="#split" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">9. Split Payment</a>
-                    <a href="#comex" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">10. Importação e Exportação</a>
-                    <a href="#especificos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">11. Regimes Específicos</a>
-                    <a href="#transicao" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">12. Transição 2026</a>
-                    <a href="#compliance" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">13. Fiscalização e Riscos</a>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    # Dados do Guia (Baseado no material funcional)
+    guia_data = [
+        {
+            "id": "1",
+            "tag": "visão geral",
+            "title": "1. Fundamentos do IVA Dual (IBS e CBS)",
+            "content": "IBS (estadual/municipal/DF) e CBS (federal) formam um modelo “IVA dual”, com lógica de crédito/débito e objetivos de neutralidade.",
+            "points": [
+                {"type": "ok", "label": "Ponto central", "text": "Neutralidade: a regra é evitar distorções econômicas; as exceções precisam estar na lei."},
+                {"type": "warn", "label": "Atenção", "text": "IBS e CBS possuem fatos geradores idênticos, mas gestões distintas."}
+            ]
+        },
+        {
+            "id": "2",
+            "tag": "conceitos",
+            "title": "2. Conceitos Essenciais e Operação Tributável",
+            "content": "O tributo incide sobre operações onerosas com bens (tangíveis e intangíveis), serviços e direitos.",
+            "points": [
+                {"type": "ok", "label": "Bens Imateriais", "text": "Direitos, softwares e ativos digitais estão no escopo de incidência."},
+                {"type": "warn", "label": "Operação", "text": "Não confunda faturamento com operação tributável. Remessas podem gerar tributo."}
+            ]
+        },
+        {
+            "id": "5",
+            "tag": "local",
+            "title": "5. Local da Operação (Destino)",
+            "content": "A regra de ouro do IVA Dual é a tributação no destino (onde ocorre o consumo).",
+            "points": [
+                {"type": "ok", "label": "Bens Móveis", "text": "Local da entrega ou disponibilização ao adquirente."},
+                {"type": "ok", "label": "Serviços", "text": "Local do estabelecimento do adquirente ou onde o serviço é efetivamente consumido."}
+            ]
+        },
+        {
+            "id": "9",
+            "tag": "como paga",
+            "title": "9. Split Payment (Recolhimento na Liquidação)",
+            "content": "No pagamento eletrônico, o prestador de serviço de pagamento segrega e recolhe IBS/CBS no momento da liquidação financeira.",
+            "points": [
+                {"type": "ok", "label": "Efeito prático", "text": "Garante o recolhimento e evita sonegação, mas impacta o fluxo de caixa imediato."},
+                {"type": "warn", "label": "Gestão", "text": "Exige conciliação rigorosa entre ERP e extratos bancários."}
+            ]
+        },
+        {
+            "id": "10",
+            "tag": "coração do iva",
+            "title": "10. Não Cumulatividade e Créditos",
+            "content": "O contribuinte apropria créditos vinculados às aquisições e compensa com débitos das saídas.",
+            "points": [
+                {"type": "ok", "label": "Crédito Financeiro", "text": "A regra é o crédito amplo, desde que haja o destaque e o pagamento do imposto na etapa anterior."},
+                {"type": "warn", "label": "Vedações", "text": "Uso ou consumo pessoal não gera direito a crédito."}
+            ]
+        },
+        {
+            "id": "16",
+            "tag": "ano teste",
+            "title": "16. Transição (2026–2035)",
+            "content": "A transição começa em 2026 com alíquotas reduzidas para teste do sistema.",
+            "points": [
+                {"type": "ok", "label": "2026", "text": "IBS 0,1% e CBS 0,9%. Momento de auditar cadastros e regras de local."},
+                {"type": "warn", "label": "Risco", "text": "Errar no 'ano teste' é treinar o erro para a fase de alíquotas cheias."}
+            ]
+        },
+        {
+            "id": "17",
+            "tag": "extrafiscal",
+            "title": "17. Imposto Seletivo (IS)",
+            "content": "Incide sobre bens e serviços prejudiciais à saúde ou ao meio ambiente (ex: fumo, bebidas alcoólicas).",
+            "points": [
+                {"type": "warn", "label": "Natureza", "text": "Não segue a lógica de crédito do IVA; tem finalidade desestimuladora."}
+            ]
+        }
+    ]
 
-    with col2:
-        sections = [
-            ("conceitos", "1. Conceitos Fundamentais", ["O que são IBS e CBS", "Operação onerosa: quando o tributo nasce", "Fornecimento: bens, serviços e direitos", "Bens x Serviços: impactos práticos na tributação", "Situações em que não há incidência"]),
-            ("incidencia", "2. Hipóteses de Incidência na Prática", ["Venda, troca, permuta e dação em pagamento", "Bonificações, brindes e amostras", "Operações com partes relacionadas", "Remessas que geram tributação sem faturamento", "Ativo imobilizado e operações não habituais", "Erros comuns de enquadramento no ERP"]),
-            ("imunidades", "3. Imunidades e Não Incidência", ["Exportações de bens e serviços", "Livros, jornais, periódicos e papel para impressão", "Entidades religiosas, assistenciais e educacionais", "Operações do poder público", "Impactos das imunidades na classificação fiscal (cClassTrib)"]),
-            ("local", "4. Local da Operação e Tributação no Destino", ["Regra geral do destino", "Local da operação com mercadorias", "Local da operação com serviços", "Transporte de cargas e passageiros", "Energia elétrica, telecomunicações e serviços digitais", "Critérios de domicílio do adquirente", "Riscos fiscais por cadastro incorreto"]),
-            ("base", "5. Base de Cálculo do IBS e da CBS", ["O que compõe o valor da operação", "Valores que não integram a base de cálculo", "Descontos condicionais e incondicionais", "Frete, seguros, juros e encargos", "Arbitramento pela autoridade fiscal", "Impactos diretos no preço e na margem"]),
-            ("aliquotas", "6. Alíquotas: Como Funciona na Vida Real", ["CBS: competência federal", "IBS estadual e IBS municipal", "Alíquota efetiva da operação", "Alíquotas de referência", "Mitos e erros do “ano teste” de 2026", "Por que destacar corretamente desde 2026"]),
-            ("creditos", "7. Não Cumulatividade e Créditos", ["O conceito de crédito financeiro", "O que gera direito a crédito", "Hipóteses de vedação", "Uso ou consumo pessoal", "Cancelamentos, devoluções e estornos", "Reflexos na parametrização do ERP"]),
-            ("regimes", "8. Regimes Diferenciados do IBS e da CBS", ["Tributação integral", "Redução de 30% das alíquotas", "Redução de 60% das alíquotas", "Alíquota zero", "Cesta Básica Nacional", "Alimentos, medicamentos, saúde e educação", "Classificação correta por NCM e cClassTrib"]),
-            ("split", "9. Split Payment e Formas de Recolhimento", ["O que é o split payment", "Quando o recolhimento ocorre na liquidação financeira", "Recolhimento pelo adquirente", "Impactos no fluxo de caixa", "Impactos na formação de preços"]),
-            ("comex", "10. Importações e Exportações", ["Importação de bens", "Importação de serviços e intangíveis", "Momento do fato gerador na importação", "Exportações e imunidade", "Créditos vinculados às operações internacionais"]),
-            ("especificos", "11. Regimes Específicos", ["Combustíveis", "Serviços financeiros", "Planos de saúde", "Bens imóveis", "Transporte coletivo e turismo", "Produtor rural e produtor integrado", "Transportador autônomo pessoa física"]),
-            ("transicao", "12. Transição para o IBS e a CBS", ["Ano teste – 2026", "Obrigações acessórias desde 2026", "Período de convivência com tributos atuais", "Fixação das alíquotas até 2035", "Riscos fiscais durante a transição"]),
-            ("compliance", "13. Fiscalização, Compliance e Riscos", ["Novo modelo de fiscalização digital", "Cruzamentos automáticos e uso de IA", "Penalidades e autuações", "Importância da classificação correta", "Como se preparar desde já"])
-        ]
+    # Filtragem funcional
+    filtered_data = [item for item in guia_data if search_query.lower() in item["title"].lower() or search_query.lower() in item["content"].lower() or search_query.lower() in item["tag"].lower()]
 
-        for sid, title, items in sections:
-            st.markdown(f'<div id="{sid}"></div>', unsafe_allow_html=True)
-            with st.container():
-                st.markdown(
-                    f"""
-                    <div class="pricetax-card">
-                        <div style="color: {COLOR_BLUE_PORTAL}; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem;">
-                            {title}
-                        </div>
-                        <ul style="margin: 0; padding-left: 1.2rem; color: {COLOR_TEXT_MAIN};">
-                            {"".join([f'<li style="margin-bottom: 0.5rem;">{item}</li>' for item in items])}
-                        </ul>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+    if not filtered_data:
+        st.info("Nenhum tópico encontrado para sua busca. Tente termos mais genéricos.")
+    else:
+        for item in filtered_data:
+            with st.expander(f"{item['title']} ({item['tag']})", expanded=len(filtered_data) == 1):
+                st.markdown(f"<p style='color: {COLOR_TEXT_MAIN}; font-size: 1rem;'>{item['content']}</p>", unsafe_allow_html=True)
+                
+                c1, c2 = st.columns(2)
+                for i, point in enumerate(item["points"]):
+                    target_col = c1 if i % 2 == 0 else c2
+                    with target_col:
+                        border_color = COLOR_SUCCESS if point["type"] == "ok" else COLOR_GOLD
+                        bg_color = "rgba(16, 185, 129, 0.05)" if point["type"] == "ok" else "rgba(255, 221, 0, 0.05)"
+                        st.markdown(
+                            f"""
+                            <div style="border-left: 4px solid {border_color}; background: {bg_color}; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                                <strong style="color: {COLOR_SECONDARY}; font-size: 0.85rem; text-transform: uppercase;">{point['label']}</strong><br>
+                                <span style="color: {COLOR_TEXT_MAIN}; font-size: 0.9rem;">{point['text']}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+    st.markdown(
+        f"""
+        <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid {COLOR_BORDER}; color: {COLOR_TEXT_MUTED}; font-size: 0.85rem;">
+            <strong>Nota Técnica:</strong> Este guia é uma ferramenta de apoio baseada na LC 214/2025. 
+            Para decisões jurídicas, consulte sempre o texto oficial e sua assessoria especializada.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # =============================================================================
 # CARREGAMENTO DA PLANILHA CFOP x cClassTrib
