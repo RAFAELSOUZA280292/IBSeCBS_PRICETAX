@@ -1355,15 +1355,64 @@ with tabs[0]:
             st.session_state.desc_busca_termo = ""
         
         if buscar_desc and desc_input.strip():
-            # Busca semântica na descrição
-            termos = desc_input.strip().lower().split()
+            # Dicionário de sinônimos (termos populares → termos técnicos TIPI)
+            sinonimos = {
+                'bezerro': ['bovinos', 'bezerro'],
+                'bezerros': ['bovinos', 'bezerro'],
+                'boi': ['bovinos', 'boi'],
+                'bois': ['bovinos', 'boi'],
+                'vaca': ['bovinos', 'vaca'],
+                'vacas': ['bovinos', 'vaca'],
+                'gado': ['bovinos', 'gado'],
+                'porco': ['suínos', 'porco'],
+                'porcos': ['suínos', 'porco'],
+                'suino': ['suínos'],
+                'frango': ['aves', 'galinhas', 'frango'],
+                'frangos': ['aves', 'galinhas', 'frango'],
+                'galinha': ['aves', 'galinhas'],
+                'galinhas': ['aves', 'galinhas'],
+                'pato': ['aves', 'patos'],
+                'patos': ['aves', 'patos'],
+                'carneiro': ['ovinos', 'carneiro'],
+                'carneiros': ['ovinos', 'carneiro'],
+                'ovelha': ['ovinos', 'ovelha'],
+                'ovelhas': ['ovinos', 'ovelha'],
+                'cabra': ['caprinos', 'cabra'],
+                'cabras': ['caprinos', 'cabra'],
+                'bode': ['caprinos', 'bode'],
+                'bodes': ['caprinos', 'bode'],
+                'cavalo': ['cavalos'],
+                'égua': ['cavalos', 'égua'],
+                'éguas': ['cavalos', 'égua'],
+            }
             
-            # Filtrar produtos que contenham TODOS os termos
-            mask = df_tipi["NCM_DESCRICAO"].str.lower().str.contains(termos[0], na=False)
-            for termo in termos[1:]:
-                mask = mask & df_tipi["NCM_DESCRICAO"].str.lower().str.contains(termo, na=False)
+            # Busca semântica na descrição com expansão de sinônimos
+            termos_originais = desc_input.strip().lower().split()
+            termos_expandidos = []
             
-            resultados = df_tipi[mask]
+            for termo in termos_originais:
+                if termo in sinonimos:
+                    # Adicionar termo original + sinônimos
+                    termos_expandidos.append([termo] + sinonimos[termo])
+                else:
+                    # Apenas termo original
+                    termos_expandidos.append([termo])
+            
+            # Filtrar produtos que contenham PELO MENOS UM sinônimo de CADA termo
+            mask = None
+            for grupo_termos in termos_expandidos:
+                # Para cada grupo de sinônimos, criar máscara OR
+                mask_grupo = df_tipi["NCM_DESCRICAO"].str.lower().str.contains(grupo_termos[0], na=False)
+                for sinonimo in grupo_termos[1:]:
+                    mask_grupo = mask_grupo | df_tipi["NCM_DESCRICAO"].str.lower().str.contains(sinonimo, na=False)
+                
+                # Combinar com AND entre grupos
+                if mask is None:
+                    mask = mask_grupo
+                else:
+                    mask = mask & mask_grupo
+            
+            resultados = df_tipi[mask] if mask is not None else df_tipi[df_tipi.index < 0]  # DataFrame vazio
             
             # Salvar no session_state
             st.session_state.desc_resultados = resultados
