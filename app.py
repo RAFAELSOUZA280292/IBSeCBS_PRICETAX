@@ -1386,15 +1386,15 @@ with tabs[0]:
                 'égua': ['cavalos', 'égua'],
                 'éguas': ['cavalos', 'égua'],
                 # Produtos alimentícios
-                'linguiça': ['enchidos', 'preparações', 'linguiça'],
-                'linguica': ['enchidos', 'preparações', 'linguica'],
-                'salsicha': ['enchidos', 'preparações', 'salsicha'],
-                'salsichas': ['enchidos', 'preparações', 'salsicha'],
-                'mortadela': ['enchidos', 'preparações', 'mortadela'],
-                'presunto': ['preparações', 'presunto'],
-                'bacon': ['preparações', 'bacon', 'toucinho'],
-                'hamburguer': ['preparações', 'hamburguer'],
-                'hambúrguer': ['preparações', 'hamburguer'],
+                'linguiça': ['enchidos', 'linguiça'],
+                'linguica': ['enchidos', 'linguica'],
+                'salsicha': ['enchidos', 'salsicha'],
+                'salsichas': ['enchidos', 'salsicha'],
+                'mortadela': ['enchidos', 'mortadela'],
+                'presunto': ['presunto'],
+                'bacon': ['bacon', 'toucinho'],
+                'hamburguer': ['hamburguer'],
+                'hambúrguer': ['hamburguer'],
             }
             
             # Busca semântica na descrição com expansão de sinônimos
