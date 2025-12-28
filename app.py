@@ -34,15 +34,23 @@ st.set_page_config(
 )
 
 # Paleta de Cores Sênior (Foco em Contraste e Usabilidade)
-COLOR_PRIMARY = "#FFDD00"    # Amarelo PRICETAX (Ação)
-COLOR_SECONDARY = "#0D141A"  # Azul Marinho Profundo (Texto/Cabeçalhos)
-COLOR_BG_MAIN = "#F8FAFC"    # Fundo Cinza Ultra Claro (Conforto)
-COLOR_BG_CARD = "#FFFFFF"    # Fundo Branco (Destaque)
-COLOR_TEXT_MAIN = "#1E293B"  # Texto Principal (Cinza Escuro)
-COLOR_TEXT_MUTED = "#64748B" # Texto Secundário (Labels)
+COLOR_GOLD = "#FFDD00"       # Amarelo PRICETAX (Ação)
+COLOR_BLACK = "#0D141A"      # Azul Marinho Profundo (Texto/Cabeçalhos)
+COLOR_DARK_BG = "#F8FAFC"    # Fundo Cinza Ultra Claro (Conforto)
+COLOR_CARD_BG = "#FFFFFF"    # Fundo Branco (Destaque)
+COLOR_WHITE = "#1E293B"      # Texto Principal (Cinza Escuro)
+COLOR_GRAY_LIGHT = "#64748B" # Texto Secundário (Labels)
+COLOR_GRAY_MEDIUM = "#ADB5BD" # Bordas e elementos desativados
 COLOR_BORDER = "#E2E8F0"     # Bordas Suaves
 COLOR_SUCCESS = "#10B981"    # Verde Sucesso
 COLOR_ERROR = "#EF4444"      # Vermelho Erro
+
+# Aliases para o novo sistema de design
+COLOR_PRIMARY = COLOR_GOLD
+COLOR_SECONDARY = COLOR_BLACK
+COLOR_BG_MAIN = COLOR_DARK_BG
+COLOR_TEXT_MAIN = COLOR_WHITE
+COLOR_TEXT_MUTED = COLOR_GRAY_LIGHT
 
 st.markdown(
     f"""
