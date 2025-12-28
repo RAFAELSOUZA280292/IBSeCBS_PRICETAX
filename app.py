@@ -868,27 +868,33 @@ with tabs[5]:
     lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
 
     # Banco de Dados de Artigos (Mapeamento Integral - 544 Artigos)
-    # Nota: Em um ambiente real, isso seria carregado de um JSON ou Banco de Dados.
-    # Para garantir 100% de funcionalidade no Streamlit, mapeamos os principais e a busca varre o texto integral.
-    artigos_db = {
-        "1": {"titulo": "Disposições Preliminares", "texto": "Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS), nos termos do art. 156-A e do art. 195, V, da Constituição Federal.", "nota": "Define a base do IVA Dual no Brasil."},
-        "2": {"titulo": "Incidência Geral", "texto": "O IBS e a CBS incidem sobre operações com bens e serviços, nos termos desta Lei Complementar.", "nota": "Regra geral de incidência sobre o consumo."},
-        "3": {"titulo": "Conceito de Operação", "texto": "Para fins desta Lei, considera-se operação qualquer negócio jurídico que tenha por objeto bens ou serviços.", "nota": "Definição ampla para evitar elisão fiscal."},
-        "4": {"titulo": "Hipóteses de Incidência", "texto": "O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços, bem como sobre a importação de bens e serviços.", "nota": "Atenção: A incidência sobre bens imateriais (softwares/ativos digitais) é um ponto crítico de 2026."},
-        "5": {"titulo": "Independência da Denominação", "texto": "A incidência ocorre independentemente da denominação da operação ou da natureza jurídica do objeto.", "nota": "Prevalência da substância econômica sobre a forma jurídica."},
-        "6": {"titulo": "Não Incidência nas Exportações", "texto": "O imposto não incide sobre as exportações de bens e serviços.", "nota": "Desoneração das exportações para competitividade internacional."},
-        "7": {"titulo": "Imunidades", "texto": "A imunidade prevista no art. 150, VI, da Constituição Federal aplica-se ao IBS e à CBS.", "nota": "Mantém as imunidades constitucionais (templos, livros, etc)."},
-        "8": {"titulo": "Imunidade de Livros e Periódicos", "texto": "A não incidência do IBS e da CBS sobre as operações com livros, jornais, periódicos e o papel destinado à sua impressão...", "nota": "Preservação do acesso à cultura e informação."},
-        "9": {"titulo": "Entidades de Assistência Social", "texto": "A imunidade tributária para entidades de assistência social sem fins lucrativos...", "nota": "Regra de imunidade para o terceiro setor."},
-        "10": {"titulo": "Fato Gerador", "texto": "O fato gerador do IBS e da CBS ocorre no momento da entrega, da disponibilização ou da prestação do serviço.", "nota": "Define o momento exato da obrigação tributária."},
-        "11": {"titulo": "Local da Operação", "texto": "O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem ao adquirente.", "nota": "Princípio do Destino: A arrecadação pertence ao local do consumo."},
-        "31": {"titulo": "Split Payment", "texto": "O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico, mediante a segregação do valor do imposto.", "nota": "Impacto no Fluxo de Caixa: O imposto é retido na fonte pagadora automaticamente."},
-        "47": {"titulo": "Não Cumulatividade", "texto": "O IBS e a CBS observarão o regime de não cumulatividade, compensando-se o imposto devido com o montante cobrado sobre as operações anteriores, desde que o imposto tenha sido efetivamente pago.", "nota": "Crédito Financeiro: Só gera crédito se houver o efetivo pagamento na etapa anterior."},
-        "143": {"titulo": "Alíquota Zero - Cesta Básica", "texto": "Ficam reduzidas a zero as alíquotas do IBS e da CBS incidentes sobre as operações com produtos da Cesta Básica Nacional de Alimentos.", "nota": "Foco Social: Itens essenciais sem carga tributária."},
-        "342": {"titulo": "Transição 2026", "texto": "A transição para o IBS e a CBS terá início em 2026, com alíquotas de teste de 0,1% e 0,9%, respectivamente, com o objetivo de testar os sistemas de arrecadação.", "nota": "Ano Teste: Período crucial para ajuste de sistemas de ERP e emissão de notas."},
-        "409": {"titulo": "Imposto Seletivo", "texto": "O Imposto Seletivo incide sobre a produção, extração, comercialização ou importação de bens e serviços prejudiciais à saúde ou ao meio ambiente.", "nota": "Sin Tax: Tributação extrafiscal para desestímulo de consumo."},
-        "544": {"titulo": "Vigência", "texto": "Esta Lei Complementar entra em vigor na data de sua publicação, observados os prazos de transição previstos na Constituição Federal.", "nota": "Marco final da regulamentação."}
+    # Carregamento dinâmico do JSON extraído do PDF da ECONET
+    import json
+    import os
+    
+    articles_json_path = os.path.join(os.path.dirname(__file__), 'articles_db.json')
+    if os.path.exists(articles_json_path):
+        with open(articles_json_path, 'r', encoding='utf-8') as f:
+            artigos_db = json.load(f)
+    else:
+        # Fallback caso o arquivo não exista (não deve ocorrer após o push)
+        artigos_db = {"1": {"titulo": "Erro", "texto": "Banco de dados não encontrado. Por favor, verifique o deploy.", "nota": ""}}
+
+    # Adicionar notas técnicas automáticas para os principais artigos
+    notas_fixas = {
+        "1": "Define a base do IVA Dual no Brasil.",
+        "2": "Regra geral de incidência sobre o consumo.",
+        "4": "Atenção: A incidência sobre bens imateriais (softwares/ativos digitais) é um ponto crítico de 2026.",
+        "11": "Princípio do Destino: A arrecadação pertence ao local do consumo.",
+        "31": "Impacto no Fluxo de Caixa: O imposto é retido na fonte pagadora automaticamente (Split Payment).",
+        "47": "Crédito Financeiro: Só gera crédito se houver o efetivo pagamento na etapa anterior.",
+        "143": "Foco Social: Itens essenciais da Cesta Básica sem carga tributária.",
+        "342": "Ano Teste: Período crucial para ajuste de sistemas de ERP e emissão de notas.",
+        "409": "Sin Tax: Tributação extrafiscal para desestímulo de consumo."
     }
+    for art_id, nota in notas_fixas.items():
+        if art_id in artigos_db:
+            artigos_db[art_id]["nota"] = nota
 
     with lc_tabs[0]:
         c1, c2 = st.columns([1, 2])
@@ -921,50 +927,16 @@ with tabs[5]:
 
     with lc_tabs[1]:
         st.subheader("Texto Integral da Lei Complementar nº 214/2025")
-        with st.container(height=600, border=True):
-            st.markdown(
-                """
-                ### LIVRO I - DO IBS E DA CBS
-                #### TÍTULO I - DAS NORMAS GERAIS
-                **Art. 1º** Esta Lei Complementar institui o Imposto sobre Bens e Serviços (IBS) e a Contribuição Social sobre Bens e Serviços (CBS), nos termos do art. 156-A e do art. 195, V, da Constituição Federal.
-                
-                **Art. 2º** O IBS e a CBS incidem sobre operações com bens e serviços, nos termos desta Lei Complementar.
-                
-                **Art. 3º** Para fins desta Lei, considera-se operação qualquer negócio jurídico que tenha por objeto bens ou serviços.
-                
-                #### TÍTULO II - DA INCIDÊNCIA
-                **Art. 4º** O IBS e a CBS incidem sobre operações onerosas com bens materiais e imateriais, inclusive direitos, e serviços, bem como sobre a importação de bens e serviços.
-                
-                **Art. 5º** A incidência ocorre independentemente da denominação da operação ou da natureza jurídica do objeto.
-                
-                **Art. 6º** O imposto não incide sobre as exportações de bens e serviços.
-                
-                **Art. 7º** A imunidade prevista no art. 150, VI, da Constituição Federal aplica-se ao IBS e à CBS.
-                
-                **Art. 8º** A não incidência do IBS e da CBS sobre as operações com livros, jornais, periódicos e o papel destinado à sua impressão...
-                
-                **Art. 9º** A imunidade tributária para entidades de assistência social...
-                
-                **Art. 10** O fato gerador do IBS e da CBS ocorre no momento da entrega, da disponibilização ou da prestação do serviço.
-                
-                **Art. 11** O local da operação, para fins de cobrança do IBS e da CBS e definição do ente federativo de destino, é o local da entrega ou disponibilização do bem ao adquirente.
-                
-                **Art. 31** O recolhimento do IBS e da CBS será efetuado no momento da liquidação financeira da operação por meio de sistema de pagamento eletrônico (Split Payment).
-                
-                **Art. 47** O IBS e a CBS observarão o regime de não cumulatividade, compensando-se o imposto devido com o montante cobrado sobre as operações anteriores.
-                
-                **Art. 143** Ficam reduzidas a zero as alíquotas do IBS e da CBS incidentes sobre as operações com produtos da Cesta Básica Nacional de Alimentos.
-                
-                **Art. 342** A transição para o IBS e a CBS terá início em 2026, com alíquotas de teste de 0,1% e 0,9%, respectivamente.
-                
-                **Art. 409** O Imposto Seletivo incide sobre a produção, extração, comercialização ou importação de bens e serviços prejudiciais à saúde ou ao meio ambiente.
-                
-                **Art. 544** Esta Lei Complementar entra em vigor na data de sua publicação.
-                
-                *(O texto completo com todos os 544 artigos está integrado ao sistema de busca na aba ao lado)*
-                """
-            )
-        st.caption("Dica: Use a aba 'Consulta' para localizar qualquer um dos 544 artigos de forma instantânea.")
+        st.info("Abaixo você pode visualizar a lei na íntegra. Use a barra de rolagem para navegar por todos os 544 artigos.")
+        
+        # Gerar o texto completo a partir do banco de dados para exibição integral
+        full_text_content = ""
+        for art_id in sorted(artigos_db.keys(), key=lambda x: int(x) if x.isdigit() else 999):
+            full_text_content += f"**{artigos_db[art_id]['titulo']}**\n\n{artigos_db[art_id]['texto']}\n\n---\n\n"
+            
+        with st.container(height=700, border=True):
+            st.markdown(full_text_content)
+        st.caption("Base de dados atualizada conforme material oficial da ECONET.")
 
     with lc_tabs[2]:
         st.subheader("Central de Q&A — 50 Perguntas e Respostas")
