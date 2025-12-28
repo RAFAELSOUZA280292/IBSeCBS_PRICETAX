@@ -842,8 +842,90 @@ tabs = st.tabs(
         "cClassTrib",
         "Download CFOP x cClassTrib",
         "Análise de XML",
+        "LC 214/2025",
     ]
 )
+
+# =============================================================================
+# ABA: LC 214/2025 (GUIA OPERACIONAL)
+# =============================================================================
+with tabs[5]:
+    st.markdown(
+        f"""
+        <div class="pricetax-card">
+            <div class="pricetax-card-header">
+                <span style="font-size: 1.5rem;">📘</span> Guia Operacional IBS & CBS – PriceTax (LC 214/2025)
+            </div>
+            <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 2rem;">
+                Lei Complementar nº 214/2025 aplicada à prática empresarial. Explore os capítulos abaixo para entender os impactos na sua operação.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        st.markdown(
+            f"""
+            <div class="pricetax-card" style="position: sticky; top: 2rem;">
+                <div style="font-weight: 700; color: {COLOR_BLUE_PORTAL}; margin-bottom: 1rem; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em;">
+                    Sumário Executivo
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="#conceitos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">1. Conceitos Fundamentais</a>
+                    <a href="#incidencia" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">2. Hipóteses de Incidência</a>
+                    <a href="#imunidades" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">3. Imunidades e Não Incidência</a>
+                    <a href="#local" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">4. Local da Operação</a>
+                    <a href="#base" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">5. Base de Cálculo</a>
+                    <a href="#aliquotas" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">6. Alíquotas na Prática</a>
+                    <a href="#creditos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">7. Não Cumulatividade</a>
+                    <a href="#regimes" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">8. Regimes Diferenciados</a>
+                    <a href="#split" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">9. Split Payment</a>
+                    <a href="#comex" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">10. Importação e Exportação</a>
+                    <a href="#especificos" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">11. Regimes Específicos</a>
+                    <a href="#transicao" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">12. Transição 2026</a>
+                    <a href="#compliance" style="text-decoration: none; color: {COLOR_TEXT_MAIN}; font-size: 0.9rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;">13. Fiscalização e Riscos</a>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        sections = [
+            ("conceitos", "1. Conceitos Fundamentais", ["O que são IBS e CBS", "Operação onerosa: quando o tributo nasce", "Fornecimento: bens, serviços e direitos", "Bens x Serviços: impactos práticos na tributação", "Situações em que não há incidência"]),
+            ("incidencia", "2. Hipóteses de Incidência na Prática", ["Venda, troca, permuta e dação em pagamento", "Bonificações, brindes e amostras", "Operações com partes relacionadas", "Remessas que geram tributação sem faturamento", "Ativo imobilizado e operações não habituais", "Erros comuns de enquadramento no ERP"]),
+            ("imunidades", "3. Imunidades e Não Incidência", ["Exportações de bens e serviços", "Livros, jornais, periódicos e papel para impressão", "Entidades religiosas, assistenciais e educacionais", "Operações do poder público", "Impactos das imunidades na classificação fiscal (cClassTrib)"]),
+            ("local", "4. Local da Operação e Tributação no Destino", ["Regra geral do destino", "Local da operação com mercadorias", "Local da operação com serviços", "Transporte de cargas e passageiros", "Energia elétrica, telecomunicações e serviços digitais", "Critérios de domicílio do adquirente", "Riscos fiscais por cadastro incorreto"]),
+            ("base", "5. Base de Cálculo do IBS e da CBS", ["O que compõe o valor da operação", "Valores que não integram a base de cálculo", "Descontos condicionais e incondicionais", "Frete, seguros, juros e encargos", "Arbitramento pela autoridade fiscal", "Impactos diretos no preço e na margem"]),
+            ("aliquotas", "6. Alíquotas: Como Funciona na Vida Real", ["CBS: competência federal", "IBS estadual e IBS municipal", "Alíquota efetiva da operação", "Alíquotas de referência", "Mitos e erros do “ano teste” de 2026", "Por que destacar corretamente desde 2026"]),
+            ("creditos", "7. Não Cumulatividade e Créditos", ["O conceito de crédito financeiro", "O que gera direito a crédito", "Hipóteses de vedação", "Uso ou consumo pessoal", "Cancelamentos, devoluções e estornos", "Reflexos na parametrização do ERP"]),
+            ("regimes", "8. Regimes Diferenciados do IBS e da CBS", ["Tributação integral", "Redução de 30% das alíquotas", "Redução de 60% das alíquotas", "Alíquota zero", "Cesta Básica Nacional", "Alimentos, medicamentos, saúde e educação", "Classificação correta por NCM e cClassTrib"]),
+            ("split", "9. Split Payment e Formas de Recolhimento", ["O que é o split payment", "Quando o recolhimento ocorre na liquidação financeira", "Recolhimento pelo adquirente", "Impactos no fluxo de caixa", "Impactos na formação de preços"]),
+            ("comex", "10. Importações e Exportações", ["Importação de bens", "Importação de serviços e intangíveis", "Momento do fato gerador na importação", "Exportações e imunidade", "Créditos vinculados às operações internacionais"]),
+            ("especificos", "11. Regimes Específicos", ["Combustíveis", "Serviços financeiros", "Planos de saúde", "Bens imóveis", "Transporte coletivo e turismo", "Produtor rural e produtor integrado", "Transportador autônomo pessoa física"]),
+            ("transicao", "12. Transição para o IBS e a CBS", ["Ano teste – 2026", "Obrigações acessórias desde 2026", "Período de convivência com tributos atuais", "Fixação das alíquotas até 2035", "Riscos fiscais durante a transição"]),
+            ("compliance", "13. Fiscalização, Compliance e Riscos", ["Novo modelo de fiscalização digital", "Cruzamentos automáticos e uso de IA", "Penalidades e autuações", "Importância da classificação correta", "Como se preparar desde já"])
+        ]
+
+        for sid, title, items in sections:
+            st.markdown(f'<div id="{sid}"></div>', unsafe_allow_html=True)
+            with st.container():
+                st.markdown(
+                    f"""
+                    <div class="pricetax-card">
+                        <div style="color: {COLOR_BLUE_PORTAL}; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem;">
+                            {title}
+                        </div>
+                        <ul style="margin: 0; padding-left: 1.2rem; color: {COLOR_TEXT_MAIN};">
+                            {"".join([f'<li style="margin-bottom: 0.5rem;">{item}</li>' for item in items])}
+                        </ul>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
 # =============================================================================
 # CARREGAMENTO DA PLANILHA CFOP x cClassTrib
