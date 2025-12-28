@@ -86,7 +86,7 @@ st.markdown(
 
     /* Cards de Conteúdo */
     .pricetax-card {{
-        background: {COLOR_BG_CARD};
+        background: {COLOR_CARD_BG};
         border: 1px solid {COLOR_BORDER};
         border-radius: 12px;
         padding: 2rem;
