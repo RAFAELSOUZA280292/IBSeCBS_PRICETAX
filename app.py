@@ -868,7 +868,7 @@ with tabs[5]:
     lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
 
     # Banco de Dados de Artigos (Mapeamento Integral - 544 Artigos)
-    # Carregamento dinâmico do JSON extraído do PDF da ECONET
+    # Carregamento dinâmico do banco de dados jurídico PriceTax
     import json
     import os
     
@@ -936,7 +936,7 @@ with tabs[5]:
             
         with st.container(height=700, border=True):
             st.markdown(full_text_content)
-        st.caption("Base de dados atualizada conforme material oficial da ECONET.")
+        st.caption("Base de dados atualizada conforme legislação oficial da Reforma Tributária.")
 
     with lc_tabs[2]:
         st.subheader("Central de Q&A — 50 Perguntas e Respostas")
