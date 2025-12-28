@@ -33,15 +33,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Paleta de Cores Sênior (Foco em Contraste e Usabilidade)
-COLOR_GOLD = "#FFDD00"       # Amarelo PRICETAX (Ação)
-COLOR_BLACK = "#0D141A"      # Azul Marinho Profundo (Texto/Cabeçalhos)
-COLOR_DARK_BG = "#F8FAFC"    # Fundo Cinza Ultra Claro (Conforto)
+# Paleta de Cores Sênior (PRICETAX + Portal da Reforma)
+COLOR_GOLD = "#FFDD00"       # Amarelo PRICETAX (Ação/Destaque)
+COLOR_BLACK = "#000000"      # Preto Original PRICETAX (Cabeçalho)
+COLOR_BLUE_PORTAL = "#0056B3" # Azul Institucional (Portal da Reforma)
+COLOR_DARK_BG = "#F0F4F8"    # Fundo Azulado Ultra Claro (Conforto)
 COLOR_CARD_BG = "#FFFFFF"    # Fundo Branco (Destaque)
 COLOR_WHITE = "#1E293B"      # Texto Principal (Cinza Escuro)
 COLOR_GRAY_LIGHT = "#64748B" # Texto Secundário (Labels)
 COLOR_GRAY_MEDIUM = "#ADB5BD" # Bordas e elementos desativados
-COLOR_BORDER = "#E2E8F0"     # Bordas Suaves
+COLOR_BORDER = "#D1D9E6"     # Bordas Suaves e Definidas
 COLOR_SUCCESS = "#10B981"    # Verde Sucesso
 COLOR_ERROR = "#EF4444"      # Vermelho Erro
 
@@ -67,21 +68,22 @@ st.markdown(
         max-width: 1200px;
     }}
 
-    /* Cabeçalho Limpo */
+    /* Cabeçalho Original PRICETAX (Preto) */
     .pricetax-header {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.5rem 0;
-        margin-bottom: 2rem;
-        border-bottom: 2px solid {COLOR_PRIMARY};
+        text-align: left;
+        margin: -3rem -5rem 2rem -5rem;
+        padding: 1.5rem 5rem;
+        background-color: {COLOR_BLACK};
+        border-bottom: 4px solid {COLOR_GOLD};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }}
 
     .pricetax-logo {{
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         font-weight: 800;
-        color: {COLOR_SECONDARY};
-        letter-spacing: -0.03em;
+        color: {COLOR_GOLD};
+        letter-spacing: -0.02em;
+        margin-bottom: 0.2rem;
     }}
 
     /* Cards de Conteúdo */
@@ -117,10 +119,11 @@ st.markdown(
         color: {COLOR_TEXT_MUTED} !important;
     }}
 
-    /* Radio Buttons e Checkboxes */
+    /* Radio Buttons e Checkboxes (Estilo Portal) */
     .stRadio > label {{
-        color: {COLOR_SECONDARY} !important;
-        font-weight: 600 !important;
+        color: {COLOR_BLUE_PORTAL} !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
     }}
 
     /* Inputs e Selects */
@@ -175,9 +178,9 @@ st.markdown(
     }}
 
     .stTabs [aria-selected="true"] {{
-        background-color: {COLOR_PRIMARY} !important;
-        color: {COLOR_SECONDARY} !important;
-        border-color: {COLOR_PRIMARY} !important;
+        background-color: {COLOR_BLUE_PORTAL} !important;
+        color: #FFFFFF !important;
+        border-color: {COLOR_BLUE_PORTAL} !important;
     }}
 
     /* Tabelas e Dataframes */
