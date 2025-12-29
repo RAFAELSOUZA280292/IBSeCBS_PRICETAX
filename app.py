@@ -1919,6 +1919,8 @@ with tabs[0]:
                                     st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
+                                if not cfop_input or not cfop_input.strip():
+                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>💡 Informe o CFOP acima para sugestão de cClassTrib</span>", unsafe_allow_html=True)
                             st.markdown("**Tipo de Alíquota (cClassTrib)**")
                             tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
                             tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
