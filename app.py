@@ -576,6 +576,21 @@ CFOP_CCLASSTRIB_MAP = {
     "5917": "410999",
     "6917": "410999",
     "7917": "410999",
+    
+    # Remessas para conserto/reparo (sem transferência de propriedade)
+    "5915": "410999",
+    "6915": "410999",
+    "7915": "410999",
+    
+    # Remessas para demonstração
+    "5912": "410999",
+    "6912": "410999",
+    "7912": "410999",
+    
+    # Remessas para exposição ou feira
+    "5914": "410999",
+    "6914": "410999",
+    "7914": "410999",
 }
 
 for _cfop in CFOP_NAO_ONEROSOS_410999:
@@ -626,12 +641,38 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         return "", "Informe o CFOP da operação de venda para sugerir o cClassTrib padrão."
 
     # =========================================================================
-    # PRIORIDADE 1: REGIME IVA (baseado na natureza jurídica do produto)
+    # PRIORIDADE 1: CFOP não oneroso (prevalece sobre tudo)
     # =========================================================================
-    # Esta é a regra MAIS IMPORTANTE segundo LC 214/2025
+    # REGRA CRÍTICA: Operações não onerosas (remessas, brindes, doações) têm
+    # prioridade MÁXIMA, pois a NATUREZA DA OPERAÇÃO prevalece sobre o produto.
+    # 
+    # Exemplo: Arroz em remessa para conserto (5915) → 410999 (não onerosa)
+    #          mesmo que arroz tenha RED_60 na venda normal
+    
+    if cfop_clean in CFOP_CCLASSTRIB_MAP:
+        code = CFOP_CCLASSTRIB_MAP[cfop_clean]
+        
+        # Se for operação não onerosa (410999), explicar claramente
+        if code == "410999":
+            msg = (
+                f"⚠️ Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
+                "Não gera débito de IBS/CBS. "
+                "Exemplos: brindes, doações, remessas temporárias, amostras grátis."
+            )
+        else:
+            msg = (
+                f"Regra padrão PRICETAX: CFOP {cfop_clean} → "
+                f"cClassTrib {code} (conforme matriz PRICETAX)."
+            )
+        return code, msg
+    
+    # =========================================================================
+    # PRIORIDADE 2: REGIME IVA (baseado na natureza jurídica do produto)
+    # =========================================================================
+    # Esta regra se aplica APENAS para operações ONEROSAS (vendas normais)
     # cClassTrib depende do FUNDAMENTO LEGAL, não da alíquota
     
-    # 1.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
+    # 2.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
     if "ALIQ_ZERO_CESTA_BASICA_NACIONAL" in regime_iva_upper:
         # ❌ ERRO CRÍTICO: usar 000001 para cesta básica
         # ✅ CORRETO: usar 200003 (operação onerosa com redução legal)
@@ -643,7 +684,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         )
         return code, msg
     
-    # 1.2) Redução 60% (Cesta Estendida - Anexo VII ou Essencialidade)
+    # 2.2) Redução 60% (Cesta Estendida - Anexo VII ou Essencialidade)
     if "RED_60" in regime_iva_upper:
         # ❌ ERRO CRÍTICO: usar 000001 para produtos com redução 60%
         # ✅ CORRETO: usar 200034 (operação onerosa com redução de 60%)
@@ -662,29 +703,8 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         )
         return code, msg
     
-    # 1.3) Outras reduções específicas (se houver)
+    # 2.3) Outras reduções específicas (se houver)
     # Adicionar aqui se surgirem outros regimes com redução
-    
-    # =========================================================================
-    # PRIORIDADE 2: CFOP específico (operações não onerosas)
-    # =========================================================================
-    # Regra fixa via mapa (brindes, doações, remessas especiais)
-    if cfop_clean in CFOP_CCLASSTRIB_MAP:
-        code = CFOP_CCLASSTRIB_MAP[cfop_clean]
-        
-        # Se for operação não onerosa (410999), explicar claramente
-        if code == "410999":
-            msg = (
-                f"⚠️ Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
-                "Não gera débito de IBS/CBS. "
-                "Exemplos: brindes, doações, amostras grátis."
-            )
-        else:
-            msg = (
-                f"Regra padrão PRICETAX: CFOP {cfop_clean} → "
-                f"cClassTrib {code} (conforme matriz PRICETAX)."
-            )
-        return code, msg
 
     # =========================================================================
     # PRIORIDADE 3: Regra genérica para saídas tributadas
@@ -972,7 +992,9 @@ with tabs[5]:
             st.markdown(f'<div style="background:white; padding:20px; border:1px solid {COLOR_BORDER}; border-radius:8px; color:{COLOR_TEXT_MAIN}; font-size:1.1rem;">{data["texto"]}</div>', unsafe_allow_html=True)
             
             sc1, sc2 = st.columns(2)
-            sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE_PORTAL}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
+            # Verificar se 'nota' existe antes de exibir
+            if "nota" in data and data["nota"]:
+                sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE_PORTAL}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
             sc2.markdown(f'<div style="border-left:4px solid {COLOR_GOLD}; background:rgba(255,221,0,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Correlação:</strong><br>Vinculado à EC 132/2023 e Art. 156-A da CF/88.</div>', unsafe_allow_html=True)
         else:
             if art_search or key_search:
