@@ -68,10 +68,14 @@ def render_blocos_navigation():
     ---
     """)
     
-    # Dropdown de seleção com títulos corretos
+    # Dropdown de seleção com títulos corretos do anexo
+    from blocos_titulos_map import BLOCOS_TITULOS
+    
     bloco_options = {}
     for b in blocos:
-        label = f"Bloco {b['numero']:02d}: {b['titulo']}"
+        # Usar título correto do mapeamento
+        titulo_correto = BLOCOS_TITULOS.get(b['numero'], b['titulo'])
+        label = f"Bloco {b['numero']:02d}: {titulo_correto}"
         bloco_options[label] = b['numero'] - 1
     
     selected_label = st.selectbox(
@@ -88,9 +92,11 @@ def render_blocos_navigation():
     artigos_corretos = BLOCOS_ARTIGOS.get(bloco['numero'], bloco['artigos'])
     
     # Exibir bloco selecionado com design simples
+    titulo_exibicao = BLOCOS_TITULOS.get(bloco['numero'], bloco['titulo'])
+    
     st.markdown("---")
     st.markdown(f"## Bloco {bloco['numero']:02d}")
-    st.markdown(f"### {bloco['titulo']}")
+    st.markdown(f"### {titulo_exibicao}")
     st.markdown(f"**Artigos:** {artigos_corretos}")
     
     # Tags de palavras-chave
