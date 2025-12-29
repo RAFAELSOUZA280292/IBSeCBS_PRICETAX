@@ -16,7 +16,13 @@ def render_blocos_navigation():
         return
     
     with open(blocos_path, 'r', encoding='utf-8') as f:
-        blocos = json.load(f)
+        data = json.load(f)
+    
+    # Suportar formato antigo (lista) e novo (dict com metadados)
+    if isinstance(data, dict) and 'blocos' in data:
+        blocos = data['blocos']
+    else:
+        blocos = data
     
     # Cabeçalho com mapeamento de blocos e artigos
     st.markdown("""
