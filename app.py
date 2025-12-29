@@ -355,31 +355,42 @@ def load_tipi_base() -> pd.DataFrame:
     Carrega a planilha de regras TIPI IBS/CBS.
     Procura em múltiplos caminhos possíveis e normaliza as colunas.
     """
+    # Lista de caminhos possíveis para localizar a planilha TIPI
+    # Tenta múltiplos locais para garantir compatibilidade (local, Streamlit Cloud, etc)
     paths = [
-        Path(TIPI_DEFAULT_NAME),
-        Path.cwd() / TIPI_DEFAULT_NAME,
-        Path(ALT_TIPI_NAME),
+        Path(TIPI_DEFAULT_NAME),  # Diretório atual (desenvolvimento local)
+        Path.cwd() / TIPI_DEFAULT_NAME,  # Working directory (Streamlit Cloud)
+        Path(ALT_TIPI_NAME),  # Nome alternativo da planilha
         Path.cwd() / ALT_TIPI_NAME,
     ]
+    
+    # Adicionar caminho relativo ao arquivo app.py (se disponível)
     try:
         paths.append(Path(__file__).parent / TIPI_DEFAULT_NAME)
         paths.append(Path(__file__).parent / ALT_TIPI_NAME)
     except Exception:
-        pass
+        pass  # __file__ pode não estar disponível em alguns ambientes
 
+    # Tentar carregar planilha do primeiro caminho válido encontrado
     df = None
     for p in paths:
         if p.exists():
             df = pd.read_excel(p)
-            break
+            break  # Sucesso! Parar busca
 
+    # Se nenhum arquivo foi encontrado, retornar DataFrame vazio
     if df is None:
         return pd.DataFrame()
 
+    # Normalizar nomes de colunas para maiúsculas (padronização)
     df = normalize_cols_upper(df)
+    
+    # Validar coluna obrigatória NCM
     if "NCM" not in df.columns:
-        return pd.DataFrame()
+        return pd.DataFrame()  # Planilha inválida
 
+    # Criar coluna NCM_DIG (8 dígitos numéricos) se não existir
+    # Remove caracteres não numéricos e preenche com zeros à esquerda
     if "NCM_DIG" not in df.columns:
         df["NCM_DIG"] = (
             df["NCM"].astype(str).str.replace(r"\D", "", regex=True).str.zfill(8)
@@ -404,9 +415,11 @@ def load_tipi_base() -> pd.DataFrame:
         "OBS_REGIME_ESPECIAL",
         "FLAG_IMPOSTO_SELETIVO",
     ]
+    # Garantir existência de todas as colunas obrigatórias
+    # Se alguma coluna não existir, criar com valor vazio
     for c in required:
         if c not in df.columns:
-            df[c] = ""
+            df[c] = ""  # Valor padrão vazio
 
     return df
 
@@ -532,82 +545,37 @@ CFOP_NAO_ONEROSOS_410999 = [
 ]
 
 CFOP_CCLASSTRIB_MAP = {
-    # Vendas padrão (tributação regular)
-    "5101": "000001",
-    "5102": "000001",
-    "5103": "000001",
-    "5104": "000001",
-    "5105": "000001",
-    "5106": "000001",
-    "5109": "000001",
-    "5110": "000001",
-    "5111": "000001",
-    "5112": "000001",
-    "5113": "000001",
-    "5114": "000001",
-    "5115": "000001",
-    "5116": "000001",
-    "5117": "000001",
-    "5118": "000001",
-    "5119": "000001",
-    "5120": "000001",
-    "5122": "000001",
-    "5123": "000001",
-    "5124": "000001",
-    "5125": "000001",
-    "5401": "000001",  # Venda de produção do estabelecimento em operação com produto sujeito ao regime de substituição tributária
-    "5405": "000001",  # Venda de mercadoria adquirida ou recebida de terceiros em operação com mercadoria sujeita ao regime de substituição tributária
+    # =========================================================================
+    # APENAS OPERAÇÕES NÃO ONEROSAS (410999)
+    # =========================================================================
+    # IMPORTANTE: Vendas normais (5102, 6102, etc) foram REMOVIDAS deste mapa
+    # para permitir que a verificação de regime IVA (RED_60, ALIQ_ZERO) 
+    # tenha PRIORIDADE 1 na função guess_cclasstrib()
+    #
+    # Fluxo correto:
+    # 1. Verifica regime IVA (RED_60 → 200034, ALIQ_ZERO → 200003)
+    # 2. Verifica CFOP especial (410999 para brindes/doações)
+    # 3. Regra genérica (000001 para vendas normais)
     
-    "6101": "000001",
-    "6102": "000001",
-    "6103": "000001",
-    "6104": "000001",
-    "6105": "000001",
-    "6106": "000001",
-    "6107": "000001",
-    "6108": "000001",
-    "6109": "000001",
-    "6110": "000001",
-    "6111": "000001",
-    "6112": "000001",
-    "6113": "000001",
-    "6114": "000001",
-    "6115": "000001",
-    "6116": "000001",
-    "6117": "000001",
-    "6118": "000001",
-    "6119": "000001",
-    "6120": "000001",
-    "6122": "000001",
-    "6123": "000001",
-    "6124": "000001",
-    "6401": "000001",  # Venda de produção do estabelecimento em operação com produto sujeito ao regime de substituição tributária
-    "6405": "000001",  # Venda de mercadoria adquirida ou recebida de terceiros em operação com mercadoria sujeita ao regime de substituição tributária
-    
-    "7101": "000001",
-    "7102": "000001",
-    "7105": "000001",
-    "7106": "000001",
-    "7127": "000001",
-    
-    # Operações não onerosas
+    # Brindes, doações, bonificações
     "5910": "410999",
     "6910": "410999",
     "7910": "410999",
+    
+    # Amostras grátis
     "5911": "410999",
     "6911": "410999",
     "7911": "410999",
+    
+    # Outras saídas não especificadas
     "5949": "410999",
     "6949": "410999",
     "7949": "410999",
+    
+    # Remessas em consignação
     "5917": "410999",
     "6917": "410999",
     "7917": "410999",
-    
-    # Operações específicas
-    "5922": "000001",
-    "6922": "000001",
-    "6557": "000001",
 }
 
 for _cfop in CFOP_NAO_ONEROSOS_410999:
@@ -616,51 +584,124 @@ for _cfop in CFOP_NAO_ONEROSOS_410999:
 
 def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     """
-    Sugere um código de Classificação Tributária (cClassTrib) para NFe.
+    Sugere um código de Classificação Tributária (cClassTrib) para NFe conforme LC 214/2025.
+    
+    🔹 REGRAS FUNDAMENTAIS (LC 214/2025):
+    - cClassTrib NÃO depende do valor da alíquota, e sim da NATUREZA JURÍDICA da operação
+    - Série 000xxx → tributação cheia (sem benefício)
+    - Série 200xxx → operação onerosa com REDUÇÃO LEGAL
+    - Série 410xxx → imunidade, isenção ou não incidência
+    
+    🍞 ALIMENTOS - Classificação Correta:
+    1. Cesta Básica Nacional (Anexo I) → 200003 (redução 100%, alíquota zero)
+    2. Cesta Básica Estendida (Anexo VII) → 200034 (redução 60%)
+    3. Alimentos sem benefício → 000001 (tributação padrão)
     
     A sugestão é baseada em:
-    1. Mapeamento fixo de CFOPs específicos (via CFOP_CCLASSTRIB_MAP)
-    2. Regras genéricas para saídas tributadas (CFOPs 5xxx/6xxx/7xxx + CST normal)
-    3. Identificação de operações não onerosas (410999)
+    1. Regime IVA do produto (ALIQ_ZERO_CESTA_BASICA_NACIONAL, RED_60_*, etc)
+    2. Mapeamento fixo de CFOPs específicos (via CFOP_CCLASSTRIB_MAP)
+    3. Regras genéricas para saídas tributadas (CFOPs 5xxx/6xxx/7xxx + CST normal)
+    4. Identificação de operações não onerosas (410999)
     
     Parâmetros:
         cst (Any): Código de Situação Tributária (CST) do produto
         cfop (Any): Código Fiscal de Operações e Prestações (CFOP)
-        regime_iva (str): Regime de tributação IVA do produto (não utilizado atualmente)
+        regime_iva (str): Regime de tributação IVA do produto (CRÍTICO para classificação correta)
     
     Retorna:
         tuple[str, str]: (código_cClassTrib, mensagem_explicativa)
     
     Exemplos:
-        - CFOP 5102 + CST 000 → ("000001", "tributação regular")
+        - Arroz (Anexo I) + CFOP 5102 → ("200003", "Cesta Básica Nacional - redução 100%")
+        - Carne bovina (Anexo VII) + CFOP 5102 → ("200034", "Cesta Estendida - redução 60%")
+        - Refrigerante + CFOP 5102 → ("000001", "tributação regular")
         - CFOP 5910 (brinde) → ("410999", "operação não onerosa")
     """
+    # Limpar e normalizar entradas
     cst_clean = re.sub(r"\D+", "", str(cst or ""))
     cfop_clean = re.sub(r"\D+", "", str(cfop or ""))
+    regime_iva_upper = str(regime_iva or "").upper().strip()
 
     if not cfop_clean:
         return "", "Informe o CFOP da operação de venda para sugerir o cClassTrib padrão."
 
-    # 1) Regra fixa via mapa
-    if cfop_clean in CFOP_CCLASSTRIB_MAP:
-        code = CFOP_CCLASSTRIB_MAP[cfop_clean]
+    # =========================================================================
+    # PRIORIDADE 1: REGIME IVA (baseado na natureza jurídica do produto)
+    # =========================================================================
+    # Esta é a regra MAIS IMPORTANTE segundo LC 214/2025
+    # cClassTrib depende do FUNDAMENTO LEGAL, não da alíquota
+    
+    # 1.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
+    if "ALIQ_ZERO_CESTA_BASICA_NACIONAL" in regime_iva_upper:
+        # ❌ ERRO CRÍTICO: usar 000001 para cesta básica
+        # ✅ CORRETO: usar 200003 (operação onerosa com redução legal)
+        code = "200003"
         msg = (
-            f"Regra padrão PRICETAX: CFOP {cfop_clean} → "
-            f"cClassTrib {code} (conforme matriz PRICETAX)."
+            f"✅ Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
+            "Operação onerosa com redução de 100% (alíquota zero). "
+            "Fundamento: LC 214/2025, Anexo I."
         )
         return code, msg
+    
+    # 1.2) Redução 60% (Cesta Estendida - Anexo VII ou Essencialidade)
+    if "RED_60" in regime_iva_upper:
+        # ❌ ERRO CRÍTICO: usar 000001 para produtos com redução 60%
+        # ✅ CORRETO: usar 200034 (operação onerosa com redução de 60%)
+        code = "200034"
+        
+        # Identificar se é alimento (Anexo VII) ou essencialidade (arts. 137-145)
+        if "ALIMENTO" in regime_iva_upper:
+            fundamento = "Anexo VII (Cesta Básica Estendida)"
+        else:
+            fundamento = "arts. 137 a 145 (essencialidade)"
+        
+        msg = (
+            f"✅ Redução 60% ({fundamento}) → cClassTrib {code}. "
+            "Operação onerosa com redução de 60%. "
+            f"Fundamento: LC 214/2025, {fundamento}."
+        )
+        return code, msg
+    
+    # 1.3) Outras reduções específicas (se houver)
+    # Adicionar aqui se surgirem outros regimes com redução
+    
+    # =========================================================================
+    # PRIORIDADE 2: CFOP específico (operações não onerosas)
+    # =========================================================================
+    # Regra fixa via mapa (brindes, doações, remessas especiais)
+    if cfop_clean in CFOP_CCLASSTRIB_MAP:
+        code = CFOP_CCLASSTRIB_MAP[cfop_clean]
+        
+        # Se for operação não onerosa (410999), explicar claramente
+        if code == "410999":
+            msg = (
+                f"⚠️ Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
+                "Não gera débito de IBS/CBS. "
+                "Exemplos: brindes, doações, amostras grátis."
+            )
+        else:
+            msg = (
+                f"Regra padrão PRICETAX: CFOP {cfop_clean} → "
+                f"cClassTrib {code} (conforme matriz PRICETAX)."
+            )
+        return code, msg
 
-    # 2) Saída (5, 6 ou 7) com CST de tributação "normal" → 000001
+    # =========================================================================
+    # PRIORIDADE 3: Regra genérica para saídas tributadas
+    # =========================================================================
+    # Saída (5, 6 ou 7) com CST de tributação "normal" → 000001 (tributação padrão)
     if cfop_clean[0] in ("5", "6", "7") and cst_clean in {"000", "200", "201", "202", "900"}:
         code = "000001"
         msg = (
             f"Regra genérica: CFOP {cfop_clean} é saída tributada padrão "
-            f"→ cClassTrib {code} (tributação regular). "
-            "Revise apenas se for operação especial (doação, brinde, bonificação, remessa técnica etc.)."
+            f"→ cClassTrib {code} (tributação regular sem benefício). "
+            "Revise se for operação especial (doação, brinde, bonificação, remessa técnica etc.)."
         )
         return code, msg
 
-    # 3) Não conseguiu sugerir nada com segurança
+    # =========================================================================
+    # PRIORIDADE 4: Não conseguiu classificar
+    # =========================================================================
     return "", (
         "Não foi possível localizar um cClassTrib padrão para o CFOP informado. "
         "Provável operação especial (devolução, bonificação, remessa, teste, garantia etc.) – revisar manualmente."
@@ -692,11 +733,15 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
         - Apenas operações de saída (IND_OPER = 1) são consideradas
         - CFOPs de entrada (1xxx, 2xxx, 3xxx) são automaticamente ignorados
     """
-    produtos: Dict[str, Dict[str, str]] = {}
-    documentos: Dict[str, Dict[str, Any]] = {}
-    itens_venda = []
+    # Dicionários para armazenar dados extraídos do SPED
+    produtos: Dict[str, Dict[str, str]] = {}  # Mapa: COD_ITEM → {NCM, DESCR_ITEM}
+    documentos: Dict[str, Dict[str, Any]] = {}  # Mapa: DOC_KEY → {IND_OPER}
+    itens_venda = []  # Lista de itens vendidos (C170)
 
+    # Regex para identificar CFOPs de saída (5xxx, 6xxx, 7xxx)
     cfop_saida_pattern = re.compile(r"^[567]\d{3}$")
+    
+    # Variável de controle para rastrear o documento atual sendo processado
     current_doc_key: Optional[str] = None
 
     try:
@@ -709,15 +754,19 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
 
             registro = fields[1]
 
+            # Registro 0200: Cadastro de produtos (mapeia COD_ITEM → NCM)
             if registro == "0200":
                 if len(fields) >= 9:
-                    cod_item = fields[2]
-                    descr_item = fields[3]
-                    cod_ncm = fields[8]
+                    cod_item = fields[2]  # Código do produto no ERP
+                    descr_item = fields[3]  # Descrição do produto
+                    cod_ncm = fields[8]  # NCM (Nomenclatura Comum do Mercosul)
                     produtos[cod_item] = {"NCM": cod_ncm, "DESCR_ITEM": descr_item}
 
+            # Registro C100: Cabeçalho do documento fiscal (NF-e, NFC-e, etc)
             elif registro == "C100":
-                ind_oper = fields[2] if len(fields) > 2 else ""
+                ind_oper = fields[2] if len(fields) > 2 else ""  # 0=Entrada, 1=Saída
+                
+                # Processar apenas documentos de SAÍDA (IND_OPER = 1)
                 if ind_oper == "1":
                     chv_nfe = fields[9] if len(fields) > 9 else ""
                     ser = fields[6] if len(fields) > 6 else ""
@@ -735,21 +784,24 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                 else:
                     current_doc_key = None
 
+            # Registro C170: Itens do documento fiscal (produtos vendidos)
             elif (
                 registro == "C170"
-                and current_doc_key
-                and documentos.get(current_doc_key, {}).get("IND_OPER") == "1"
+                and current_doc_key  # Garante que estamos dentro de um documento válido
+                and documentos.get(current_doc_key, {}).get("IND_OPER") == "1"  # Apenas saídas
             ):
                 if len(fields) >= 12:
-                    cod_item = fields[3]
-                    vl_item_str = fields[7].replace(",", ".")
-                    cfop = fields[11]
+                    cod_item = fields[3]  # Código do produto (referencia |0200|)
+                    vl_item_str = fields[7].replace(",", ".")  # Valor do item (normalizar decimal)
+                    cfop = fields[11]  # CFOP da operação
 
                     try:
                         vl_item = float(vl_item_str)
                     except ValueError:
                         continue
 
+                    # Filtrar apenas CFOPs de saída (5xxx, 6xxx, 7xxx)
+                    # Ignora entradas (1xxx, 2xxx, 3xxx) automaticamente
                     if cfop_saida_pattern.match(cfop):
                         itens_venda.append(
                             {
@@ -760,8 +812,9 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                             }
                         )
 
+            # Registros que indicam fim do bloco C100 (resetar documento atual)
             elif registro in ("C190", "C300", "D100", "E100"):
-                current_doc_key = None
+                current_doc_key = None  # Limpar contexto do documento
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
