@@ -925,27 +925,13 @@ tabs = st.tabs(
 with tabs[5]:
     st.markdown(
         f"""
-        <div style="background: linear-gradient(135deg, #003366 0%, #004080 100%); 
-                    padding: 2.5rem; border-radius: 12px; margin-bottom: 2rem; 
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
-                <span style="font-size: 2.5rem; margin-right: 1rem;">⚖️</span>
-                <div>
-                    <h1 style="color: white; margin: 0; font-size: 2rem; font-weight: 600; 
-                               font-family: 'Montserrat', sans-serif;">
-                        LC 214/2025 — Inteligência Jurídica Premium
-                    </h1>
-                    <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem;">
-                        Plataforma profissional padrão Big Four | 544 artigos + 36 blocos comentados + 50 Q&A
-                    </p>
-                </div>
+        <div class="pricetax-card">
+            <div class="pricetax-card-header">
+                <span style="font-size: 1.5rem;">⚖️</span> LC 214/2025 — Inteligência e Consulta Integral
             </div>
-            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; 
-                        border-left: 4px solid #D4AF37;">
-                <p style="color: white; margin: 0; font-size: 0.95rem;">
-                    🎯 <strong>Diferenciais:</strong> Busca inteligente | Navegação temática | Análise PriceTax | Correlações automáticas
-                </p>
-            </div>
+            <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
+                Plataforma profissional de consulta à Reforma Tributária. 544 artigos + 36 blocos comentados + 50 Q&A.
+            </p>
         </div>
         """,
         unsafe_allow_html=True
@@ -1002,63 +988,14 @@ with tabs[5]:
 
         if result_art:
             data = artigos_db[result_art]
+            st.markdown(f"### Artigo {result_art}: {data['titulo']}")
+            st.markdown(f'<div style="background:white; padding:20px; border:1px solid {COLOR_BORDER}; border-radius:8px; color:{COLOR_TEXT_MAIN}; font-size:1.1rem;">{data["texto"]}</div>', unsafe_allow_html=True)
             
-            # Cabeçalho do artigo com design premium
-            st.markdown(f"""
-            <div style="background: linear-gradient(to right, #003366, #004080); 
-                        padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; 
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <h3 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 600;">
-                    📜 Artigo {result_art}
-                </h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem;">
-                    {data['titulo']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Texto legal
-            st.markdown("""
-            <div style="background: white; padding: 1.5rem; border: 2px solid #E0E0E0; 
-                        border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <h4 style="color: #003366; margin-top: 0; font-size: 1.1rem; font-weight: 600;">
-                    📝 Texto Legal
-                </h4>
-            """, unsafe_allow_html=True)
-            st.markdown(f'<div style="color: #4A4A4A; font-size: 1.05rem; line-height: 1.7;">{data["texto"]}</div>', unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Comentários PriceTax e Correlações
             sc1, sc2 = st.columns(2)
-            
-            # Comentário PriceTax
+            # Verificar se 'nota' existe antes de exibir
             if "nota" in data and data["nota"]:
-                sc1.markdown(f"""
-                <div style="background: rgba(0,86,179,0.05); padding: 1.5rem; 
-                            border-left: 4px solid #003366; border-radius: 8px; 
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 100%;">
-                    <h4 style="color: #003366; margin-top: 0; font-size: 1rem; font-weight: 600;">
-                        💡 Comentário PriceTax
-                    </h4>
-                    <p style="color: #4A4A4A; margin: 0; line-height: 1.6;">
-                        {data["nota"]}
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Correlações
-            sc2.markdown(f"""
-            <div style="background: rgba(212,175,55,0.05); padding: 1.5rem; 
-                        border-left: 4px solid #D4AF37; border-radius: 8px; 
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 100%;">
-                <h4 style="color: #D4AF37; margin-top: 0; font-size: 1rem; font-weight: 600;">
-                    🔗 Correlações
-                </h4>
-                <p style="color: #4A4A4A; margin: 0; line-height: 1.6;">
-                    Vinculado à EC 132/2023 e Art. 156-A da CF/88.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+                sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE_PORTAL}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
+            sc2.markdown(f'<div style="border-left:4px solid {COLOR_GOLD}; background:rgba(255,221,0,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Correlação:</strong><br>Vinculado à EC 132/2023 e Art. 156-A da CF/88.</div>', unsafe_allow_html=True)
         else:
             if art_search or key_search:
                 st.warning("Artigo não mapeado nesta versão rápida. Tente os artigos chave: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 31, 47, 143, 342, 409 ou 544.")
