@@ -1185,11 +1185,31 @@ with tabs[0]:
                 total_iva = ibs_uf + ibs_mun + cbs
                 cst_ibscbs = row.get("CST_IBSCBS", "")
 
-                # Sugere cClassTrib
-                cclastrib_code, cclastrib_msg = guess_cclasstrib(
-                    cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                # Sugere cClassTrib SEMPRE para venda (CFOP 5102)
+                cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                    cst=cst_ibscbs, cfop="5102", regime_iva=str(regime or "")
                 )
-                class_info = get_class_info_by_code(cclastrib_code)
+                class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                
+                # Se CFOP foi informado E é diferente de venda padrão, calcular também
+                cfop_clean_main = re.sub(r"\D+", "", cfop_input or "")
+                cclastrib_cfop_code = ""
+                cclastrib_cfop_msg = ""
+                class_info_cfop = None
+                cfop_is_different = False
+                
+                if cfop_clean_main and cfop_clean_main not in ["5102", "6102", "7102"]:
+                    # CFOP informado é diferente de venda padrão
+                    cfop_is_different = True
+                    cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
+                        cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                    )
+                    class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                
+                # Para compatibilidade com código existente
+                cclastrib_code = cclastrib_venda_code
+                class_info = class_info_venda
+
 
                 # Header do produto
                 st.markdown(
@@ -1325,15 +1345,27 @@ with tabs[0]:
 
                 with col_xml2:
                     st.markdown("**cClassTrib Sugerido (venda)**")
-                    if cclastrib_code:
-                        desc_class = class_info["DESC_CLASS"] if class_info else ""
-                        if desc_class:
-                            st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
-                            st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                    # Sempre mostrar cClassTrib de venda
+                    if cclastrib_venda_code:
+                        desc_class_venda = class_info_venda["DESC_CLASS"] if class_info_venda else ""
+                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
+                        if desc_class_venda:
+                            st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP assumido: 5102</span>", unsafe_allow_html=True)
                     else:
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
+                    
+                    # Se CFOP diferente foi informado, mostrar também
+                    if cfop_is_different and cclastrib_cfop_code:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown(f"**cClassTrib para CFOP {cfop_clean_main}**")
+                        desc_class_cfop = class_info_cfop["DESC_CLASS"] if class_info_cfop else ""
+                        st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_cfop_code}</span>", unsafe_allow_html=True)
+                        if desc_class_cfop:
+                            st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_cfop}</span>", unsafe_allow_html=True)
+                        # Alertar se for não oneroso
+                        if cclastrib_cfop_code == "410999":
+                            st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
 
                     st.markdown("**Tipo de Alíquota (cClassTrib)**")
                     tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
@@ -1792,11 +1824,31 @@ with tabs[0]:
                         total_iva = ibs_uf + ibs_mun + cbs
                         cst_ibscbs = row.get("CST_IBSCBS", "")
 
-                        # Sugere cClassTrib
-                        cclastrib_code, cclastrib_msg = guess_cclasstrib(
-                            cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                        # Sugere cClassTrib SEMPRE para venda (CFOP 5102)
+                        cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                            cst=cst_ibscbs, cfop="5102", regime_iva=str(regime or "")
                         )
-                        class_info = get_class_info_by_code(cclastrib_code)
+                        class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                        
+                        # Se CFOP foi informado E é diferente de venda padrão, calcular também
+                        cfop_clean_desc = re.sub(r"\D+", "", cfop_input or "")
+                        cclastrib_cfop_code = ""
+                        cclastrib_cfop_msg = ""
+                        class_info_cfop = None
+                        cfop_is_different = False
+                        
+                        if cfop_clean_desc and cfop_clean_desc not in ["5102", "6102", "7102"]:
+                            # CFOP informado é diferente de venda padrão
+                            cfop_is_different = True
+                            cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
+                                cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                            )
+                            class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                        
+                        # Para compatibilidade com código existente
+                        cclastrib_code = cclastrib_venda_code
+                        class_info = class_info_venda
+
 
                         # Header do produto
                         st.markdown(
@@ -1910,17 +1962,27 @@ with tabs[0]:
 
                         with col_xml2:
                             st.markdown("**cClassTrib Sugerido (venda)**")
-                            if cclastrib_code:
-                                desc_class = class_info["DESC_CLASS"] if class_info else ""
-                                if desc_class:
-                                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
-                                    st.markdown(f"<span style='font-size:0.9rem;color:{COLOR_GRAY_LIGHT};'>{desc_class}</span>", unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_code}</span>", unsafe_allow_html=True)
+                            # Sempre mostrar cClassTrib de venda
+                            if cclastrib_venda_code:
+                                desc_class_venda = class_info_venda["DESC_CLASS"] if class_info_venda else ""
+                                st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
+                                if desc_class_venda:
+                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
+                                st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP assumido: 5102</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
-                                if not cfop_input or not cfop_input.strip():
-                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>💡 Informe o CFOP acima para sugestão de cClassTrib</span>", unsafe_allow_html=True)
+                            
+                            # Se CFOP diferente foi informado, mostrar também
+                            if cfop_is_different and cclastrib_cfop_code:
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                st.markdown(f"**cClassTrib para CFOP {cfop_clean_desc}**")
+                                desc_class_cfop = class_info_cfop["DESC_CLASS"] if class_info_cfop else ""
+                                st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_cfop_code}</span>", unsafe_allow_html=True)
+                                if desc_class_cfop:
+                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_cfop}</span>", unsafe_allow_html=True)
+                                # Alertar se for não oneroso
+                                if cclastrib_cfop_code == "410999":
+                                    st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
                             st.markdown("**Tipo de Alíquota (cClassTrib)**")
                             tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
                             tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
