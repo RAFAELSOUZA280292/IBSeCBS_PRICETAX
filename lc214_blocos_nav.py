@@ -5,7 +5,7 @@ import re
 
 def limpar_formatacao(texto):
     """
-    Remove linhas de formatação (===) e outros elementos visuais do texto.
+    Remove linhas de formatação (===), barras invertidas e outros elementos visuais do texto.
     """
     if not texto:
         return texto
@@ -18,8 +18,15 @@ def limpar_formatacao(texto):
             continue
         lines_clean.append(line)
     
-    # Remover linhas vazias excessivas
     texto_limpo = '\n'.join(lines_clean)
+    
+    # Remover TODAS as barras invertidas
+    texto_limpo = texto_limpo.replace('\\', '')
+    
+    # Substituir ≠ por "não é igual a"
+    texto_limpo = texto_limpo.replace('≠', '≠')
+    
+    # Remover linhas vazias excessivas
     texto_limpo = re.sub(r'\n{3,}', '\n\n', texto_limpo)
     
     return texto_limpo.strip()
