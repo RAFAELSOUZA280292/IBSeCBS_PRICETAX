@@ -1,6 +1,28 @@
 import streamlit as st
 import json
 import os
+import re
+
+def limpar_formatacao(texto):
+    """
+    Remove linhas de formatação (===) e outros elementos visuais do texto.
+    """
+    if not texto:
+        return texto
+    
+    # Remover linhas com 3+ sinais de igual
+    lines = texto.split('\n')
+    lines_clean = []
+    for line in lines:
+        if line.count('=') >= 3:
+            continue
+        lines_clean.append(line)
+    
+    # Remover linhas vazias excessivas
+    texto_limpo = '\n'.join(lines_clean)
+    texto_limpo = re.sub(r'\n{3,}', '\n\n', texto_limpo)
+    
+    return texto_limpo.strip()
 
 def render_blocos_navigation():
     """
@@ -113,8 +135,10 @@ def render_blocos_navigation():
         
         for secao in bloco['secoes']:
             with st.expander(f"{secao['numero']}. {secao['titulo']}", expanded=False):
-                st.markdown(secao['conteudo'])
+                conteudo_limpo = limpar_formatacao(secao['conteudo'])
+                st.markdown(conteudo_limpo)
     
     # Conteúdo completo
     with st.expander("📄 Ver Conteúdo Completo do Bloco", expanded=False):
-        st.markdown(bloco['conteudo_completo'])
+        conteudo_completo_limpo = limpar_formatacao(bloco['conteudo_completo'])
+        st.markdown(conteudo_completo_limpo)
