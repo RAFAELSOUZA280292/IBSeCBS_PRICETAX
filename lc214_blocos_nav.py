@@ -22,7 +22,7 @@ def render_blocos_navigation():
     st.markdown("""
     ### 📚 Navegação por Blocos Temáticos
     
-    36 blocos comentados pela PriceTax com análise estruturada da LC 214/2025.
+    32 blocos comentados pela PriceTax com análise estruturada da LC 214/2025.
     
     **Mapeamento completo:**
     

@@ -938,7 +938,7 @@ with tabs[5]:
     )
 
     # Navegação por Abas Internas (UX de Alto Nível)
-    lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📚 Blocos Temáticos (36)", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
+    lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📚 Blocos Temáticos (32)", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
 
     # Banco de Dados de Artigos (Mapeamento Integral - 544 Artigos)
     # Carregamento dinâmico do banco de dados jurídico PriceTax

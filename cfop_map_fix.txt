@@ -1,0 +1,31 @@
+# Mapeamento de CFOPs para cClassTrib
+# IMPORTANTE: Apenas CFOPs ESPECIAIS devem estar aqui (não onerosos, etc)
+# CFOPs de venda padrão (5102, 6102, etc) NÃO devem estar no mapa,
+# pois precisam passar pela verificação de regime IVA primeiro (PRIORIDADE 1)
+CFOP_CCLASSTRIB_MAP = {
+    # =========================================================================
+    # APENAS OPERAÇÕES NÃO ONEROSAS (410999)
+    # =========================================================================
+    # Vendas normais (5102, 6102, etc) foram REMOVIDAS para permitir que
+    # a verificação de regime IVA (RED_60, ALIQ_ZERO) tenha prioridade
+    
+    # Brindes, doações, bonificações
+    "5910": "410999",
+    "6910": "410999",
+    "7910": "410999",
+    
+    # Amostras grátis
+    "5911": "410999",
+    "6911": "410999",
+    "7911": "410999",
+    
+    # Outras saídas não especificadas
+    "5949": "410999",
+    "6949": "410999",
+    "7949": "410999",
+    
+    # Remessas em consignação
+    "5917": "410999",
+    "6917": "410999",
+    "7917": "410999",
+}

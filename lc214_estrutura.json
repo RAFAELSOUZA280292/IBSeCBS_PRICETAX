@@ -1,0 +1,1472 @@
+[
+  {
+    "numero": 1,
+    "arquivo": "Bloco_01_LC214_PriceTax.txt",
+    "titulo": "NORMAS GERAIS, PRINCÍPIOS, FATO GERADOR, OPERAÇÃO, LOCAL E BASE DE CÁLCULO",
+    "artigos": "1º a 20\n\n1",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO E OBJETIVO DO BLOCO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "DEFINIÇÕES E CONCEITOS"
+      },
+      {
+        "numero": 3,
+        "titulo": "REGRAS LEGAIS"
+      },
+      {
+        "numero": 4,
+        "titulo": "LÓGICA DE FUNCIONAMENTO DO SISTEMA\nO"
+      },
+      {
+        "numero": 5,
+        "titulo": "IMPACTOS PRÁTICOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASOS REAIS E EXEMPLOS DE APLICAÇÃO"
+      },
+      {
+        "numero": 7,
+        "titulo": "PONTOS DE ATENÇÃO E ERROS COMUNS"
+      },
+      {
+        "numero": 8,
+        "titulo": "CONEXÕES COM OUTROS BLOCOS DA LC"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Imunidade",
+      "Crédito"
+    ],
+    "tamanho": 3659
+  },
+  {
+    "numero": 2,
+    "arquivo": "Bloco_02_LC214_PriceTax.txt",
+    "titulo": "SUJEIÇÃO PASSIVA, CONTRIBUINTES E PLATAFORMAS DIGITAIS",
+    "artigos": "21 a 26\n\n1",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO E OBJETIVO DO BLOCO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "DEFINIÇÕES E CONCEITOS"
+      },
+      {
+        "numero": 3,
+        "titulo": "REGRAS LEGAIS"
+      },
+      {
+        "numero": 4,
+        "titulo": "LÓGICA DE FUNCIONAMENTO DO SISTEMA\nA LC"
+      },
+      {
+        "numero": 5,
+        "titulo": "IMPACTOS PRÁTICOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASOS REAIS DE APLICAÇÃO\nC"
+      },
+      {
+        "numero": 7,
+        "titulo": "PONTOS DE ATENÇÃO E ERROS COMUNS"
+      },
+      {
+        "numero": 8,
+        "titulo": "CONEXÕES COM OUTROS BLOCOS"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Crédito"
+    ],
+    "tamanho": 3120
+  },
+  {
+    "numero": 3,
+    "arquivo": "Bloco_03_LC214_PriceTax.txt",
+    "titulo": "Bloco 3",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO E OBJETIVO DO BLOCO"
+      },
+      {
+        "numero": 2,
+        "titulo": "ART"
+      },
+      {
+        "numero": 3,
+        "titulo": "ART"
+      },
+      {
+        "numero": 4,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 5,
+        "titulo": "ART"
+      },
+      {
+        "numero": 6,
+        "titulo": "ART"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 8,
+        "titulo": "CONSEQUÊNCIAS OPERACIONAIS"
+      },
+      {
+        "numero": 9,
+        "titulo": "REGRA DE OURO PARA IA ESPECIALISTA"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Crédito",
+      "Alíquota Zero"
+    ],
+    "tamanho": 4550
+  },
+  {
+    "numero": 4,
+    "arquivo": "Bloco_04_LC214_PriceTax.txt",
+    "titulo": "Bloco 4",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "PRINCÍPIO CENTRAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "ART"
+      },
+      {
+        "numero": 3,
+        "titulo": "REGRA DO PAGAMENTO"
+      },
+      {
+        "numero": 4,
+        "titulo": "OPERAÇÕES SEM DIREITO A CRÉDITO"
+      },
+      {
+        "numero": 5,
+        "titulo": "ESTORNO DE CRÉDITOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 7,
+        "titulo": "ART"
+      },
+      {
+        "numero": 8,
+        "titulo": "EXCEÇÕES EXPRESSAS À VEDAÇÃO"
+      },
+      {
+        "numero": 9,
+        "titulo": "CASOS REAIS"
+      },
+      {
+        "numero": 10,
+        "titulo": "REGRA DE OURO PARA IA ESPECIALISTA"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Crédito",
+      "Alíquota Zero"
+    ],
+    "tamanho": 3888
+  },
+  {
+    "numero": 5,
+    "arquivo": "Bloco_05_LC214_PriceTax.txt",
+    "titulo": "Bloco 5",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Split Payment",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 3984
+  },
+  {
+    "numero": 6,
+    "arquivo": "Bloco_06_LC214_PriceTax.txt",
+    "titulo": "Bloco 6",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "OBJETIVO DO BLOCO"
+      },
+      {
+        "numero": 2,
+        "titulo": "INCIDÊNCIA NA IMPORTAÇÃO DE BENS"
+      },
+      {
+        "numero": 3,
+        "titulo": "IMPORTAÇÃO DE SERVIÇOS E BENS IMATERIAIS"
+      },
+      {
+        "numero": 4,
+        "titulo": "CONTRIBUINTE NA IMPORTAÇÃO"
+      },
+      {
+        "numero": 5,
+        "titulo": "DIREITO AO CRÉDITO NA IMPORTAÇÃO"
+      },
+      {
+        "numero": 6,
+        "titulo": "IMPORTAÇÃO POR CONTA E ORDEM"
+      },
+      {
+        "numero": 7,
+        "titulo": "REGIMES ADUANEIROS ESPECIAIS"
+      },
+      {
+        "numero": 8,
+        "titulo": "IMPORTAÇÃO VIA PLATAFORMAS DIGITAIS"
+      },
+      {
+        "numero": 9,
+        "titulo": "PONTO CRÍTICO PARA IA TRIBUTÁRIA"
+      },
+      {
+        "numero": 10,
+        "titulo": "ERROS QUE NÃO PODEM OCORRER"
+      }
+    ],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Crédito"
+    ],
+    "tamanho": 4868
+  },
+  {
+    "numero": 7,
+    "arquivo": "Bloco_07_LC214_PriceTax.txt",
+    "titulo": "Bloco 7",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "PRINCÍPIO GERAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "MANUTENÇÃO DOS CRÉDITOS"
+      },
+      {
+        "numero": 3,
+        "titulo": "EXPORTAÇÃO DE SERVIÇOS E INTANGÍVEIS"
+      },
+      {
+        "numero": 4,
+        "titulo": "TRADING COMPANIES"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASOS REAIS DE APLICAÇÃO"
+      },
+      {
+        "numero": 6,
+        "titulo": "ALERTAS PARA IA TRIBUTÁRIA"
+      }
+    ],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Imunidade",
+      "Crédito"
+    ],
+    "tamanho": 2954
+  },
+  {
+    "numero": 8,
+    "arquivo": "Bloco_08_LC214_PriceTax.txt",
+    "titulo": "Bloco 8",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "OBJETIVO DOS REGIMES ESPECIAIS"
+      },
+      {
+        "numero": 2,
+        "titulo": "DRAWBACK"
+      },
+      {
+        "numero": 3,
+        "titulo": "ADMISSÃO TEMPORÁRIA"
+      },
+      {
+        "numero": 4,
+        "titulo": "REMESSAS INTERNACIONAIS"
+      },
+      {
+        "numero": 5,
+        "titulo": "OUTROS REGIMES ADUANEIROS"
+      },
+      {
+        "numero": 6,
+        "titulo": "ALERTAS PARA IA TRIBUTÁRIA"
+      }
+    ],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Isenção",
+      "Crédito"
+    ],
+    "tamanho": 3388
+  },
+  {
+    "numero": 9,
+    "arquivo": "Bloco_09_LC214_PriceTax.txt",
+    "titulo": "ZONAS DE PROCESSAMENTO DE EXPORTAÇÃO (ZPE)",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Imunidade",
+      "Isenção",
+      "Crédito"
+    ],
+    "tamanho": 5140
+  },
+  {
+    "numero": 10,
+    "arquivo": "Bloco_10_LC214_PriceTax.txt",
+    "titulo": "CASHBACK E CESTA BÁSICA NACIONAL",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Isenção",
+      "Cashback",
+      "Cesta Básica",
+      "Alíquota Zero",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 5017
+  },
+  {
+    "numero": 11,
+    "arquivo": "Bloco_11_LC214_PriceTax.txt",
+    "titulo": "REGIMES DIFERENCIADOS: REDUÇÕES DE ALÍQUOTA (30% E 60%)",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 6540
+  },
+  {
+    "numero": 12,
+    "arquivo": "Bloco_12_LC214_PriceTax.txt",
+    "titulo": "Bloco 12",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "VISÃO GERAL\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "MEDICAMENTOS E SAÚDE"
+      },
+      {
+        "numero": 3,
+        "titulo": "ACESSIBILIDADE E INCLUSÃO"
+      },
+      {
+        "numero": 4,
+        "titulo": "SAÚDE MENSTRUAL"
+      },
+      {
+        "numero": 5,
+        "titulo": "VEÍCULOS PARA PCD E TAXISTAS"
+      },
+      {
+        "numero": 6,
+        "titulo": "REGRAS DE CRÉDITO"
+      },
+      {
+        "numero": 7,
+        "titulo": "CHECKLIST OPERACIONAL PARA CLASSIFICAÇÃO"
+      },
+      {
+        "numero": 8,
+        "titulo": "RESUMO EXECUTIVO"
+      }
+    ],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2802
+  },
+  {
+    "numero": 13,
+    "arquivo": "Bloco_13_LC214_PriceTax.txt",
+    "titulo": "TRANSPORTE PÚBLICO, REABILITAÇÃO URBANA E BENEFÍCIOS URBANOS",
+    "artigos": "157",
+    "secoes": [
+      {
+        "numero": 13,
+        "titulo": "FIM DO BLOCO"
+      }
+    ],
+    "palavras_chave": [
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2645
+  },
+  {
+    "numero": 14,
+    "arquivo": "Bloco_14_LC214_PriceTax.txt",
+    "titulo": "PRODUTOR RURAL E TRANSPORTADORES",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "PRODUTOR RURAL DE PEQUENO PORTE"
+      },
+      {
+        "numero": 0,
+        "titulo": "CONSEQUÊNCIAS TRIBUTÁRIAS"
+      },
+      {
+        "numero": 2,
+        "titulo": "CRÉDITO PRESUMIDO PARA O ADQUIRENTE DO PRODUTOR RURAL"
+      },
+      {
+        "numero": 3,
+        "titulo": "TRANSPORTADOR AUTÔNOMO DE CARGAS"
+      },
+      {
+        "numero": 4,
+        "titulo": "TRANSPORTADOR PESSOA JURÍDICA\n\nQ"
+      },
+      {
+        "numero": 5,
+        "titulo": "DISTINÇÃO ESSENCIAL"
+      },
+      {
+        "numero": 6,
+        "titulo": "ERROS CRÍTICOS QUE A IA DEVE EVITAR"
+      },
+      {
+        "numero": 7,
+        "titulo": "CHECKLIST OPERACIONAL PARA IA"
+      },
+      {
+        "numero": 1,
+        "titulo": "O"
+      },
+      {
+        "numero": 2,
+        "titulo": "O"
+      }
+    ],
+    "palavras_chave": [
+      "Isenção",
+      "Crédito"
+    ],
+    "tamanho": 3294
+  },
+  {
+    "numero": 15,
+    "arquivo": "Bloco_15_LC214_PriceTax.txt",
+    "titulo": "Bloco 15",
+    "artigos": "126 a 129",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO GERAL\nA L"
+      },
+      {
+        "numero": 2,
+        "titulo": "FUNDAMENTO LEGAL\nA"
+      },
+      {
+        "numero": 3,
+        "titulo": "ABRANGÊNCIA DO REGIME\nA"
+      },
+      {
+        "numero": 4,
+        "titulo": "REDUÇÃO DE ALÍQUOTA\nA"
+      },
+      {
+        "numero": 5,
+        "titulo": "CONDIÇÕES PARA FRUIÇÃO\nP"
+      },
+      {
+        "numero": 6,
+        "titulo": "NÃO CUMULATIVIDADE\nO"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO PRÁTICO\nC"
+      },
+      {
+        "numero": 8,
+        "titulo": "PONTOS DE ATENÇÃO"
+      },
+      {
+        "numero": 9,
+        "titulo": "IMPACTO OPERACIONAL"
+      },
+      {
+        "numero": 10,
+        "titulo": "CONCLUSÃO\nO"
+      }
+    ],
+    "palavras_chave": [
+      "Imunidade",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2689
+  },
+  {
+    "numero": 16,
+    "arquivo": "Bloco_16_LC214_PriceTax.txt",
+    "titulo": "Bloco 16",
+    "artigos": "130 a 142",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO GERAL\nA LC"
+      },
+      {
+        "numero": 2,
+        "titulo": "FUNDAMENTO LEGAL\nA"
+      },
+      {
+        "numero": 3,
+        "titulo": "SETORES ALCANÇADOS\nA"
+      },
+      {
+        "numero": 4,
+        "titulo": "REDUÇÃO DE ALÍQUOTA\nA"
+      },
+      {
+        "numero": 5,
+        "titulo": "REGRA GERAL DE APURAÇÃO"
+      },
+      {
+        "numero": 6,
+        "titulo": "CRÉDITOS"
+      },
+      {
+        "numero": 7,
+        "titulo": "MEDICAMENTOS E PRODUTOS DE SAÚDE"
+      },
+      {
+        "numero": 8,
+        "titulo": "CASO PRÁTICO"
+      },
+      {
+        "numero": 9,
+        "titulo": "CASO PRÁTICO"
+      },
+      {
+        "numero": 10,
+        "titulo": "PONTOS DE ATENÇÃO"
+      }
+    ],
+    "palavras_chave": [
+      "Alíquota Zero",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2988
+  },
+  {
+    "numero": 17,
+    "arquivo": "Bloco_17_LC214_PriceTax.txt",
+    "titulo": "ALÍQUOTA ZERO ESPECÍFICA (ARTS. 143 A 156 – LC 214/2025)",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO NORMATIVO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "DIFERENÇA ENTRE ALÍQUOTA ZERO"
+      },
+      {
+        "numero": 3,
+        "titulo": "HIPÓTESES DE ALÍQUOTA ZERO"
+      },
+      {
+        "numero": 4,
+        "titulo": "IMPACTOS NA CADEIA DE CRÉDITOS"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "PONTOS DE ATENÇÃO PARA ERP E COMPLIANCE"
+      },
+      {
+        "numero": 7,
+        "titulo": "CONCLUSÃO TÉCNICA\nO"
+      }
+    ],
+    "palavras_chave": [
+      "Isenção",
+      "Cesta Básica",
+      "Alíquota Zero",
+      "Crédito",
+      "Redução de Alíquota"
+    ],
+    "tamanho": 2962
+  },
+  {
+    "numero": 18,
+    "arquivo": "Bloco_18_LC214_PriceTax.txt",
+    "titulo": "TRANSPORTE COLETIVO E REABILITAÇÃO URBANA (ARTS. 157 A 163 – LC 214/2025)",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO NORMATIVO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "TRANSPORTE COLETIVO URBANO E METROPOLITANO"
+      },
+      {
+        "numero": 3,
+        "titulo": "REABILITAÇÃO URBANA"
+      },
+      {
+        "numero": 4,
+        "titulo": "IMPACTOS NA CADEIA DE CRÉDITOS"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "PONTOS DE ATENÇÃO PARA ERP E COMPLIANCE"
+      },
+      {
+        "numero": 7,
+        "titulo": "CONCLUSÃO TÉCNICA\nO"
+      }
+    ],
+    "palavras_chave": [
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2812
+  },
+  {
+    "numero": 19,
+    "arquivo": "Bloco_19_LC214_PriceTax.txt",
+    "titulo": "Bloco 19",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "PRODUTOR RURAL"
+      },
+      {
+        "numero": 3,
+        "titulo": "CRÉDITO PRESUMIDO"
+      },
+      {
+        "numero": 4,
+        "titulo": "CASO PRÁTICO"
+      },
+      {
+        "numero": 5,
+        "titulo": "CAMINHONEIRO AUTÔNOMO"
+      },
+      {
+        "numero": 6,
+        "titulo": "CRÉDITO PRESUMIDO NO FRETE AUTÔNOMO"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO PRÁTICO"
+      },
+      {
+        "numero": 8,
+        "titulo": "EXPORTAÇÕES"
+      },
+      {
+        "numero": 9,
+        "titulo": "IMPACTOS PARA ERP E COMPLIANCE"
+      },
+      {
+        "numero": 10,
+        "titulo": "CONCLUSÃO DO BLOCO"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 6054
+  },
+  {
+    "numero": 20,
+    "arquivo": "Bloco_20_LC214_PriceTax.txt",
+    "titulo": "Bloco 20",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "PRINCÍPIO ECONÔMICO"
+      },
+      {
+        "numero": 3,
+        "titulo": "REVENDAS DE BENS USADOS\nA"
+      },
+      {
+        "numero": 4,
+        "titulo": "CRÉDITO PRESUMIDO\nC"
+      },
+      {
+        "numero": 5,
+        "titulo": "RESÍDUOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 8,
+        "titulo": "PONTOS CRÍTICOS DE COMPLIANCE"
+      },
+      {
+        "numero": 9,
+        "titulo": "ALERTA FISCAL\nU"
+      },
+      {
+        "numero": 10,
+        "titulo": "CONCLUSÃO TÉCNICA\nO B"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 2691
+  },
+  {
+    "numero": 21,
+    "arquivo": "Bloco_21_LC214_PriceTax.txt",
+    "titulo": "Bloco 21",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL\nE"
+      },
+      {
+        "numero": 2025,
+        "titulo": "O"
+      },
+      {
+        "numero": 2,
+        "titulo": "CARACTERÍSTICAS DO REGIME"
+      },
+      {
+        "numero": 3,
+        "titulo": "PRODUTOS ALCANÇADOS\nE"
+      },
+      {
+        "numero": 4,
+        "titulo": "SUJEITO PASSIVO\nO"
+      },
+      {
+        "numero": 5,
+        "titulo": "BASE DE CÁLCULO E ALÍQUOTA"
+      },
+      {
+        "numero": 6,
+        "titulo": "EFEITOS NA CADEIA\nA"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 8,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 9,
+        "titulo": "COMBUSTÍVEIS E EXPORTAÇÃO"
+      }
+    ],
+    "palavras_chave": [
+      "Redução de Alíquota",
+      "Crédito",
+      "Regime Monofásico"
+    ],
+    "tamanho": 3171
+  },
+  {
+    "numero": 22,
+    "arquivo": "Bloco_22_LC214_PriceTax.txt",
+    "titulo": "Bloco 22",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO GERAL\nO"
+      },
+      {
+        "numero": 2,
+        "titulo": "CONTRIBUINTES ALCANÇADOS"
+      },
+      {
+        "numero": 3,
+        "titulo": "BASE DE CÁLCULO\nA"
+      },
+      {
+        "numero": 4,
+        "titulo": "OPERAÇÕES ALCANÇADAS"
+      },
+      {
+        "numero": 5,
+        "titulo": "CRÉDITOS PARA O TOMADOR\nE"
+      },
+      {
+        "numero": 6,
+        "titulo": "VEDAÇÕES"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 8,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 9,
+        "titulo": "IMPACTOS EM ERP E COMPLIANCE"
+      },
+      {
+        "numero": 10,
+        "titulo": "PONTOS DE ATENÇÃO FISCAL"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 2337
+  },
+  {
+    "numero": 23,
+    "arquivo": "Bloco_23_LC214_PriceTax.txt",
+    "titulo": "Bloco 23",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "ARRENDAMENTO MERCANTIL OPERACIONAL"
+      },
+      {
+        "numero": 3,
+        "titulo": "ARRENDAMENTO MERCANTIL FINANCEIRO"
+      },
+      {
+        "numero": 4,
+        "titulo": "PONTOS DE ATENÇÃO OPERACIONAL"
+      },
+      {
+        "numero": 5,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 2643
+  },
+  {
+    "numero": 24,
+    "arquivo": "Bloco_24_LC214_PriceTax.txt",
+    "titulo": "Bloco 24",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "CONSÓRCIOS"
+      },
+      {
+        "numero": 3,
+        "titulo": "ENTREGA DO BEM AO CONSORCIADO"
+      },
+      {
+        "numero": 4,
+        "titulo": "FUNDOS DE INVESTIMENTO"
+      },
+      {
+        "numero": 5,
+        "titulo": "FUNDO COMO CONTRIBUINTE"
+      },
+      {
+        "numero": 6,
+        "titulo": "PONTOS DE ATENÇÃO OPERACIONAL"
+      },
+      {
+        "numero": 7,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 2732
+  },
+  {
+    "numero": 25,
+    "arquivo": "Bloco_25_LC214_PriceTax.txt",
+    "titulo": "Bloco 25",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "BASE DE CÁLCULO"
+      },
+      {
+        "numero": 3,
+        "titulo": "TAXA DE DESCONTO"
+      },
+      {
+        "numero": 4,
+        "titulo": "ANTECIPAÇÃO DE RECEBÍVEIS"
+      },
+      {
+        "numero": 5,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 6,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 7,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 8,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Crédito"
+    ],
+    "tamanho": 2959
+  },
+  {
+    "numero": 26,
+    "arquivo": "Bloco_26_LC214_PriceTax.txt",
+    "titulo": "Bloco 26",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "BASE DE CÁLCULO"
+      },
+      {
+        "numero": 3,
+        "titulo": "SEGUROS EM GERAL"
+      },
+      {
+        "numero": 4,
+        "titulo": "PREVIDÊNCIA COMPLEMENTAR"
+      },
+      {
+        "numero": 5,
+        "titulo": "TÍTULOS DE CAPITALIZAÇÃO"
+      },
+      {
+        "numero": 6,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 7,
+        "titulo": "BASE NEGATIVA"
+      },
+      {
+        "numero": 8,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 9,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 3116
+  },
+  {
+    "numero": 27,
+    "arquivo": "Bloco_27_LC214_PriceTax.txt",
+    "titulo": "Bloco 27",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "BASE DE CÁLCULO"
+      },
+      {
+        "numero": 3,
+        "titulo": "ALÍQUOTA DIFERENCIADA"
+      },
+      {
+        "numero": 4,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 5,
+        "titulo": "EXCEÇÃO"
+      },
+      {
+        "numero": 6,
+        "titulo": "BASE NEGATIVA"
+      },
+      {
+        "numero": 7,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 8,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 9,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 3029
+  },
+  {
+    "numero": 28,
+    "arquivo": "Bloco_28_LC214_PriceTax.txt",
+    "titulo": "Bloco 28",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "BASE DE CÁLCULO"
+      },
+      {
+        "numero": 3,
+        "titulo": "INCIDÊNCIA TRIBUTÁRIA"
+      },
+      {
+        "numero": 4,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 6,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 7,
+        "titulo": "BASE NEGATIVA"
+      },
+      {
+        "numero": 8,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 9,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 2563
+  },
+  {
+    "numero": 29,
+    "arquivo": "Bloco_29_LC214_PriceTax.txt",
+    "titulo": "Bloco 29",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "CONTRIBUINTES"
+      },
+      {
+        "numero": 3,
+        "titulo": "BASE DE CÁLCULO"
+      },
+      {
+        "numero": 4,
+        "titulo": "ALÍQUOTAS DIFERENCIADAS"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 7,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 8,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 9,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 10,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2930
+  },
+  {
+    "numero": 30,
+    "arquivo": "Bloco_30_LC214_PriceTax.txt",
+    "titulo": "Bloco 30",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ENQUADRAMENTO LEGAL"
+      },
+      {
+        "numero": 2,
+        "titulo": "ALÍQUOTAS DIFERENCIADAS"
+      },
+      {
+        "numero": 3,
+        "titulo": "TRATAMENTO DAS GORJETAS"
+      },
+      {
+        "numero": 4,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 5,
+        "titulo": "DIREITO AO CRÉDITO"
+      },
+      {
+        "numero": 6,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASO REAL"
+      },
+      {
+        "numero": 8,
+        "titulo": "OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 9,
+        "titulo": "RISCOS FISCAIS"
+      },
+      {
+        "numero": 10,
+        "titulo": "CONCLUSÃO TÉCNICA"
+      }
+    ],
+    "palavras_chave": [
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 3035
+  },
+  {
+    "numero": 31,
+    "arquivo": "Bloco_31_LC214_PriceTax.txt",
+    "titulo": "Bloco 31",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ESCOPO DO BLOCO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "TRANSPORTE COLETIVO URBANO E METROPOLITANO"
+      },
+      {
+        "numero": 3,
+        "titulo": "TRANSPORTE INTERMUNICIPAL"
+      },
+      {
+        "numero": 4,
+        "titulo": "AGÊNCIAS DE TURISMO"
+      },
+      {
+        "numero": 5,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 6,
+        "titulo": "ALERTAS DE CONFORMIDADE"
+      },
+      {
+        "numero": 7,
+        "titulo": "CONEXÕES COM OUTROS BLOCOS"
+      }
+    ],
+    "palavras_chave": [
+      "Split Payment",
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 2080
+  },
+  {
+    "numero": 32,
+    "arquivo": "Bloco_32_LC214_PriceTax.txt",
+    "titulo": "Bloco 32",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "ESCOPO DO BLOCO\nE"
+      },
+      {
+        "numero": 2,
+        "titulo": "REGIME DE TRIBUTAÇÃO ESPECÍFICA DO FUTEBOL"
+      },
+      {
+        "numero": 3,
+        "titulo": "ALÍQUOTA UNIFICADA"
+      },
+      {
+        "numero": 4,
+        "titulo": "RECEITAS ABRANGIDAS"
+      },
+      {
+        "numero": 5,
+        "titulo": "EXPORTAÇÃO DE ATLETAS"
+      },
+      {
+        "numero": 6,
+        "titulo": "CRÉDITOS"
+      },
+      {
+        "numero": 7,
+        "titulo": "CASOS PRÁTICOS"
+      },
+      {
+        "numero": 8,
+        "titulo": "ALERTAS DE CONFORMIDADE"
+      },
+      {
+        "numero": 9,
+        "titulo": "CONEXÕES COM OUTROS BLOCOS"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 1696
+  },
+  {
+    "numero": 33,
+    "arquivo": "Bloco_33_LC214_PriceTax.txt",
+    "titulo": "Bloco 33",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "CONTEXTO E OBJETIVO DO BLOCO"
+      },
+      {
+        "numero": 2,
+        "titulo": "BASE DE CÁLCULO NEGATIVA"
+      },
+      {
+        "numero": 3,
+        "titulo": "UNIFORMIZAÇÃO DAS OBRIGAÇÕES ACESSÓRIAS"
+      },
+      {
+        "numero": 4,
+        "titulo": "PREVALÊNCIA DO REGIME ESPECÍFICO"
+      },
+      {
+        "numero": 5,
+        "titulo": "SEGREGAÇÃO CONTÁBIL OBRIGATÓRIA"
+      },
+      {
+        "numero": 6,
+        "titulo": "CRÉDITOS"
+      },
+      {
+        "numero": 7,
+        "titulo": "COMPETÊNCIA E APURAÇÃO"
+      },
+      {
+        "numero": 8,
+        "titulo": "ALERTAS OPERACIONAIS PRICE TAX"
+      }
+    ],
+    "palavras_chave": [
+      "Crédito"
+    ],
+    "tamanho": 3723
+  },
+  {
+    "numero": 34,
+    "arquivo": "Bloco_34_LC214_PriceTax.txt",
+    "titulo": "Bloco 34",
+    "artigos": "N/A",
+    "secoes": [
+      {
+        "numero": 1,
+        "titulo": "OBJETIVO DO BLOCO"
+      },
+      {
+        "numero": 2,
+        "titulo": "PROUNI"
+      },
+      {
+        "numero": 3,
+        "titulo": "REGIME AUTOMOTIVO REGIONAL"
+      },
+      {
+        "numero": 4,
+        "titulo": "LIMITAÇÕES IMPORTANTES"
+      },
+      {
+        "numero": 5,
+        "titulo": "ALERTAS ESTRATÉGICOS PRICE TAX"
+      }
+    ],
+    "palavras_chave": [
+      "Isenção",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 3159
+  },
+  {
+    "numero": 35,
+    "arquivo": "Bloco_35_LC214_PriceTax.txt",
+    "titulo": "Bloco 35",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Split Payment",
+      "Redução de Alíquota",
+      "Crédito"
+    ],
+    "tamanho": 4809
+  },
+  {
+    "numero": 36,
+    "arquivo": "Bloco_36_LC214_PriceTax.txt",
+    "titulo": "Bloco 36",
+    "artigos": "N/A",
+    "secoes": [],
+    "palavras_chave": [
+      "Split Payment",
+      "Redução de Alíquota",
+      "Crédito",
+      "Alíquota Zero"
+    ],
+    "tamanho": 5182
+  }
+]
