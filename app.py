@@ -1090,15 +1090,6 @@ with tabs[5]:
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        f"""
-        <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid {COLOR_BORDER}; color: {COLOR_TEXT_MUTED}; font-size: 0.8rem; text-align: center;">
-            Plataforma de Inteligência Jurídica PriceTax — Baseada na LC 214/2025.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 # =============================================================================
 # CARREGAMENTO DA PLANILHA CFOP x cClassTrib
 # =============================================================================
