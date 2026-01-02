@@ -452,12 +452,15 @@ BENEFICIOS_ENGINE = None
 
 if BENEFICIOS_DISPONIVEL:
     try:
-        # Procurar planilha de benefícios
+        # Procurar planilha de benefícios (tentar vários nomes)
         beneficios_paths = [
-            Path("BDBENEFÍCIOS_PRICETAX_2026.xlsx"),
+            Path("BDBENEF_PRICETAX_2026.xlsx"),  # Nome sem acento (preferência)
+            Path.cwd() / "BDBENEF_PRICETAX_2026.xlsx",
+            Path("BDBENEFÍCIOS_PRICETAX_2026.xlsx"),  # Nome com acento (fallback)
             Path.cwd() / "BDBENEFÍCIOS_PRICETAX_2026.xlsx",
         ]
         try:
+            beneficios_paths.append(Path(__file__).parent / "BDBENEF_PRICETAX_2026.xlsx")
             beneficios_paths.append(Path(__file__).parent / "BDBENEFÍCIOS_PRICETAX_2026.xlsx")
         except Exception:
             pass
@@ -470,12 +473,15 @@ if BENEFICIOS_DISPONIVEL:
         
         if planilha_encontrada:
             BENEFICIOS_ENGINE = init_engine(planilha_encontrada)
-            print(f"✅ Motor de benefícios fiscais inicializado: {planilha_encontrada}")
+            st.success(f"✅ Motor de benefícios fiscais inicializado: {planilha_encontrada}")
         else:
-            print("⚠️ Planilha BDBENEFÍCIOS_PRICETAX_2026.xlsx não encontrada")
+            st.warning("⚠️ Planilha de benefícios não encontrada. Funcionalidade desabilitada.")
+            BENEFICIOS_ENGINE = None
     except Exception as e:
-        print(f"❌ Erro ao inicializar motor de benefícios: {e}")
+        st.error(f"❌ Erro ao inicializar motor de benefícios: {e}")
         BENEFICIOS_ENGINE = None
+else:
+    st.warning("⚠️ Módulo de benefícios fiscais não disponível")
 
 # =============================================================================
 # CARREGAMENTO DA BASE DE CLASSIFICAÇÃO TRIBUTÁRIA
@@ -1277,8 +1283,11 @@ with tabs[0]:
                 if BENEFICIOS_ENGINE:
                     try:
                         beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_fmt)
+                        st.info(f"🔍 Debug: Consultando benefícios para NCM {ncm_fmt}... Encontrados: {beneficios_info['total_enquadramentos']}")
                     except Exception as e:
-                        print(f"⚠️ Erro ao consultar benefícios para NCM {ncm_fmt}: {e}")
+                        st.error(f"⚠️ Erro ao consultar benefícios para NCM {ncm_fmt}: {e}")
+                else:
+                    st.warning("⚠️ Motor de benefícios não inicializado")
                 
                 # Header do produto
                 st.markdown(
