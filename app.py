@@ -1361,11 +1361,11 @@ with tabs[0]:
                 # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
                 # =============================================================================
                 if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                    st.markdown("### 🎁 Benefícios Fiscais Identificados")
+                    st.markdown("### Benefícios Fiscais Identificados")
                     
                     if beneficios_info['multi_enquadramento']:
                         st.warning(
-                            f"⚠️ **Múltiplos Enquadramentos Possíveis:** Este NCM se enquadra em "
+                            f"**Múltiplos Enquadramentos Possíveis:** Este NCM se enquadra em "
                             f"{beneficios_info['total_enquadramentos']} anexos diferentes. "
                             f"Verifique qual se aplica ao seu caso: {', '.join(beneficios_info['lista_anexos'])}"
                         )
@@ -1406,9 +1406,6 @@ with tabs[0]:
                         )
                     
                     st.markdown("---")
-                elif beneficios_info and beneficios_info['sem_beneficio']:
-                    st.info("ℹ️ Este produto não possui benefícios fiscais específicos (tributação padrão).")
-                    st.markdown("---")
 
                 # =============================================================================
                 # ALÍQUOTAS EFETIVAS (SIMPLIFICADO)
@@ -1440,7 +1437,7 @@ with tabs[0]:
                 
                 # Nota explicativa
                 st.caption(
-                    "📊 **Ano teste 2026:** Alíquotas reduzidas (IBS 0,1% e CBS 0,9%). "
+                    "**Ano teste 2026:** Alíquotas reduzidas (IBS 0,1% e CBS 0,9%). "
                     "Benefícios fiscais já aplicados nos valores acima."
                 )
 
@@ -1535,7 +1532,7 @@ with tabs[0]:
                 # INFORMAÇÕES COMPLEMENTARES (SIMPLIFICADO)
                 # =============================================================================
                 st.markdown("---")
-                st.markdown("### 📝 Informações Complementares")
+                st.markdown("### Informações Complementares")
 
                 def clean_txt(v):
                     s = str(v or "").strip()
@@ -1547,14 +1544,14 @@ with tabs[0]:
 
                 # Base legal
                 if fonte:
-                    st.markdown(f"📜 **Base Legal:** {fonte}")
+                    st.markdown(f"**Base Legal:** {fonte}")
                 
                 # Alertas importantes (apenas se relevante)
                 alertas = []
                 if flag_alim == "SIM":
-                    alertas.append("🍽️ **Produto classificado como alimento** - Verifique enquadramento nos anexos da LC 214/25")
+                    alertas.append("**Produto classificado como alimento** - Verifique enquadramento nos anexos da LC 214/25")
                 if flag_dep == "SIM":
-                    alertas.append("⚠️ **Tratamento varia conforme destinação** - Avaliar uso final (consumo, insumo, indústria)")
+                    alertas.append("**Tratamento varia conforme destinação** - Avaliar uso final (consumo, insumo, indústria)")
                 
                 if alertas:
                     for alerta in alertas:
