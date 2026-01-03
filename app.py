@@ -1280,6 +1280,63 @@ with tabs[0]:
                 if BENEFICIOS_ENGINE:
                     try:
                         beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_fmt)
+                        
+                        # SOBRESCREVER ALÍQUOTAS E REGIME SE HOUVER BENEFÍCIOS
+                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                            # Pegar primeiro enquadramento (mais específico)
+                            enq = beneficios_info['enquadramentos'][0]
+                            reducao_pct = enq['reducao_aliquota']
+                            
+                            # Alíquotas integrais 2026
+                            ibs_integral = 0.10
+                            cbs_integral = 0.90
+                            
+                            # Aplicar redução
+                            if reducao_pct == 100:
+                                # Alíquota zero (Cesta Básica)
+                                ibs_uf = 0.0
+                                ibs_mun = 0.0
+                                cbs = 0.0
+                                regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                            elif reducao_pct == 60:
+                                # Redução de 60%
+                                ibs_uf = ibs_integral * 0.4  # 40% da integral
+                                ibs_mun = 0.0  # IBS municipal é só estadual no ano teste
+                                cbs = cbs_integral * 0.4
+                                regime = "RED_60_ESSENCIALIDADE"
+                            else:
+                                # Outras reduções
+                                fator = (100 - reducao_pct) / 100
+                                ibs_uf = ibs_integral * fator
+                                ibs_mun = 0.0
+                                cbs = cbs_integral * fator
+                                regime = f"RED_{int(reducao_pct)}"
+                            
+                            # Recalcular total
+                            total_iva = ibs_uf + ibs_mun + cbs
+                            
+                            # RECALCULAR cClassTrib com novo regime
+                            cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                                cst=cst_ibscbs, cfop="5102", regime_iva=regime
+                            )
+                            class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                            
+                            # Se CFOP foi informado, recalcular também
+                            if cfop_is_different:
+                                cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
+                                    cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
+                                )
+                                class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                            
+                            # Atualizar variáveis de compatibilidade
+                            cclastrib_code = cclastrib_venda_code
+                            class_info = class_info_venda
+                            
+                            print(f"✅ Alíquotas sobrescritas por benefícios: {reducao_pct}% redução")
+                            print(f"   IBS: {ibs_uf:.4f}%, CBS: {cbs:.4f}%, Total: {total_iva:.4f}%")
+                            print(f"   Regime: {regime}")
+                            print(f"   cClassTrib: {cclastrib_venda_code}")
+                            
                     except Exception as e:
                         print(f"⚠️ Erro ao consultar benefícios para NCM {ncm_fmt}: {e}")
                         import traceback
