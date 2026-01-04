@@ -1492,7 +1492,7 @@ with tabs[0]:
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
                         if desc_class_venda:
                             st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP assumido: 5102</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
                     else:
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
                     
@@ -2199,7 +2199,7 @@ with tabs[0]:
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
                                 if desc_class_venda:
                                     st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
-                                st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP assumido: 5102</span>", unsafe_allow_html=True)
+                                st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
                             
