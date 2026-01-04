@@ -2736,12 +2736,88 @@ with tabs[4]:
                             cst_ibscbs = row.get("CST_IBSCBS", "")
                             regime = row["REGIME_IVA_2026_FINAL"]
                             
-                            # Sugere cClassTrib
+                            # CONSULTAR BENEFÍCIOS FISCAIS
+                            beneficios_info = None
+                            if BENEFICIOS_ENGINE:
+                                try:
+                                    beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_clean)
+                                    
+                                    # SOBRESCREVER ALÍQUOTAS SE HOUVER BENEFÍCIOS
+                                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                                        enq = beneficios_info['enquadramentos'][0]
+                                        reducao_pct = enq['reducao_aliquota']
+                                        
+                                        ibs_integral = 0.10
+                                        cbs_integral = 0.90
+                                        
+                                        if reducao_pct == 100:
+                                            ibs_uf = 0.0
+                                            ibs_mun = 0.0
+                                            cbs = 0.0
+                                            regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                                        elif reducao_pct == 60:
+                                            ibs_uf = ibs_integral * 0.4
+                                            ibs_mun = 0.0
+                                            cbs = cbs_integral * 0.4
+                                            regime = "RED_60_ESSENCIALIDADE"
+                                        else:
+                                            fator = (100 - reducao_pct) / 100
+                                            ibs_uf = ibs_integral * fator
+                                            ibs_mun = 0.0
+                                            cbs = cbs_integral * fator
+                                            regime = f"RED_{int(reducao_pct)}"
+                                        
+                                        total_iva = ibs_uf + ibs_mun + cbs
+                                except Exception as e:
+                                    print(f"⚠️ Erro ao consultar benefícios para NCM {ncm_clean}: {e}")
+                            
+                            # Sugere cClassTrib (com regime atualizado)
                             cclastrib_code, cclastrib_msg = guess_cclasstrib(
                                 cst=cst_ibscbs, cfop=cfop, regime_iva=str(regime or "")
                             )
                             
                             st.markdown("---")
+                            
+                            # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
+                            if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                                st.markdown("**Benefícios Fiscais Identificados**")
+                                
+                                for enq in beneficios_info['enquadramentos']:
+                                    anexo = enq['anexo']
+                                    reducao_pct = enq['reducao_aliquota']
+                                    descricao = enq['descricao_anexo']
+                                    
+                                    if reducao_pct == 100:
+                                        cor_badge = COLOR_SUCCESS
+                                        texto_reducao = "ALÍQUOTA ZERO (100%)"
+                                    elif reducao_pct == 60:
+                                        cor_badge = "#3B82F6"
+                                        texto_reducao = "REDUÇÃO DE 60%"
+                                    else:
+                                        cor_badge = COLOR_GOLD
+                                        texto_reducao = f"REDUÇÃO DE {reducao_pct}%"
+                                    
+                                    st.markdown(
+                                        f"""
+                                        <div style="
+                                            background: {COLOR_CARD_BG};
+                                            border-left: 4px solid {cor_badge};
+                                            padding: 0.8rem;
+                                            margin: 0.5rem 0;
+                                            border-radius: 4px;
+                                        ">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div style="font-weight: 600; color: {COLOR_GOLD}; font-size: 0.9rem;">{anexo}</div>
+                                                <div style="background: {cor_badge}; color: white; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">
+                                                    {texto_reducao}
+                                                </div>
+                                            </div>
+                                            <div style="font-size: 0.8rem; color: {COLOR_GRAY_LIGHT}; margin-top: 0.3rem;">{descricao[:80]}...</div>
+                                        </div>
+                                        """,
+                                        unsafe_allow_html=True,
+                                    )
+                            
                             st.markdown("### Tributação IBS/CBS (Reforma Tributária)")
                             
                             # Alíquotas
@@ -2749,16 +2825,16 @@ with tabs[4]:
                                 f"""
                                 <div class="metric-container" style="margin-top: 1rem;">
                                     <div class="metric-box">
-                                        <div class="metric-label">IBS Efetivo</div>
+                                        <div class="metric-label">IBS (UF + Município)</div>
                                         <div class="metric-value">{pct_str(ibs_uf + ibs_mun)}</div>
                                     </div>
                                     <div class="metric-box">
-                                        <div class="metric-label">CBS Efetivo</div>
+                                        <div class="metric-label">CBS (Federal)</div>
                                         <div class="metric-value">{pct_str(cbs)}</div>
                                     </div>
                                     <div class="metric-box">
                                         <div class="metric-label">Carga Total IVA</div>
-                                        <div class="metric-value">{pct_str(total_iva)}</div>
+                                        <div class="metric-value" style="color: {COLOR_GOLD};">{pct_str(total_iva)}</div>
                                     </div>
                                 </div>
                                 """,
