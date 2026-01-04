@@ -1985,6 +1985,69 @@ with tabs[0]:
                         cclastrib_code = cclastrib_venda_code
                         class_info = class_info_venda
 
+                        # =============================================================================
+                        # CONSULTAR BENEFÍCIOS FISCAIS (NOVA PLANILHA)
+                        # =============================================================================
+                        beneficios_info = None
+                        if BENEFICIOS_ENGINE:
+                            try:
+                                beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_fmt)
+                                
+                                # SOBRESCREVER ALÍQUOTAS E REGIME SE HOUVER BENEFÍCIOS
+                                if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                                    # Pegar primeiro enquadramento (mais específico)
+                                    enq = beneficios_info['enquadramentos'][0]
+                                    reducao_pct = enq['reducao_aliquota']
+                                    
+                                    # Alíquotas integrais 2026
+                                    ibs_integral = 0.10
+                                    cbs_integral = 0.90
+                                    
+                                    # Aplicar redução
+                                    if reducao_pct == 100:
+                                        # Alíquota zero (Cesta Básica)
+                                        ibs_uf = 0.0
+                                        ibs_mun = 0.0
+                                        cbs = 0.0
+                                        regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                                    elif reducao_pct == 60:
+                                        # Redução de 60%
+                                        ibs_uf = ibs_integral * 0.4  # 40% da integral
+                                        ibs_mun = 0.0  # IBS municipal é só estadual no ano teste
+                                        cbs = cbs_integral * 0.4
+                                        regime = "RED_60_ESSENCIALIDADE"
+                                    else:
+                                        # Outras reduções
+                                        fator = (100 - reducao_pct) / 100
+                                        ibs_uf = ibs_integral * fator
+                                        ibs_mun = 0.0
+                                        cbs = cbs_integral * fator
+                                        regime = f"RED_{int(reducao_pct)}"
+                                    
+                                    # Recalcular total
+                                    total_iva = ibs_uf + ibs_mun + cbs
+                                    
+                                    # RECALCULAR cClassTrib com novo regime
+                                    cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                                        cst=cst_ibscbs, cfop="5102", regime_iva=regime
+                                    )
+                                    class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                                    
+                                    # Se CFOP foi informado, recalcular também
+                                    if cfop_is_different:
+                                        cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
+                                            cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
+                                        )
+                                        class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                                    
+                                    # Atualizar variáveis de compatibilidade
+                                    cclastrib_code = cclastrib_venda_code
+                                    class_info = class_info_venda
+                                    
+                            except Exception as e:
+                                print(f"⚠️ Erro ao consultar benefícios para NCM {ncm_fmt}: {e}")
+                                import traceback
+                                traceback.print_exc()
 
                         # Header do produto
                         st.markdown(
@@ -1996,61 +2059,93 @@ with tabs[0]:
                                 <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
                                     {desc}
                                 </div>
-                                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                                    <span class="tag tag-regime">{regime_label(regime)}</span>
-                                    <span class="tag tag-info">Cesta Básica: {flag_cesta or "NÃO"}</span>
-                                    <span class="tag tag-info">Hortifrúti/Ovos: {flag_hf or "NÃO"}</span>
-                                    <span class="tag tag-info">Redução 60%: {flag_red or "NÃO"}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        
+                        # =============================================================================
+                        # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
+                        # =============================================================================
+                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                            st.markdown("### Benefícios Fiscais Identificados")
+                            
+                            if beneficios_info['multi_enquadramento']:
+                                st.warning(
+                                    f"**Múltiplos Enquadramentos Possíveis:** Este NCM se enquadra em "
+                                    f"{beneficios_info['total_enquadramentos']} anexos diferentes. "
+                                    f"Verifique qual se aplica ao seu caso: {', '.join(beneficios_info['lista_anexos'])}"
+                                )
+                            
+                            for idx, enq in enumerate(beneficios_info['enquadramentos'], 1):
+                                anexo = enq['anexo']
+                                reducao_pct = enq['reducao_aliquota']
+                                descricao = enq['descricao_anexo']
+                                
+                                # Cor baseada na redução
+                                if reducao_pct == 100:
+                                    cor_badge = COLOR_SUCCESS
+                                    texto_reducao = "ALÍQUOTA ZERO (100%)"
+                                elif reducao_pct == 60:
+                                    cor_badge = "#3B82F6"  # Azul
+                                    texto_reducao = "REDUÇÃO DE 60%"
+                                else:
+                                    cor_badge = COLOR_GOLD
+                                    texto_reducao = f"REDUÇÃO DE {reducao_pct}%"
+                                
+                                st.markdown(
+                                    f"""
+                                    <div class="pricetax-card" style="border-left: 4px solid {cor_badge}; margin-top: 1rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                            <div style="font-size: 1.1rem; font-weight: 600; color: {COLOR_GOLD};">
+                                                {anexo}
+                                            </div>
+                                            <div style="background: {cor_badge}; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
+                                                {texto_reducao}
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.9rem; color: {COLOR_GRAY_LIGHT}; line-height: 1.5;">
+                                            {descricao}
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                            
+                            st.markdown("---")
+                        
+                        # =============================================================================
+                        # ALÍQUOTAS EFETIVAS (SIMPLIFICADO)
+                        # =============================================================================
+                        ibs_efetivo = ibs_uf + ibs_mun
+                        cbs_efetivo = cbs
+                        total_iva = ibs_efetivo + cbs_efetivo
+        
+                        st.markdown("### Alíquotas Efetivas 2026 (Ano Teste)")
+                        st.markdown(
+                            f"""
+                            <div class="metric-container">
+                                <div class="metric-box">
+                                    <div class="metric-label">IBS (UF + Município)</div>
+                                    <div class="metric-value">{pct_str(ibs_efetivo)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">CBS (Federal)</div>
+                                    <div class="metric-value">{pct_str(cbs_efetivo)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">Carga Total IVA</div>
+                                    <div class="metric-value" style="color: {COLOR_GOLD};">{pct_str(total_iva)}</div>
                                 </div>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
                         
-                        # Calcular alíquotas efetivas
-                        ibs_integral = 0.1
-                        cbs_integral = 0.9
-                        ibs_efetivo = ibs_uf + ibs_mun
-                        cbs_efetivo = cbs
-                        
-                        # Calcular reduções
-                        red_ibs_pct = ((ibs_integral - ibs_efetivo) / ibs_integral * 100) if ibs_integral > 0 else 0
-                        red_cbs_pct = ((cbs_integral - cbs_efetivo) / cbs_integral * 100) if cbs_integral > 0 else 0
-                        
-                        # Exibir reduções (se houver)
-                        if red_ibs_pct > 0 or red_cbs_pct > 0:
-                            st.markdown(
-                                f"""
-                                <div class="info-section" style="margin-top:1.5rem;">
-                                    <div class="info-section-title">Reduções Aplicadas</div>
-                                    <div>
-                                        Redução IBS: <strong>{pct_str(red_ibs_pct)}</strong><br>
-                                        Redução CBS: <strong>{pct_str(red_cbs_pct)}</strong>
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-            
-                        # Alíquotas efetivas
-                        st.markdown(
-                            f"""
-                            <div class="metric-container" style="margin-top:1.5rem;">
-                                <div class="metric-box">
-                                    <div class="metric-label">IBS Efetivo (após redução)</div>
-                                    <div class="metric-value">{pct_str(ibs_efetivo)}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-label">CBS Efetivo (após redução)</div>
-                                    <div class="metric-value">{pct_str(cbs_efetivo)}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-label">Carga Total IVA Efetiva</div>
-                                    <div class="metric-value">{pct_str(total_iva)}</div>
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
+                        # Nota explicativa
+                        st.caption(
+                            "**Ano teste 2026:** Alíquotas reduzidas (IBS 0,1% e CBS 0,9%). "
+                            "Benefícios fiscais já aplicados nos valores acima."
                         )
 
                         # Tributação da operação (se CFOP foi informado)
@@ -2139,7 +2234,9 @@ with tabs[0]:
                                     f"- Monofásica: **{class_info.get('MONOFASICA') or '—'}**"
                                 )
 
-                        # Observações e alertas (apenas se houver conteúdo relevante)
+                        # =============================================================================
+                        # INFORMAÇÕES COMPLEMENTARES (SIMPLIFICADO)
+                        # =============================================================================
                         st.markdown("---")
                         st.markdown("### Informações Complementares")
 
@@ -2148,30 +2245,23 @@ with tabs[0]:
                             return "" if s.lower() == "nan" else s
 
                         fonte = clean_txt(row.get("FONTE_LEGAL_FINAL"))
-                        alerta_fmt = clean_txt(row.get("ALERTA_APP"))
-                        obs_alim = clean_txt(row.get("OBS_ALIMENTO"))
-                        obs_dest = clean_txt(row.get("OBS_DESTINACAO"))
-                        reg_extra = clean_txt(row.get("OBS_REGIME_ESPECIAL"))
+                        flag_alim = clean_txt(row.get("FLAG_ALIMENTO"))
+                        flag_dep = clean_txt(row.get("FLAG_DEPENDE_DESTINACAO"))
 
-                        # Exibir apenas campos com conteúdo
+                        # Base legal
                         if fonte:
                             st.markdown(f"**Base Legal:** {fonte}")
-            
-                        if alerta_fmt:
-                            st.markdown(f"**Alerta:** {alerta_fmt}")
-            
-                        if obs_alim:
-                            st.markdown(f"**Observação (Alimentos):** {obs_alim}")
-            
-                        if obs_dest:
-                            st.markdown(f"**Observação (Destinação):** {obs_dest}")
-            
-                        if reg_extra:
-                            st.markdown(f"**Observações Adicionais:** {reg_extra}")
-            
-                        # Se nenhum campo tiver conteúdo, mostrar mensagem
-                        if not any([fonte, alerta_fmt, obs_alim, obs_dest, reg_extra]):
-                            st.markdown("*Nenhuma observação adicional disponível para este NCM.*")
+                        
+                        # Alertas importantes (apenas se relevante)
+                        alertas = []
+                        if flag_alim == "SIM":
+                            alertas.append("**Produto classificado como alimento** - Verifique enquadramento nos anexos da LC 214/25")
+                        if flag_dep == "SIM":
+                            alertas.append("**Tratamento varia conforme destinação** - Avaliar uso final (consumo, insumo, indústria)")
+                        
+                        if alertas:
+                            for alerta in alertas:
+                                st.info(alerta)
 
 # =============================================================================
 # ABA 2 - RANKING DE SAÍDAS SPED
