@@ -4,12 +4,12 @@ import re
 
 def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
     """
-    Extrai dados estruturados de um XML de NF-e.
+    Extrai dados estruturados de um XML de NF-e (incluindo IBS/CBS da Reforma Tributária).
     
     Retorna:
         dict com:
         - emitente: {cnpj, razao_social, uf}
-        - itens: lista de {ncm, cfop, descricao, valor_unitario, quantidade, valor_total, cst_icms, cst_pis, cst_cofins}
+        - itens: lista com dados completos incluindo IBS/CBS
     """
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -89,7 +89,15 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
                 'vbc_pis': 0.0,
                 'vpis': 0.0,
                 'vbc_cofins': 0.0,
-                'vcofins': 0.0
+                'vcofins': 0.0,
+                # Campos IBS/CBS (Reforma Tributária)
+                'cst_ibscbs': '',
+                'cclasstrib': '',
+                'vibs': 0.0,
+                'vcbs': 0.0,
+                'vbc_ibscbs': 0.0,
+                'pibs': 0.0,
+                'pcbs': 0.0
             }
             
             # Extrair CST e valores de impostos
@@ -141,6 +149,53 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
                             item['vbc_cofins'] = float(vbc_elem.text)
                         if vcofins_elem is not None:
                             item['vcofins'] = float(vcofins_elem.text)
+                
+                # IBSCBS (Grupo IBS/CBS - Reforma Tributária 2026)
+                ibscbs = imposto.find('nfe:IBSCBS', ns)
+                if ibscbs is not None:
+                    # CST e cClassTrib ficam no nível do IBSCBS
+                    cst_elem = ibscbs.find('nfe:CST', ns)
+                    cclasstrib_elem = ibscbs.find('nfe:cClassTrib', ns)
+                    
+                    if cst_elem is not None:
+                        item['cst_ibscbs'] = cst_elem.text
+                    if cclasstrib_elem is not None:
+                        item['cclasstrib'] = cclasstrib_elem.text
+                    
+                    # Grupo gIBSCBS contém os valores
+                    gibscbs = ibscbs.find('nfe:gIBSCBS', ns)
+                    if gibscbs is not None:
+                        # Base de cálculo
+                        vbc_elem = gibscbs.find('nfe:vBC', ns)
+                        if vbc_elem is not None:
+                            item['vbc_ibscbs'] = float(vbc_elem.text)
+                        
+                        # IBS UF
+                        gibsuf = gibscbs.find('nfe:gIBSUF', ns)
+                        if gibsuf is not None:
+                            pibsuf_elem = gibsuf.find('nfe:pIBSUF', ns)
+                            vibsuf_elem = gibsuf.find('nfe:vIBSUF', ns)
+                            if pibsuf_elem is not None:
+                                item['pibs'] = float(pibsuf_elem.text)
+                            if vibsuf_elem is not None:
+                                item['vibs'] += float(vibsuf_elem.text)
+                        
+                        # IBS Município
+                        gibsmun = gibscbs.find('nfe:gIBSMun', ns)
+                        if gibsmun is not None:
+                            vibsmun_elem = gibsmun.find('nfe:vIBSMun', ns)
+                            if vibsmun_elem is not None:
+                                item['vibs'] += float(vibsmun_elem.text)
+                        
+                        # CBS
+                        gcbs = gibscbs.find('nfe:gCBS', ns)
+                        if gcbs is not None:
+                            pcbs_elem = gcbs.find('nfe:pCBS', ns)
+                            vcbs_elem = gcbs.find('nfe:vCBS', ns)
+                            if pcbs_elem is not None:
+                                item['pcbs'] = float(pcbs_elem.text)
+                            if vcbs_elem is not None:
+                                item['vcbs'] = float(vcbs_elem.text)
             
             itens.append(item)
     
@@ -163,5 +218,7 @@ if __name__ == "__main__":
             print(f"  NCM: {item['ncm']}")
             print(f"  CFOP: {item['cfop']}")
             print(f"  Descrição: {item['descricao'][:50]}")
-            print(f"  Valor Unit: R$ {item['valor_unitario']:.2f}")
-            print(f"  CST ICMS: {item['cst_icms']}")
+            print(f"  Valor Total: R$ {item['valor_total']:.2f}")
+            print(f"  cClassTrib: {item['cclasstrib']}")
+            print(f"  IBS: R$ {item['vibs']:.2f} ({item['pibs']:.4f}%)")
+            print(f"  CBS: R$ {item['vcbs']:.2f} ({item['pcbs']:.4f}%)")
