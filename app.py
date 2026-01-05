@@ -2333,36 +2333,54 @@ with tabs[1]:
                         .str.zfill(8)
                     )
 
-                    cols_tipi_merge = [
-                        "NCM_DIG",
-                        "NCM_DESCRICAO",
-                        "REGIME_IVA_2026_FINAL",
-                        "IBS_UF_TESTE_2026_FINAL",
-                        "IBS_MUN_TESTE_2026_FINAL",
-                        "CBS_TESTE_2026_FINAL",
-                        "CST_IBSCBS",
-                        "FLAG_ALIMENTO",
-                        "FLAG_CESTA_BASICA",
-                        "FLAG_HORTIFRUTI_OVOS",
-                        "FLAG_RED_60",
-                    ]
-                    
+                    # Merge apenas descrição (para busca semântica)
+                    cols_tipi_merge = ["NCM_DIG", "NCM_DESCRICAO"]
                     df_tipi_mini = df_tipi[cols_tipi_merge].copy()
+                    df_total = df_total.merge(df_tipi_mini, on="NCM_DIG", how="left")
 
-                    df_total = df_total.merge(
-                        df_tipi_mini, on="NCM_DIG", how="left"
-                    )
-
-                    # Sugere cClassTrib para cada linha
-                    def row_cclasstrib(row):
-                        code, _ = guess_cclasstrib(
-                            cst=row.get("CST_IBSCBS"),
-                            cfop=row.get("CFOP"),
-                            regime_iva=row.get("REGIME_IVA_2026_FINAL", "")
-                        )
-                        return code
-
-                    df_total["CCLASSTRIB_SUGERIDO"] = df_total.apply(row_cclasstrib, axis=1)
+                    # Calcular alíquotas e cClassTrib baseado em BDBENEF
+                    def processar_linha(row):
+                        ncm = row.get("NCM_DIG")
+                        cfop = row.get("CFOP")
+                        
+                        # Padrão
+                        regime = "TRIBUTACAO_PADRAO"
+                        ibs_uf = 0.10
+                        cbs = 0.90
+                        
+                        # Consultar benefícios
+                        if BENEFICIOS_ENGINE and ncm:
+                            try:
+                                beneficios = consulta_ncm(BENEFICIOS_ENGINE, str(ncm))
+                                if beneficios['total_enquadramentos'] > 0:
+                                    enq = beneficios['enquadramentos'][0]
+                                    reducao = enq['reducao_aliquota']
+                                    
+                                    if reducao == 100:
+                                        ibs_uf, cbs = 0.0, 0.0
+                                        regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                                    elif reducao == 60:
+                                        ibs_uf, cbs = 0.04, 0.36
+                                        regime = "RED_60_ESSENCIALIDADE"
+                                    else:
+                                        fator = (100 - reducao) / 100
+                                        ibs_uf, cbs = 0.10 * fator, 0.90 * fator
+                                        regime = f"RED_{int(reducao)}"
+                            except:
+                                pass
+                        
+                        # Calcular cClassTrib
+                        code, _ = guess_cclasstrib(cst="", cfop=cfop, regime_iva=regime)
+                        
+                        return pd.Series({
+                            'REGIME_IVA': regime,
+                            'IBS_UF': ibs_uf,
+                            'CBS': cbs,
+                            'TOTAL_IVA': ibs_uf + cbs,
+                            'CCLASSTRIB_SUGERIDO': code
+                        })
+                    
+                    df_total[["REGIME_IVA", "IBS_UF", "CBS", "TOTAL_IVA", "CCLASSTRIB_SUGERIDO"]] = df_total.apply(processar_linha, axis=1)
 
                     # Formata valores
                     df_total["VALOR_TOTAL_VENDAS"] = df_total["VALOR_TOTAL_VENDAS"].apply(
