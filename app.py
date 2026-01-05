@@ -1295,6 +1295,15 @@ with tabs[0]:
                 )
                 class_info_venda = get_class_info_by_code(cclastrib_venda_code)
                 
+                # SOBRESCREVER DESCRIÇÃO com base no anexo (se houver benefícios)
+                if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                    enq = beneficios_info['enquadramentos'][0]
+                    desc_anexo = enq['descricao_anexo']
+                    # Atualizar descrição do cClassTrib com a descrição do anexo
+                    if class_info_venda:
+                        class_info_venda = class_info_venda.copy()
+                        class_info_venda['DESC_CLASS'] = desc_anexo
+                
                 # Se CFOP foi informado E é diferente de venda padrão
                 cfop_clean_main = re.sub(r"\D+", "", cfop_input or "")
                 cclastrib_cfop_code = ""
@@ -1308,6 +1317,10 @@ with tabs[0]:
                         cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
                     )
                     class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                    # Sobrescrever descrição do CFOP também
+                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0 and class_info_cfop:
+                        class_info_cfop = class_info_cfop.copy()
+                        class_info_cfop['DESC_CLASS'] = desc_anexo
                 
                 # Compatibilidade
                 cclastrib_code = cclastrib_venda_code
@@ -2004,12 +2017,24 @@ with tabs[0]:
                                     )
                                     class_info_venda = get_class_info_by_code(cclastrib_venda_code)
                                     
+                                    # SOBRESCREVER DESCRIÇÃO com base no anexo
+                                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                                        enq = beneficios_info['enquadramentos'][0]
+                                        desc_anexo = enq['descricao_anexo']
+                                        if class_info_venda:
+                                            class_info_venda = class_info_venda.copy()
+                                            class_info_venda['DESC_CLASS'] = desc_anexo
+                                    
                                     # Se CFOP foi informado, recalcular também
                                     if cfop_is_different:
                                         cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
                                             cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
                                         )
                                         class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
+                                        # Sobrescrever descrição do CFOP também
+                                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0 and class_info_cfop:
+                                            class_info_cfop = class_info_cfop.copy()
+                                            class_info_cfop['DESC_CLASS'] = desc_anexo
                                     
                                     # Atualizar variáveis de compatibilidade
                                     cclastrib_code = cclastrib_venda_code
@@ -2759,6 +2784,15 @@ with tabs[4]:
                             cclastrib_code, cclastrib_msg = guess_cclasstrib(
                                 cst=cst_ibscbs, cfop=cfop, regime_iva=regime
                             )
+                            class_info = get_class_info_by_code(cclastrib_code)
+                            
+                            # SOBRESCREVER DESCRIÇÃO com base no anexo (se houver benefícios)
+                            if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                                enq = beneficios_info['enquadramentos'][0]
+                                desc_anexo = enq['descricao_anexo']
+                                if class_info:
+                                    class_info = class_info.copy()
+                                    class_info['DESC_CLASS'] = desc_anexo
                             
                             st.markdown("---")
                             
