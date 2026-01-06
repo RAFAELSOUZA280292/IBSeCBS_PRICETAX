@@ -2859,6 +2859,130 @@ with tabs[4]:
                                 unsafe_allow_html=True,
                             )
                             
+                            # VALIDAÇÃO: Comparar XML com Calculado
+                            xml_cclasstrib = item.get('cclasstrib', '')
+                            xml_vibs = item.get('vibs', 0.0)
+                            xml_vcbs = item.get('vcbs', 0.0)
+                            xml_pibs = item.get('pibs', 0.0)
+                            xml_pcbs = item.get('pcbs', 0.0)
+                            
+                            # Calcular valores esperados
+                            calc_pibs = (ibs_uf + ibs_mun) * 100  # Converter para %
+                            calc_pcbs = cbs * 100  # Converter para %
+                            calc_vibs = valor_total * (ibs_uf + ibs_mun)
+                            calc_vcbs = valor_total * cbs
+                            
+                            # Tolerâncias
+                            tol_valor = 0.02  # R$ 0,02
+                            tol_aliq = 0.0001  # 0,0001%
+                            
+                            # Verificar se XML tem dados
+                            tem_xml = xml_cclasstrib or xml_vibs > 0 or xml_vcbs > 0
+                            
+                            if tem_xml:
+                                # Comparar cClassTrib
+                                cclasstrib_ok = (xml_cclasstrib == cclastrib_code)
+                                
+                                # Comparar alíquotas
+                                pibs_ok = abs(xml_pibs - calc_pibs) <= tol_aliq
+                                pcbs_ok = abs(xml_pcbs - calc_pcbs) <= tol_aliq
+                                
+                                # Comparar valores
+                                vibs_ok = abs(xml_vibs - calc_vibs) <= tol_valor
+                                vcbs_ok = abs(xml_vcbs - calc_vcbs) <= tol_valor
+                                
+                                # Status geral
+                                tudo_ok = cclasstrib_ok and pibs_ok and pcbs_ok and vibs_ok and vcbs_ok
+                                
+                                # Cor e ícone
+                                if tudo_ok:
+                                    status_cor = "#10B981"  # Verde
+                                    status_icone = "✓"
+                                    status_texto = "CONFORME"
+                                else:
+                                    status_cor = "#F59E0B"  # Amarelo
+                                    status_icone = "⚠"
+                                    status_texto = "DIVERGÊNCIA"
+                                
+                                # Exibir validação
+                                st.markdown(
+                                    f"""
+                                    <div style="
+                                        background: {COLOR_CARD_BG};
+                                        border-left: 4px solid {status_cor};
+                                        padding: 1rem;
+                                        margin: 1rem 0;
+                                        border-radius: 4px;
+                                    ">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
+                                            <span style="font-size: 1.5rem; color: {status_cor};">{status_icone}</span>
+                                            <span style="font-weight: 700; color: {status_cor}; font-size: 1.1rem;">{status_texto}</span>
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: {COLOR_GRAY_LIGHT};">
+                                            Comparação entre valores destacados no XML e valores calculados pelo sistema
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                                
+                                # Tabela comparativa
+                                st.markdown("#### Comparação Detalhada")
+                                
+                                def status_icon(ok):
+                                    return "✓" if ok else "✗"
+                                
+                                def status_color(ok):
+                                    return "#10B981" if ok else "#EF4444"
+                                
+                                st.markdown(
+                                    f"""
+                                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                                        <thead>
+                                            <tr style="background: {COLOR_DARK_BG}; border-bottom: 2px solid {COLOR_GOLD};">
+                                                <th style="padding: 0.8rem; text-align: left; color: {COLOR_GOLD}; font-weight: 600;">Campo</th>
+                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">XML</th>
+                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Calculado</th>
+                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">cClassTrib</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{xml_cclasstrib or '—'}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{cclastrib_code or '—'}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(cclasstrib_ok)}; font-size: 1.2rem;">{status_icon(cclasstrib_ok)}</td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Alíquota IBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pibs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pibs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(pibs_ok)}; font-size: 1.2rem;">{status_icon(pibs_ok)}</td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Alíquota CBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pcbs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pcbs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(pcbs_ok)}; font-size: 1.2rem;">{status_icon(pcbs_ok)}</td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Valor IBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vibs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vibs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(vibs_ok)}; font-size: 1.2rem;">{status_icon(vibs_ok)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Valor CBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vcbs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vcbs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(vcbs_ok)}; font-size: 1.2rem;">{status_icon(vcbs_ok)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                            
                             # Destaque do cClassTrib
                             st.markdown(
                                 f"""
