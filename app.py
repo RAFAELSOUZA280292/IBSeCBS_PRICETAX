@@ -764,11 +764,12 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         return code, msg
 
     # =========================================================================
-    # PRIORIDADE 4: Não conseguiu classificar
+    # PRIORIDADE 4: Fallback padrão (tributação regular)
     # =========================================================================
-    return "", (
-        "Não foi possível localizar um cClassTrib padrão para o CFOP informado. "
-        "Provável operação especial (devolução, bonificação, remessa, teste, garantia etc.) – revisar manualmente."
+    # Se chegou aqui, assume tributação padrão sem benefícios
+    return "000001", (
+        "Tributação regular (sem benefícios fiscais identificados). "
+        f"CFOP {cfop_clean} não possui mapeamento específico - usando cClassTrib padrão 000001."
     )
 
 # =============================================================================
@@ -1234,7 +1235,7 @@ with tabs[0]:
             else:
                 ncm_fmt = row["NCM_DIG"]
                 desc = row["NCM_DESCRICAO"]
-                cst_ibscbs = row.get("CST_IBSCBS", "")
+                cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
                 flag_alim = row.get("FLAG_ALIMENTO", "NAO")
                 flag_dep = row.get("FLAG_DEPENDE_DESTINACAO", "NAO")
 
@@ -1942,7 +1943,7 @@ with tabs[0]:
                         ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
                         cbs = to_float_br(row["CBS_TESTE_2026_FINAL"])
                         total_iva = ibs_uf + ibs_mun + cbs
-                        cst_ibscbs = row.get("CST_IBSCBS", "")
+                        cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
 
                         # Sugere cClassTrib SEMPRE para venda (CFOP 5102)
                         cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
@@ -2742,7 +2743,7 @@ with tabs[4]:
                         # Buscar tributação IBS/CBS
                         if len(resultado_tipi) > 0:
                             row = resultado_tipi.iloc[0]
-                            cst_ibscbs = row.get("CST_IBSCBS", "")
+                            cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
                             
                             # CALCULAR ALÍQUOTAS BASEADO APENAS EM BDBENEF
                             regime = "TRIBUTACAO_PADRAO"
