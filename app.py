@@ -172,6 +172,33 @@ st.markdown(
     .stRadio span, .stRadio div[data-testid="stMarkdownContainer"] {{
         color: {COLOR_TEXT_MAIN} !important;
     }}
+    
+    /* TEMA ESCURO (macOS/Windows) - Forçar fundo branco e texto escuro */
+    @media (prefers-color-scheme: dark) {{
+        .stApp {{
+            background-color: #0E1117 !important;
+        }}
+        
+        /* Forçar fundo branco em áreas de conteúdo */
+        .main .block-container {{
+            background-color: #FFFFFF !important;
+            padding: 2rem !important;
+            border-radius: 12px !important;
+        }}
+        
+        /* Garantir texto escuro em TUDO */
+        .stMarkdown, .stMarkdown p, .stMarkdown div, 
+        .stRadio, .stRadio label, .stRadio span,
+        label, span, div, p, td, th {{
+            color: {COLOR_TEXT_MAIN} !important;
+        }}
+        
+        /* Inputs com fundo branco */
+        input, select, textarea {{
+            background-color: #FFFFFF !important;
+            color: {COLOR_TEXT_MAIN} !important;
+        }}
+    }}
 
     /* Inputs e Selects */
     .stTextInput > div > div > input, 
@@ -2811,9 +2838,9 @@ with tabs[4]:
                             xml_pibs = item.get('pibs', 0.0)
                             xml_pcbs = item.get('pcbs', 0.0)
                             
-                            # Calcular valores esperados
-                            calc_pibs = (ibs_uf + ibs_mun) * 100  # Converter para %
-                            calc_pcbs = cbs * 100  # Converter para %
+                            # Calcular valores esperados (já em formato decimal %)
+                            calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
+                            calc_pcbs = cbs  # Já é 0.90 = 0,9%
                             calc_vibs = valor_total * (ibs_uf + ibs_mun)
                             calc_vcbs = valor_total * cbs
                             
