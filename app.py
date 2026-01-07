@@ -1268,7 +1268,7 @@ with tabs[0]:
                         selecao = st.radio(
                             "Escolha qual benefício aplicar para calcular as alíquotas:",
                             opcoes_beneficios,
-                            key=f"beneficio_selector_{ncm_clean}"
+                            key=f"beneficio_selector_{ncm_fmt}"
                         )
                         
                         # Identificar qual benefício foi selecionado
@@ -1969,7 +1969,7 @@ with tabs[0]:
                                 selecao = st.radio(
                                     "Escolha qual benefício aplicar para calcular as alíquotas:",
                                     opcoes_beneficios,
-                                    key=f"beneficio_selector_desc_{ncm_clean}"
+                                    key=f"beneficio_selector_desc_{ncm_fmt}"
                                 )
                                 
                                 # Identificar qual benefício foi selecionado
