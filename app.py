@@ -122,6 +122,9 @@ COLOR_DARK_CARD = "#1F2937"
 COLOR_DARK_TEXT = "#F9FAFB"
 COLOR_DARK_TEXT_MUTED = "#D1D5DB"
 COLOR_DARK_BORDER = "#374151"
+COLOR_SUCCESS = "#10B981"    # Verde (Sucesso)
+COLOR_ERROR = "#EF4444"      # Vermelho (Erro)
+COLOR_WARNING = "#F59E0B"    # Laranja (Aviso)
 
 # =============================================================================
 # RECONSTRUÇÃO DA LÓGICA (MANTENDO 100% DAS FUNÇÕES)
