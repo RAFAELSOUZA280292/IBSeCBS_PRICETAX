@@ -1106,15 +1106,24 @@ with tabs[0]:
         with col3:
             st.write("")
             consultar = st.button("Consultar", type="primary")
-
+        
+        # Armazenar NCM consultado em session_state
         if consultar and ncm_input.strip():
-            row = buscar_ncm(df_tipi, ncm_input)
+            st.session_state['ultimo_ncm_consultado'] = ncm_input.strip()
+            st.session_state['ultimo_cfop_consultado'] = cfop_input.strip() if cfop_input else ""
+        
+        # Usar NCM do session_state se existir
+        ncm_para_consultar = st.session_state.get('ultimo_ncm_consultado', '')
+        cfop_para_consultar = st.session_state.get('ultimo_cfop_consultado', '')
+        
+        if ncm_para_consultar:
+            row = buscar_ncm(df_tipi, ncm_para_consultar)
 
             if row is None:
                 st.markdown(
                     f"""
                     <div class="pricetax-card-error">
-                        <strong>NCM informado:</strong> {ncm_input}<br>
+                        <strong>NCM informado:</strong> {ncm_para_consultar}<br>
                         Não localizamos esse NCM na base PRICETAX. Revise o código ou a planilha de referência.
                     </div>
                     """,
@@ -1166,7 +1175,7 @@ with tabs[0]:
                     fonte = "LC 214/25, regra geral art. 10"
                 
                 # Se CFOP foi informado E é diferente de venda padrão
-                cfop_clean_main = re.sub(r"\D+", "", cfop_input or "")
+                cfop_clean_main = re.sub(r"\D+", "", cfop_para_consultar or "")
                 cclastrib_cfop_code = ""
                 cclastrib_cfop_msg = ""
                 class_info_cfop = None
@@ -1175,7 +1184,7 @@ with tabs[0]:
                 if cfop_clean_main and cfop_clean_main not in ["5102", "6102", "7102"]:
                     cfop_is_different = True
                     cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
-                        cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
+                        cst=cst_ibscbs, cfop=cfop_para_consultar, regime_iva=regime
                     )
                     class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
                     # Sobrescrever descrição do CFOP também
