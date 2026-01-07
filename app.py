@@ -30,6 +30,14 @@ except ImportError as e:
     print(f"⚠️ Módulo de benefícios fiscais não disponível: {e}")
     BENEFICIOS_DISPONIVEL = False
 
+# Importar função centralizada de cálculo
+try:
+    from calcular_tributacao import calcular_tributacao_completa
+    CALC_TRIBUTACAO_DISPONIVEL = True
+except ImportError as e:
+    print(f"⚠️ Módulo de cálculo de tributação não disponível: {e}")
+    CALC_TRIBUTACAO_DISPONIVEL = False
+
 # =============================================================================
 # CONFIGURAÇÃO GERAL E IDENTIDADE VISUAL PRICETAX (MODERNA)
 # =============================================================================
@@ -1275,70 +1283,42 @@ with tabs[0]:
                 flag_dep = row.get("FLAG_DEPENDE_DESTINACAO", "NAO")
 
                 # =============================================================================
-                # CONSULTAR BENEFÍCIOS FISCAIS (FONTE DA VERDADE)
+                # CALCULAR TRIBUTAÇÃO COMPLETA (FUNÇÃO CENTRALIZADA)
                 # =============================================================================
-                beneficios_info = None
-                regime = "TRIBUTACAO_PADRAO"  # Padrão
-                ibs_uf = 0.10  # Padrão 2026
-                ibs_mun = 0.0  # Ano teste não tem municipal
-                cbs = 0.90  # Padrão 2026
-                fonte = "LC 214/25, regra geral art. 10 e disposiçoes do ADCT art. 125 (ano teste)"
-                
-                if BENEFICIOS_ENGINE:
-                    try:
-                        beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_fmt)
-                        
-                        # APLICAR BENEFÍCIOS (SE HOUVER)
-                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                            enq = beneficios_info['enquadramentos'][0]
-                            reducao_pct = enq['reducao_aliquota']
-                            anexo = enq['anexo']
-                            
-                            # Aplicar redução
-                            if reducao_pct == 100:
-                                ibs_uf = 0.0
-                                ibs_mun = 0.0
-                                cbs = 0.0
-                                regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
-                                fonte = f"LC 214/25, {anexo}"
-                            elif reducao_pct == 60:
-                                ibs_uf = 0.04  # 40% de 0,10
-                                ibs_mun = 0.0
-                                cbs = 0.36  # 40% de 0,90
-                                regime = "RED_60_ESSENCIALIDADE"
-                                fonte = f"LC 214/25, {anexo}"
-                            else:
-                                fator = (100 - reducao_pct) / 100
-                                ibs_uf = 0.10 * fator
-                                ibs_mun = 0.0
-                                cbs = 0.90 * fator
-                                regime = f"RED_{int(reducao_pct)}"
-                                fonte = f"LC 214/25, {anexo}"
-                            
-                            print(f"✅ Benefício aplicado: {anexo} ({reducao_pct}% redução)")
-                        else:
-                            print(f"ℹ️ Nenhum benefício encontrado - Tributação padrão 1,00%")
-                            
-                    except Exception as e:
-                        print(f"⚠️ Erro ao consultar benefícios: {e}")
-                
-                # Calcular total
-                total_iva = ibs_uf + ibs_mun + cbs
-                
-                # Calcular cClassTrib
-                cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
-                    cst=cst_ibscbs, cfop="5102", regime_iva=regime
-                )
-                class_info_venda = get_class_info_by_code(cclastrib_venda_code)
-                
-                # SOBRESCREVER DESCRIÇÃO com base no anexo (se houver benefícios)
-                if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                    enq = beneficios_info['enquadramentos'][0]
-                    desc_anexo = enq['descricao_anexo']
-                    # Atualizar descrição do cClassTrib com a descrição do anexo
-                    if class_info_venda:
-                        class_info_venda = class_info_venda.copy()
-                        class_info_venda['DESC_CLASS'] = desc_anexo
+                if CALC_TRIBUTACAO_DISPONIVEL:
+                    resultado = calcular_tributacao_completa(
+                        ncm=ncm_fmt,
+                        cfop="5102",
+                        beneficios_engine=BENEFICIOS_ENGINE,
+                        consulta_ncm_func=consulta_ncm if BENEFICIOS_DISPONIVEL else None,
+                        guess_cclasstrib_func=guess_cclasstrib,
+                        get_class_info_func=get_class_info_by_code,
+                    )
+                    
+                    # Extrair resultados
+                    regime = resultado['regime']
+                    ibs_uf = resultado['ibs_uf']
+                    ibs_mun = resultado['ibs_mun']
+                    cbs = resultado['cbs']
+                    total_iva = resultado['total_iva']
+                    cst_ibscbs = resultado['cst']
+                    cclastrib_venda_code = resultado['cclasstrib_code']
+                    cclastrib_venda_msg = resultado['cclasstrib_msg']
+                    class_info_venda = resultado['class_info']
+                    beneficios_info = resultado['beneficios']
+                    fonte = resultado['fonte']
+                else:
+                    # Fallback se função não disponível (nunca deve acontecer)
+                    regime = "TRIBUTACAO_PADRAO"
+                    ibs_uf = 0.10
+                    ibs_mun = 0.0
+                    cbs = 0.90
+                    total_iva = 1.00
+                    cclastrib_venda_code = "000001"
+                    cclastrib_venda_msg = "Operação tributada integralmente"
+                    class_info_venda = None
+                    beneficios_info = None
+                    fonte = "LC 214/25, regra geral art. 10"
                 
                 # Se CFOP foi informado E é diferente de venda padrão
                 cfop_clean_main = re.sub(r"\D+", "", cfop_input or "")
@@ -1967,26 +1947,49 @@ with tabs[0]:
                         # Extrair todos os dados do produto
                         ncm_fmt = row["NCM_DIG"]
                         desc = row["NCM_DESCRICAO"]
-                        regime = row["REGIME_IVA_2026_FINAL"]
-                        fonte = row["FONTE_LEGAL_FINAL"]
-                        flag_cesta = row["FLAG_CESTA_BASICA"]
-                        flag_hf = row["FLAG_HORTIFRUTI_OVOS"]
-                        flag_red = row["FLAG_RED_60"]
-                        flag_alim = row["FLAG_ALIMENTO"]
-                        flag_dep = row["FLAG_DEPENDE_DESTINACAO"]
-                        ibs_uf = to_float_br(row["IBS_UF_TESTE_2026_FINAL"])
-                        ibs_mun = to_float_br(row["IBS_MUN_TESTE_2026_FINAL"])
-                        cbs = to_float_br(row["CBS_TESTE_2026_FINAL"])
-                        total_iva = ibs_uf + ibs_mun + cbs
-                        cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
-
-                        # Sugere cClassTrib SEMPRE para venda (CFOP 5102)
-                        cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
-                            cst=cst_ibscbs, cfop="5102", regime_iva=str(regime or "")
-                        )
-                        class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                        flag_alim = row.get("FLAG_ALIMENTO", "NAO")
+                        flag_dep = row.get("FLAG_DEPENDE_DESTINACAO", "NAO")
                         
-                        # Se CFOP foi informado E é diferente de venda padrão, calcular também
+                        # =============================================================================
+                        # CALCULAR TRIBUTAÇÃO COMPLETA (FUNÇÃO CENTRALIZADA)
+                        # =============================================================================
+                        if CALC_TRIBUTACAO_DISPONIVEL:
+                            resultado = calcular_tributacao_completa(
+                                ncm=ncm_fmt,
+                                cfop="5102",
+                                beneficios_engine=BENEFICIOS_ENGINE,
+                                consulta_ncm_func=consulta_ncm if BENEFICIOS_DISPONIVEL else None,
+                                guess_cclasstrib_func=guess_cclasstrib,
+                                get_class_info_func=get_class_info_by_code,
+                            )
+                            
+                            # Extrair resultados
+                            regime = resultado['regime']
+                            ibs_uf = resultado['ibs_uf']
+                            ibs_mun = resultado['ibs_mun']
+                            cbs = resultado['cbs']
+                            total_iva = resultado['total_iva']
+                            cst_ibscbs = resultado['cst']
+                            cclastrib_venda_code = resultado['cclasstrib_code']
+                            cclastrib_venda_msg = resultado['cclasstrib_msg']
+                            class_info_venda = resultado['class_info']
+                            beneficios_info = resultado['beneficios']
+                            fonte = resultado['fonte']
+                        else:
+                            # Fallback
+                            regime = "TRIBUTACAO_PADRAO"
+                            ibs_uf = 0.10
+                            ibs_mun = 0.0
+                            cbs = 0.90
+                            total_iva = 1.00
+                            cst_ibscbs = "000"
+                            cclastrib_venda_code = "000001"
+                            cclastrib_venda_msg = "Operação tributada integralmente"
+                            class_info_venda = None
+                            beneficios_info = None
+                            fonte = "LC 214/25, regra geral art. 10"
+                        
+                        # Se CFOP foi informado E é diferente de venda padrão
                         cfop_clean_desc = re.sub(r"\D+", "", cfop_input or "")
                         cclastrib_cfop_code = ""
                         cclastrib_cfop_msg = ""
@@ -1994,92 +1997,15 @@ with tabs[0]:
                         cfop_is_different = False
                         
                         if cfop_clean_desc and cfop_clean_desc not in ["5102", "6102", "7102"]:
-                            # CFOP informado é diferente de venda padrão
                             cfop_is_different = True
                             cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
-                                cst=cst_ibscbs, cfop=cfop_input, regime_iva=str(regime or "")
+                                cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
                             )
                             class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
                         
-                        # Para compatibilidade com código existente
+                        # Para compatibilidade
                         cclastrib_code = cclastrib_venda_code
                         class_info = class_info_venda
-
-                        # =============================================================================
-                        # CONSULTAR BENEFÍCIOS FISCAIS (NOVA PLANILHA)
-                        # =============================================================================
-                        beneficios_info = None
-                        if BENEFICIOS_ENGINE:
-                            try:
-                                beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_fmt)
-                                
-                                # SOBRESCREVER ALÍQUOTAS E REGIME SE HOUVER BENEFÍCIOS
-                                if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                                    # Pegar primeiro enquadramento (mais específico)
-                                    enq = beneficios_info['enquadramentos'][0]
-                                    reducao_pct = enq['reducao_aliquota']
-                                    
-                                    # Alíquotas integrais 2026
-                                    ibs_integral = 0.10
-                                    cbs_integral = 0.90
-                                    
-                                    # Aplicar redução
-                                    if reducao_pct == 100:
-                                        # Alíquota zero (Cesta Básica)
-                                        ibs_uf = 0.0
-                                        ibs_mun = 0.0
-                                        cbs = 0.0
-                                        regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
-                                    elif reducao_pct == 60:
-                                        # Redução de 60%
-                                        ibs_uf = ibs_integral * 0.4  # 40% da integral
-                                        ibs_mun = 0.0  # IBS municipal é só estadual no ano teste
-                                        cbs = cbs_integral * 0.4
-                                        regime = "RED_60_ESSENCIALIDADE"
-                                    else:
-                                        # Outras reduções
-                                        fator = (100 - reducao_pct) / 100
-                                        ibs_uf = ibs_integral * fator
-                                        ibs_mun = 0.0
-                                        cbs = cbs_integral * fator
-                                        regime = f"RED_{int(reducao_pct)}"
-                                    
-                                    # Recalcular total
-                                    total_iva = ibs_uf + ibs_mun + cbs
-                                    
-                                    # RECALCULAR cClassTrib com novo regime
-                                    cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
-                                        cst=cst_ibscbs, cfop="5102", regime_iva=regime
-                                    )
-                                    class_info_venda = get_class_info_by_code(cclastrib_venda_code)
-                                    
-                                    # SOBRESCREVER DESCRIÇÃO com base no anexo
-                                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                                        enq = beneficios_info['enquadramentos'][0]
-                                        desc_anexo = enq['descricao_anexo']
-                                        if class_info_venda:
-                                            class_info_venda = class_info_venda.copy()
-                                            class_info_venda['DESC_CLASS'] = desc_anexo
-                                    
-                                    # Se CFOP foi informado, recalcular também
-                                    if cfop_is_different:
-                                        cclastrib_cfop_code, cclastrib_cfop_msg = guess_cclasstrib(
-                                            cst=cst_ibscbs, cfop=cfop_input, regime_iva=regime
-                                        )
-                                        class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
-                                        # Sobrescrever descrição do CFOP também
-                                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0 and class_info_cfop:
-                                            class_info_cfop = class_info_cfop.copy()
-                                            class_info_cfop['DESC_CLASS'] = desc_anexo
-                                    
-                                    # Atualizar variáveis de compatibilidade
-                                    cclastrib_code = cclastrib_venda_code
-                                    class_info = class_info_venda
-                                    
-                            except Exception as e:
-                                print(f"⚠️ Erro ao consultar benefícios para NCM {ncm_fmt}: {e}")
-                                import traceback
-                                traceback.print_exc()
 
                         # Header do produto
                         st.markdown(
@@ -2780,55 +2706,38 @@ with tabs[4]:
                             row = resultado_tipi.iloc[0]
                             cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
                             
-                            # CALCULAR ALÍQUOTAS BASEADO APENAS EM BDBENEF
-                            regime = "TRIBUTACAO_PADRAO"
-                            ibs_uf = 0.10
-                            ibs_mun = 0.0
-                            cbs = 0.90
-                            beneficios_info = None
-                            
-                            if BENEFICIOS_ENGINE:
-                                try:
-                                    beneficios_info = consulta_ncm(BENEFICIOS_ENGINE, ncm_clean)
-                                    
-                                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                                        enq = beneficios_info['enquadramentos'][0]
-                                        reducao_pct = enq['reducao_aliquota']
-                                        
-                                        if reducao_pct == 100:
-                                            ibs_uf = 0.0
-                                            ibs_mun = 0.0
-                                            cbs = 0.0
-                                            regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
-                                        elif reducao_pct == 60:
-                                            ibs_uf = 0.04
-                                            ibs_mun = 0.0
-                                            cbs = 0.36
-                                            regime = "RED_60_ESSENCIALIDADE"
-                                        else:
-                                            fator = (100 - reducao_pct) / 100
-                                            ibs_uf = 0.10 * fator
-                                            ibs_mun = 0.0
-                                            cbs = 0.90 * fator
-                                            regime = f"RED_{int(reducao_pct)}"
-                                except Exception as e:
-                                    print(f"⚠️ Erro ao consultar benefícios: {e}")
-                            
-                            total_iva = ibs_uf + ibs_mun + cbs
-                            
-                            # Sugere cClassTrib
-                            cclastrib_code, cclastrib_msg = guess_cclasstrib(
-                                cst=cst_ibscbs, cfop=cfop, regime_iva=regime
-                            )
-                            class_info = get_class_info_by_code(cclastrib_code)
-                            
-                            # SOBRESCREVER DESCRIÇÃO com base no anexo (se houver benefícios)
-                            if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                                enq = beneficios_info['enquadramentos'][0]
-                                desc_anexo = enq['descricao_anexo']
-                                if class_info:
-                                    class_info = class_info.copy()
-                                    class_info['DESC_CLASS'] = desc_anexo
+                            # CALCULAR TRIBUTAÇÃO COMPLETA (FUNÇÃO CENTRALIZADA)
+                            if CALC_TRIBUTACAO_DISPONIVEL:
+                                resultado_trib = calcular_tributacao_completa(
+                                    ncm=ncm_clean,
+                                    cfop=cfop,
+                                    beneficios_engine=BENEFICIOS_ENGINE,
+                                    consulta_ncm_func=consulta_ncm if BENEFICIOS_DISPONIVEL else None,
+                                    guess_cclasstrib_func=guess_cclasstrib,
+                                    get_class_info_func=get_class_info_by_code,
+                                )
+                                
+                                regime = resultado_trib['regime']
+                                ibs_uf = resultado_trib['ibs_uf']
+                                ibs_mun = resultado_trib['ibs_mun']
+                                cbs = resultado_trib['cbs']
+                                total_iva = resultado_trib['total_iva']
+                                cst_ibscbs = resultado_trib['cst']
+                                cclastrib_code = resultado_trib['cclasstrib_code']
+                                cclastrib_msg = resultado_trib['cclasstrib_msg']
+                                class_info = resultado_trib['class_info']
+                                beneficios_info = resultado_trib['beneficios']
+                            else:
+                                # Fallback
+                                regime = "TRIBUTACAO_PADRAO"
+                                ibs_uf = 0.10
+                                ibs_mun = 0.0
+                                cbs = 0.90
+                                total_iva = 1.00
+                                cclastrib_code = "000001"
+                                cclastrib_msg = "Operação tributada integralmente"
+                                class_info = None
+                                beneficios_info = None
                             
                             st.markdown("---")
                             
