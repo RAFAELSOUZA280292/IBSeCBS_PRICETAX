@@ -49,302 +49,53 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Paleta de Cores Profissional (Contraste WCAG AA)
-COLOR_GOLD = "#F59E0B"       # Laranja/Ouro (Destaque) - Contraste 3.8:1
-COLOR_BLACK = "#1F2937"      # Cinza Muito Escuro (Cabeçalho) - Contraste 15:1
-COLOR_BLUE = "#2563EB"       # Azul Forte (Links/Ações) - Contraste 7:1
-COLOR_BG_LIGHT = "#F9FAFB"   # Cinza Ultra Claro (Fundo Principal)
-COLOR_BG_WHITE = "#FFFFFF"   # Branco Puro (Cards)
-COLOR_TEXT_DARK = "#111827"  # Preto Suave (Texto Principal) - Contraste 16:1
-COLOR_TEXT_GRAY = "#6B7280"  # Cinza Médio (Texto Secundário) - Contraste 5:1
-COLOR_BORDER = "#E5E7EB"     # Cinza Claro (Bordas)
-COLOR_SUCCESS = "#10B981"    # Verde (Sucesso)
-COLOR_ERROR = "#EF4444"      # Vermelho (Erro)
-COLOR_WARNING = "#F59E0B"    # Laranja (Aviso)
-
-# Tema Escuro
-COLOR_DARK_BG = "#111827"        # Fundo Principal Escuro
-COLOR_DARK_CARD = "#1F2937"      # Cards Escuros
-COLOR_DARK_TEXT = "#F9FAFB"      # Texto Claro - Contraste 15:1
-COLOR_DARK_TEXT_MUTED = "#D1D5DB" # Texto Secundário - Contraste 8:1
-COLOR_DARK_BORDER = "#374151"    # Bordas Escuras
-
-# Aliases
-COLOR_PRIMARY = COLOR_GOLD
-COLOR_SECONDARY = COLOR_BLACK
-COLOR_BG_MAIN = COLOR_BG_LIGHT
-COLOR_TEXT_MAIN = COLOR_TEXT_DARK
-COLOR_TEXT_MUTED = COLOR_TEXT_GRAY
-COLOR_CARD_BG = COLOR_BG_WHITE
-COLOR_GRAY_LIGHT = COLOR_TEXT_GRAY
-COLOR_WHITE = "#FFFFFF"         # Branco Puro
-COLOR_GRAY_MEDIUM = "#9CA3AF"   # Cinza Médio
+# Apenas a cor dourada da PRICETAX - resto usa padrão Streamlit
+COLOR_GOLD = "#F59E0B"
 
 st.markdown(
     f"""
     <style>
-    /* Reset e Base */
-    .stApp {{
-        background-color: {COLOR_BG_MAIN};
-        color: {COLOR_TEXT_MAIN};
-        font-family: 'Inter', -apple-system, sans-serif;
-    }}
-
-    .block-container {{
-        padding-top: 2rem;
-        max-width: 1200px;
-    }}
-
-    /* Cabeçalho Original PRICETAX (Preto) */
+    /* Apenas customizações mínimas - deixar Streamlit gerenciar cores */
+    
+    /* Cabeçalho PRICETAX */
     .pricetax-header {{
         text-align: left;
         margin: -3rem -5rem 2rem -5rem;
         padding: 1.5rem 5rem;
-        background-color: {COLOR_BLACK};
+        background-color: #1F2937;
         border-bottom: 4px solid {COLOR_GOLD};
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }}
 
     .pricetax-logo {{
         font-size: 2.2rem;
         font-weight: 800;
         color: {COLOR_GOLD};
-        letter-spacing: -0.02em;
         margin-bottom: 0.2rem;
     }}
 
     .pricetax-tagline {{
         font-size: 1.15rem;
         color: #FFFFFF;
-        font-weight: 400;
-        letter-spacing: 0.01em;
         opacity: 0.85;
         border-left: 3px solid {COLOR_GOLD};
         padding-left: 1.2rem;
         margin-top: 0.8rem;
-        line-height: 1.4;
     }}
 
-    /* Cards de Conteúdo */
-    .pricetax-card {{
-        background: {COLOR_CARD_BG};
-        border: 1px solid {COLOR_BORDER};
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }}
-
-    .pricetax-card-header {{
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: {COLOR_SECONDARY};
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }}
-
-    /* Labels e Textos de Formulário (Correção de Ofuscamento) */
-    label, .stMarkdown p, .stText {{
-        color: {COLOR_TEXT_MAIN} !important;
-        font-weight: 500 !important;
-        font-size: 0.95rem !important;
-    }}
-
-    .stMarkdown small {{
-        color: {COLOR_TEXT_MUTED} !important;
-    }}
-
-    /* Radio Buttons e Checkboxes (Estilo Portal) */
-    .stRadio > label {{
-        color: {COLOR_BLUE} !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-    }}
-    
-    /* Forçar contraste em opções de radio buttons */
-    .stRadio > div {{
-        color: {COLOR_TEXT_MAIN} !important;
-    }}
-    
-    .stRadio > div > label {{
-        color: {COLOR_TEXT_MAIN} !important;
-        font-weight: 600 !important;
-    }}
-    
-    .stRadio > div > label > div {{
-        color: {COLOR_TEXT_MAIN} !important;
-    }}
-    
-    /* Forçar contraste em TODOS os spans e divs de texto */
-    .stRadio span, .stRadio div[data-testid="stMarkdownContainer"] {{
-        color: {COLOR_TEXT_MAIN} !important;
-    }}
-    
-    /* TEMA ESCURO (macOS/Windows) - Cores Legíveis */
-    @media (prefers-color-scheme: dark) {{
-        /* Fundo Principal */
-        .stApp {{
-            background-color: {COLOR_DARK_BG} !important;
-        }}
-        
-        /* Área de Conteúdo */
-        .main .block-container {{
-            background-color: {COLOR_DARK_CARD} !important;
-            padding: 2rem !important;
-            border-radius: 12px !important;
-        }}
-        
-        /* Cards */
-        .pricetax-card {{
-            background-color: {COLOR_DARK_CARD} !important;
-            border-color: {COLOR_DARK_BORDER} !important;
-        }}
-        
-        /* Textos */
-        .stMarkdown, .stMarkdown p, .stMarkdown div, 
-        .stRadio, .stRadio label, .stRadio span,
-        label, span, div, p, h1, h2, h3, h4, h5, h6 {{
-            color: {COLOR_DARK_TEXT} !important;
-        }}
-        
-        /* Textos Secundários */
-        .stMarkdown small, .pricetax-card-header {{
-            color: {COLOR_DARK_TEXT_MUTED} !important;
-        }}
-        
-        /* Tabelas */
-        td, th {{
-            color: {COLOR_DARK_TEXT} !important;
-            border-color: {COLOR_DARK_BORDER} !important;
-        }}
-        
-        thead {{
-            background-color: {COLOR_DARK_BG} !important;
-        }}
-        
-        /* Inputs e Selects */
-        input, select, textarea {{
-            background-color: {COLOR_DARK_BG} !important;
-            color: {COLOR_DARK_TEXT} !important;
-            border-color: {COLOR_DARK_BORDER} !important;
-        }}
-        
-        /* Botões */
-        .stButton > button {{
-            background-color: {COLOR_GOLD} !important;
-            color: {COLOR_DARK_BG} !important;
-        }}
-        
-        /* Bordas */
-        hr, .pricetax-card {{
-            border-color: {COLOR_DARK_BORDER} !important;
-        }}
-    }}
-
-    /* Inputs e Selects */
-    .stTextInput > div > div > input, 
-    .stSelectbox > div > div > div {{
-        background-color: #FFFFFF !important;
-        border: 1px solid {COLOR_BORDER} !important;
-        border-radius: 8px !important;
-        color: {COLOR_TEXT_MAIN} !important;
-        padding: 0.5rem 1rem !important;
-    }}
-
-    .stTextInput > div > div > input:focus {{
-        border-color: {COLOR_PRIMARY} !important;
-        box-shadow: 0 0 0 2px rgba(255, 221, 0, 0.2) !important;
-    }}
-
-    /* Botões de Ação */
+    /* Botão de ação com cor PRICETAX */
     .stButton > button {{
-        width: 100%;
-        background-color: {COLOR_PRIMARY} !important;
-        color: {COLOR_SECONDARY} !important;
-        border: none !important;
+        background-color: {COLOR_GOLD} !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
         border-radius: 8px !important;
-        padding: 0.75rem 1.5rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.025em !important;
-        transition: all 0.2s ease !important;
+        padding: 0.5rem 1rem !important;
     }}
 
     .stButton > button:hover {{
         background-color: #FACC15 !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }}
 
-    /* Tabs Modernas */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 1rem;
-        background-color: transparent;
-    }}
-
-    .stTabs [data-baseweb="tab"] {{
-        height: 45px;
-        background-color: #FFFFFF;
-        border: 1px solid {COLOR_BORDER};
-        border-radius: 8px 8px 0 0;
-        padding: 0 1.5rem;
-        color: {COLOR_TEXT_MUTED};
-        font-weight: 600;
-    }}
-
-    .stTabs [aria-selected="true"] {{
-        background-color: {COLOR_BLUE} !important;
-        color: #FFFFFF !important;
-        border-color: {COLOR_BLUE} !important;
-    }}
-
-    /* Tabelas e Dataframes */
-    .dataframe {{
-        border: 1px solid {COLOR_BORDER} !important;
-        border-radius: 8px !important;
-    }}
-
-    .dataframe th {{
-        background-color: {COLOR_SECONDARY} !important;
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-        padding: 12px !important;
-    }}
-
-    .dataframe td {{
-        padding: 10px !important;
-        color: {COLOR_TEXT_MAIN} !important;
-    }}
-
-    /* Mensagens de Feedback */
-    .stAlert {{
-        border-radius: 8px !important;
-        border: none !important;
-        background-color: #FFFFFF !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
-    }}
-
-    /* Forçar contraste GLOBAL em todos os textos (CRITÍCO) */
-    .stMarkdown, .stMarkdown p, .stMarkdown div, .stMarkdown span,
-    .stText, .stText div, .stText span,
-    .stTextInput label, .stSelectbox label, .stNumberInput label,
-    .stRadio label, .stCheckbox label,
-    div[data-testid="stMarkdownContainer"],
-    div[data-testid="stText"] {{
-        color: {COLOR_TEXT_MAIN} !important;
-    }}
-    
-    /* Garantir que inputs tenham texto visível */
-    input, select, textarea {{
-        color: {COLOR_TEXT_MAIN} !important;
-        background-color: #FFFFFF !important;
-    }}
-    
-    /* Ocultar elementos desnecessários */
+    /* Ocultar elementos padrão Streamlit */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
@@ -352,6 +103,25 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# Aliases para manter compatibilidade com código existente
+COLOR_PRIMARY = COLOR_GOLD
+COLOR_SECONDARY = "#1F2937"
+COLOR_BLACK = "#1F2937"
+COLOR_WHITE = "#FFFFFF"
+COLOR_BLUE = "#2563EB"
+COLOR_TEXT_MAIN = "#111827"
+COLOR_TEXT_MUTED = "#6B7280"
+COLOR_GRAY_LIGHT = "#6B7280"
+COLOR_GRAY_MEDIUM = "#9CA3AF"
+COLOR_BORDER = "#E5E7EB"
+COLOR_BG_MAIN = "#F9FAFB"
+COLOR_CARD_BG = "#FFFFFF"
+COLOR_DARK_BG = "#111827"
+COLOR_DARK_CARD = "#1F2937"
+COLOR_DARK_TEXT = "#F9FAFB"
+COLOR_DARK_TEXT_MUTED = "#D1D5DB"
+COLOR_DARK_BORDER = "#374151"
 
 # =============================================================================
 # RECONSTRUÇÃO DA LÓGICA (MANTENDO 100% DAS FUNÇÕES)
