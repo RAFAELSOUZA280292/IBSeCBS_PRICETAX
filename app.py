@@ -1242,7 +1242,7 @@ with tabs[0]:
                                         {texto_reducao}
                                     </div>
                                 </div>
-                                <div style="font-size: 0.9rem; line-height: 1.5; color: #111827;">
+                                <div style="font-size: 0.9rem; line-height: 1.5; color: {COLOR_GOLD};">
                                     {descricao}
                                 </div>
                             </div>
@@ -1907,7 +1907,7 @@ with tabs[0]:
                                                 {texto_reducao}
                                             </div>
                                         </div>
-                                        <div style="font-size: 0.9rem; line-height: 1.5; color: #111827;">
+                                        <div style="font-size: 0.9rem; line-height: 1.5; color: {COLOR_GOLD};">
                                             {descricao}
                                         </div>
                                     </div>
