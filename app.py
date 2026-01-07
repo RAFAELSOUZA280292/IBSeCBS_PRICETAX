@@ -158,7 +158,7 @@ st.markdown(
 
     /* Radio Buttons e Checkboxes (Estilo Portal) */
     .stRadio > label {{
-        color: {COLOR_BLUE_PORTAL} !important;
+        color: {COLOR_BLUE} !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
     }}
@@ -295,9 +295,9 @@ st.markdown(
     }}
 
     .stTabs [aria-selected="true"] {{
-        background-color: {COLOR_BLUE_PORTAL} !important;
+        background-color: {COLOR_BLUE} !important;
         color: #FFFFFF !important;
-        border-color: {COLOR_BLUE_PORTAL} !important;
+        border-color: {COLOR_BLUE} !important;
     }}
 
     /* Tabelas e Dataframes */
@@ -1152,7 +1152,7 @@ with tabs[5]:
             sc1, sc2 = st.columns(2)
             # Verificar se 'nota' existe antes de exibir
             if "nota" in data and data["nota"]:
-                sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE_PORTAL}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
+                sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
             sc2.markdown(f'<div style="border-left:4px solid {COLOR_GOLD}; background:rgba(255,221,0,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Correlação:</strong><br>Vinculado à EC 132/2023 e Art. 156-A da CF/88.</div>', unsafe_allow_html=True)
         else:
             if art_search or key_search:
