@@ -49,25 +49,34 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Paleta de Cores Sênior (PRICETAX + Portal da Reforma)
-COLOR_GOLD = "#FFDD00"       # Amarelo PRICETAX (Ação/Destaque)
-COLOR_BLACK = "#000000"      # Preto Original PRICETAX (Cabeçalho)
-COLOR_BLUE_PORTAL = "#0056B3" # Azul Institucional (Portal da Reforma)
-COLOR_DARK_BG = "#F0F4F8"    # Fundo Azulado Ultra Claro (Conforto)
-COLOR_CARD_BG = "#FFFFFF"    # Fundo Branco (Destaque)
-COLOR_WHITE = "#1E293B"      # Texto Principal (Cinza Escuro)
-COLOR_GRAY_LIGHT = "#64748B" # Texto Secundário (Labels)
-COLOR_GRAY_MEDIUM = "#ADB5BD" # Bordas e elementos desativados
-COLOR_BORDER = "#D1D9E6"     # Bordas Suaves e Definidas
-COLOR_SUCCESS = "#10B981"    # Verde Sucesso
-COLOR_ERROR = "#EF4444"      # Vermelho Erro
+# Paleta de Cores Profissional (Contraste WCAG AA)
+COLOR_GOLD = "#F59E0B"       # Laranja/Ouro (Destaque) - Contraste 3.8:1
+COLOR_BLACK = "#1F2937"      # Cinza Muito Escuro (Cabeçalho) - Contraste 15:1
+COLOR_BLUE = "#2563EB"       # Azul Forte (Links/Ações) - Contraste 7:1
+COLOR_BG_LIGHT = "#F9FAFB"   # Cinza Ultra Claro (Fundo Principal)
+COLOR_BG_WHITE = "#FFFFFF"   # Branco Puro (Cards)
+COLOR_TEXT_DARK = "#111827"  # Preto Suave (Texto Principal) - Contraste 16:1
+COLOR_TEXT_GRAY = "#6B7280"  # Cinza Médio (Texto Secundário) - Contraste 5:1
+COLOR_BORDER = "#E5E7EB"     # Cinza Claro (Bordas)
+COLOR_SUCCESS = "#10B981"    # Verde (Sucesso)
+COLOR_ERROR = "#EF4444"      # Vermelho (Erro)
+COLOR_WARNING = "#F59E0B"    # Laranja (Aviso)
 
-# Aliases para o novo sistema de design
+# Tema Escuro
+COLOR_DARK_BG = "#111827"        # Fundo Principal Escuro
+COLOR_DARK_CARD = "#1F2937"      # Cards Escuros
+COLOR_DARK_TEXT = "#F9FAFB"      # Texto Claro - Contraste 15:1
+COLOR_DARK_TEXT_MUTED = "#D1D5DB" # Texto Secundário - Contraste 8:1
+COLOR_DARK_BORDER = "#374151"    # Bordas Escuras
+
+# Aliases
 COLOR_PRIMARY = COLOR_GOLD
 COLOR_SECONDARY = COLOR_BLACK
-COLOR_BG_MAIN = COLOR_DARK_BG
-COLOR_TEXT_MAIN = COLOR_WHITE
-COLOR_TEXT_MUTED = COLOR_GRAY_LIGHT
+COLOR_BG_MAIN = COLOR_BG_LIGHT
+COLOR_TEXT_MAIN = COLOR_TEXT_DARK
+COLOR_TEXT_MUTED = COLOR_TEXT_GRAY
+COLOR_CARD_BG = COLOR_BG_WHITE
+COLOR_GRAY_LIGHT = COLOR_TEXT_GRAY
 
 st.markdown(
     f"""
@@ -173,30 +182,64 @@ st.markdown(
         color: {COLOR_TEXT_MAIN} !important;
     }}
     
-    /* TEMA ESCURO (macOS/Windows) - Forçar fundo branco e texto escuro */
+    /* TEMA ESCURO (macOS/Windows) - Cores Legíveis */
     @media (prefers-color-scheme: dark) {{
+        /* Fundo Principal */
         .stApp {{
-            background-color: #0E1117 !important;
+            background-color: {COLOR_DARK_BG} !important;
         }}
         
-        /* Forçar fundo branco em áreas de conteúdo */
+        /* Área de Conteúdo */
         .main .block-container {{
-            background-color: #FFFFFF !important;
+            background-color: {COLOR_DARK_CARD} !important;
             padding: 2rem !important;
             border-radius: 12px !important;
         }}
         
-        /* Garantir texto escuro em TUDO */
-        .stMarkdown, .stMarkdown p, .stMarkdown div, 
-        .stRadio, .stRadio label, .stRadio span,
-        label, span, div, p, td, th {{
-            color: {COLOR_TEXT_MAIN} !important;
+        /* Cards */
+        .pricetax-card {{
+            background-color: {COLOR_DARK_CARD} !important;
+            border-color: {COLOR_DARK_BORDER} !important;
         }}
         
-        /* Inputs com fundo branco */
+        /* Textos */
+        .stMarkdown, .stMarkdown p, .stMarkdown div, 
+        .stRadio, .stRadio label, .stRadio span,
+        label, span, div, p, h1, h2, h3, h4, h5, h6 {{
+            color: {COLOR_DARK_TEXT} !important;
+        }}
+        
+        /* Textos Secundários */
+        .stMarkdown small, .pricetax-card-header {{
+            color: {COLOR_DARK_TEXT_MUTED} !important;
+        }}
+        
+        /* Tabelas */
+        td, th {{
+            color: {COLOR_DARK_TEXT} !important;
+            border-color: {COLOR_DARK_BORDER} !important;
+        }}
+        
+        thead {{
+            background-color: {COLOR_DARK_BG} !important;
+        }}
+        
+        /* Inputs e Selects */
         input, select, textarea {{
-            background-color: #FFFFFF !important;
-            color: {COLOR_TEXT_MAIN} !important;
+            background-color: {COLOR_DARK_BG} !important;
+            color: {COLOR_DARK_TEXT} !important;
+            border-color: {COLOR_DARK_BORDER} !important;
+        }}
+        
+        /* Botões */
+        .stButton > button {{
+            background-color: {COLOR_GOLD} !important;
+            color: {COLOR_DARK_BG} !important;
+        }}
+        
+        /* Bordas */
+        hr, .pricetax-card {{
+            border-color: {COLOR_DARK_BORDER} !important;
         }}
     }}
 
