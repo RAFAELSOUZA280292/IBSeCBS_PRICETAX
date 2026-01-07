@@ -145,6 +145,25 @@ st.markdown(
         font-weight: 700 !important;
         font-size: 1rem !important;
     }}
+    
+    /* Forçar contraste em opções de radio buttons */
+    .stRadio > div {{
+        color: {COLOR_TEXT_MAIN} !important;
+    }}
+    
+    .stRadio > div > label {{
+        color: {COLOR_TEXT_MAIN} !important;
+        font-weight: 600 !important;
+    }}
+    
+    .stRadio > div > label > div {{
+        color: {COLOR_TEXT_MAIN} !important;
+    }}
+    
+    /* Forçar contraste em TODOS os spans e divs de texto */
+    .stRadio span, .stRadio div[data-testid="stMarkdownContainer"] {{
+        color: {COLOR_TEXT_MAIN} !important;
+    }}
 
     /* Inputs e Selects */
     .stTextInput > div > div > input, 
@@ -229,6 +248,22 @@ st.markdown(
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }}
 
+    /* Forçar contraste GLOBAL em todos os textos (CRITÍCO) */
+    .stMarkdown, .stMarkdown p, .stMarkdown div, .stMarkdown span,
+    .stText, .stText div, .stText span,
+    .stTextInput label, .stSelectbox label, .stNumberInput label,
+    .stRadio label, .stCheckbox label,
+    div[data-testid="stMarkdownContainer"],
+    div[data-testid="stText"] {{
+        color: {COLOR_TEXT_MAIN} !important;
+    }}
+    
+    /* Garantir que inputs tenham texto visível */
+    input, select, textarea {{
+        color: {COLOR_TEXT_MAIN} !important;
+        background-color: #FFFFFF !important;
+    }}
+    
     /* Ocultar elementos desnecessários */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
