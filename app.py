@@ -1239,7 +1239,7 @@ with tabs[0]:
                                         {texto_reducao}
                                     </div>
                                 </div>
-                                <div style="font-size: 0.9rem; line-height: 1.5;">
+                                <div style="font-size: 0.9rem; line-height: 1.5; color: #111827;">
                                     {descricao}
                                 </div>
                             </div>
@@ -1904,7 +1904,7 @@ with tabs[0]:
                                                 {texto_reducao}
                                             </div>
                                         </div>
-                                        <div style="font-size: 0.9rem; line-height: 1.5;">
+                                        <div style="font-size: 0.9rem; line-height: 1.5; color: #111827;">
                                             {descricao}
                                         </div>
                                     </div>
@@ -2617,7 +2617,7 @@ with tabs[4]:
                                                     {texto_reducao}
                                                 </div>
                                             </div>
-                                            <div style="font-size: 0.8rem; margin-top: 0.3rem;">{descricao[:80]}...</div>
+                                            <div style="font-size: 0.8rem; margin-top: 0.3rem; color: #111827;">{descricao[:80]}...</div>
                                         </div>
                                         """,
                                         unsafe_allow_html=True,
@@ -2705,7 +2705,7 @@ with tabs[4]:
                                             <span style="font-size: 1.5rem; color: {status_cor};">{status_icone}</span>
                                             <span style="font-weight: 700; color: {status_cor}; font-size: 1.1rem;">{status_texto}</span>
                                         </div>
-                                        <div style="font-size: 0.85rem;">
+                                        <div style="font-size: 0.85rem; color: #111827;">
                                             Comparação entre valores destacados no XML e valores calculados pelo sistema
                                         </div>
                                     </div>
