@@ -50,7 +50,7 @@ st.set_page_config(
 )
 
 # Apenas a cor dourada da PRICETAX - resto usa padrão Streamlit
-COLOR_GOLD = "#F59E0B"
+COLOR_GOLD = "#FFDD00"  # Amarelo PRICETAX
 
 st.markdown(
     f"""
@@ -1250,13 +1250,49 @@ with tabs[0]:
                             unsafe_allow_html=True,
                         )
                     
+                    
+                    # Seletor de benefício quando houver múltiplos enquadramentos
+                    beneficio_selecionado = None
+                    if beneficios_info['multi_enquadramento']:
+                        st.markdown("#### Selecione o Benefício Aplicável")
+                        opcoes_beneficios = []
+                        for enq in beneficios_info['enquadramentos']:
+                            anexo = enq['anexo']
+                            reducao = enq['reducao_aliquota']
+                            if reducao == 100:
+                                label = f"{anexo} - Alíquota Zero (100% de redução)"
+                            else:
+                                label = f"{anexo} - Redução de {reducao}%"
+                            opcoes_beneficios.append(label)
+                        
+                        selecao = st.radio(
+                            "Escolha qual benefício aplicar para calcular as alíquotas:",
+                            opcoes_beneficios,
+                            key=f"beneficio_selector_{ncm_clean}"
+                        )
+                        
+                        # Identificar qual benefício foi selecionado
+                        idx_selecionado = opcoes_beneficios.index(selecao)
+                        beneficio_selecionado = beneficios_info['enquadramentos'][idx_selecionado]
+                    else:
+                        # Se houver apenas um benefício, usar automaticamente
+                        if beneficios_info['enquadramentos']:
+                            beneficio_selecionado = beneficios_info['enquadramentos'][0]
+                    
                     st.markdown("---")
 
                 # =============================================================================
-                # ALÍQUOTAS EFETIVAS (SIMPLIFICADO)
+                # ALÍQUOTAS EFETIVAS (RECALCULADAS BASEADO NA SELEÇÃO)
                 # =============================================================================
-                ibs_efetivo = ibs_uf + ibs_mun
-                cbs_efetivo = cbs
+                # Recalcular com o benefício selecionado
+                if beneficio_selecionado:
+                    reducao_aplicada = beneficio_selecionado['reducao_aliquota']
+                    ibs_efetivo = (ibs_uf + ibs_mun) * (1 - reducao_aplicada / 100)
+                    cbs_efetivo = cbs * (1 - reducao_aplicada / 100)
+                else:
+                    ibs_efetivo = ibs_uf + ibs_mun
+                    cbs_efetivo = cbs
+                
                 total_iva = ibs_efetivo + cbs_efetivo
         
                 st.markdown("### Alíquotas Efetivas 2026 (Ano Teste)")
@@ -1915,13 +1951,48 @@ with tabs[0]:
                                     unsafe_allow_html=True,
                                 )
                             
+                            
+                            # Seletor de benefício quando houver múltiplos enquadramentos
+                            beneficio_selecionado = None
+                            if beneficios_info['multi_enquadramento']:
+                                st.markdown("#### Selecione o Benefício Aplicável")
+                                opcoes_beneficios = []
+                                for enq in beneficios_info['enquadramentos']:
+                                    anexo = enq['anexo']
+                                    reducao = enq['reducao_aliquota']
+                                    if reducao == 100:
+                                        label = f"{anexo} - Alíquota Zero (100% de redução)"
+                                    else:
+                                        label = f"{anexo} - Redução de {reducao}%"
+                                    opcoes_beneficios.append(label)
+                                
+                                selecao = st.radio(
+                                    "Escolha qual benefício aplicar para calcular as alíquotas:",
+                                    opcoes_beneficios,
+                                    key=f"beneficio_selector_desc_{ncm_clean}"
+                                )
+                                
+                                # Identificar qual benefício foi selecionado
+                                idx_selecionado = opcoes_beneficios.index(selecao)
+                                beneficio_selecionado = beneficios_info['enquadramentos'][idx_selecionado]
+                            else:
+                                # Se houver apenas um benefício, usar automaticamente
+                                if beneficios_info['enquadramentos']:
+                                    beneficio_selecionado = beneficios_info['enquadramentos'][0]
+                            
                             st.markdown("---")
                         
                         # =============================================================================
-                        # ALÍQUOTAS EFETIVAS (SIMPLIFICADO)
+                        # ALÍQUOTAS EFETIVAS (RECALCULADAS BASEADO NA SELEÇÃO)
                         # =============================================================================
-                        ibs_efetivo = ibs_uf + ibs_mun
-                        cbs_efetivo = cbs
+                        # Recalcular com o benefício selecionado
+                        if beneficio_selecionado:
+                            reducao_aplicada = beneficio_selecionado['reducao_aliquota']
+                            ibs_efetivo = (ibs_uf + ibs_mun) * (1 - reducao_aplicada / 100)
+                            cbs_efetivo = cbs * (1 - reducao_aplicada / 100)
+                        else:
+                            ibs_efetivo = ibs_uf + ibs_mun
+                            cbs_efetivo = cbs
                         total_iva = ibs_efetivo + cbs_efetivo
         
                         st.markdown("### Alíquotas Efetivas 2026 (Ano Teste)")
