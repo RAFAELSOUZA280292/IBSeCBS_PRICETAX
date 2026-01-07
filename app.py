@@ -1191,7 +1191,7 @@ with tabs[0]:
                         <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
                             NCM {ncm_fmt}
                         </div>
-                        <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                        <div style="font-size:1rem;margin-bottom:1rem;">
                             {desc}
                         </div>
                     </div>
@@ -1239,7 +1239,7 @@ with tabs[0]:
                                         {texto_reducao}
                                     </div>
                                 </div>
-                                <div style="font-size: 0.9rem; color: {COLOR_GRAY_LIGHT}; line-height: 1.5;">
+                                <div style="font-size: 0.9rem; line-height: 1.5;">
                                     {descricao}
                                 </div>
                             </div>
@@ -1333,8 +1333,8 @@ with tabs[0]:
                         desc_class_venda = class_info_venda["DESC_CLASS"] if class_info_venda else ""
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
                         if desc_class_venda:
-                            st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_venda}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='font-size:0.8rem;font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
                     else:
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
                     
@@ -1345,7 +1345,7 @@ with tabs[0]:
                         desc_class_cfop = class_info_cfop["DESC_CLASS"] if class_info_cfop else ""
                         st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_cfop_code}</span>", unsafe_allow_html=True)
                         if desc_class_cfop:
-                            st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_cfop}</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                         # Alertar se for não oneroso
                         if cclastrib_cfop_code == "410999":
                             st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
@@ -1442,7 +1442,7 @@ with tabs[0]:
                             <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
                                 CFOP {cfop_clean} - {reg['Tipo']}
                             </div>
-                            <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                            <div style="font-size:1rem;margin-bottom:1rem;">
                                 {reg['Descrição Resumida']}
                             </div>
                         </div>
@@ -1856,7 +1856,7 @@ with tabs[0]:
                                 <div style="font-size:1.3rem;font-weight:600;color:{COLOR_GOLD};margin-bottom:1rem;">
                                     NCM {ncm_fmt}
                                 </div>
-                                <div style="font-size:1rem;color:{COLOR_WHITE};margin-bottom:1rem;">
+                                <div style="font-size:1rem;margin-bottom:1rem;">
                                     {desc}
                                 </div>
                             </div>
@@ -1904,7 +1904,7 @@ with tabs[0]:
                                                 {texto_reducao}
                                             </div>
                                         </div>
-                                        <div style="font-size: 0.9rem; color: {COLOR_GRAY_LIGHT}; line-height: 1.5;">
+                                        <div style="font-size: 0.9rem; line-height: 1.5;">
                                             {descricao}
                                         </div>
                                     </div>
@@ -1998,8 +1998,8 @@ with tabs[0]:
                                 desc_class_venda = class_info_venda["DESC_CLASS"] if class_info_venda else ""
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_venda_code}</span>", unsafe_allow_html=True)
                                 if desc_class_venda:
-                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_venda}</span>", unsafe_allow_html=True)
-                                st.markdown(f"<span style='font-size:0.8rem;color:{COLOR_GRAY_LIGHT};font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
+                                    st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_venda}</span>", unsafe_allow_html=True)
+                                st.markdown(f"<span style='font-size:0.8rem;font-style:italic;'>CFOP de venda onerosa assumido</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>—</span>", unsafe_allow_html=True)
                             
@@ -2010,7 +2010,7 @@ with tabs[0]:
                                 desc_class_cfop = class_info_cfop["DESC_CLASS"] if class_info_cfop else ""
                                 st.markdown(f"<span style='color:{COLOR_GOLD};font-weight:700;'>{cclastrib_cfop_code}</span>", unsafe_allow_html=True)
                                 if desc_class_cfop:
-                                    st.markdown(f"<span style='font-size:0.85rem;color:{COLOR_GRAY_LIGHT};'>{desc_class_cfop}</span>", unsafe_allow_html=True)
+                                    st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                                 # Alertar se for não oneroso
                                 if cclastrib_cfop_code == "410999":
                                     st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
@@ -2385,7 +2385,7 @@ with tabs[3]:
             margin-bottom: 2rem;
         ">
             <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Download: Correlação CFOP x cClassTrib</h2>
-            <p style="color: {COLOR_WHITE}; line-height: 1.8; margin-bottom: 1rem;">
+            <p style="line-height: 1.8; margin-bottom: 1rem;">
                 Disponibilizamos uma planilha de referência com o DE/PARA entre CFOP e cClassTrib para facilitar a parametrização inicial do seu sistema.
             </p>
             <div style="
@@ -2396,7 +2396,7 @@ with tabs[3]:
                 margin-top: 1.5rem;
             ">
                 <p style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Atenção</p>
-                <p style="color: {COLOR_WHITE}; line-height: 1.6; margin: 0;">
+                <p style="line-height: 1.6; margin: 0;">
                     Esta planilha atende aos cenários em que <strong>não há redução de IBS e CBS</strong> para a NCM ou serviço pesquisado. 
                     Antes de utilizar, valide se não existem regras específicas aplicáveis ao seu segmento ou operação.
                 </p>
@@ -2436,7 +2436,7 @@ with tabs[4]:
             margin-bottom: 2rem;
         ">
             <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Análise de XML de NF-e</h2>
-            <p style="color: {COLOR_GRAY_LIGHT}; line-height: 1.6; margin: 0;">
+            <p style="line-height: 1.6; margin: 0;">
                 Faça upload de um arquivo XML de NF-e para analisar a tributação IBS/CBS de cada item.
                 O sistema irá extrair automaticamente NCM, CFOP, descrição e valores, calculando as alíquotas
                 efetivas e sugerindo o cClassTrib adequado para cada produto.
@@ -2479,16 +2479,16 @@ with tabs[4]:
                     <h3 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Dados do Emitente</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         <div>
-                            <strong style="color: {COLOR_GRAY_LIGHT};">CNPJ:</strong><br>
-                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['cnpj']}</span>
+                            <strong>CNPJ:</strong><br>
+                            <span style="font-size: 1.1rem;">{emitente['cnpj']}</span>
                         </div>
                         <div>
-                            <strong style="color: {COLOR_GRAY_LIGHT};">Razão Social:</strong><br>
-                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['razao_social']}</span>
+                            <strong>Razão Social:</strong><br>
+                            <span style="font-size: 1.1rem;">{emitente['razao_social']}</span>
                         </div>
                         <div>
-                            <strong style="color: {COLOR_GRAY_LIGHT};">UF:</strong><br>
-                            <span style="color: {COLOR_WHITE}; font-size: 1.1rem;">{emitente['uf']}</span>
+                            <strong>UF:</strong><br>
+                            <span style="font-size: 1.1rem;">{emitente['uf']}</span>
                         </div>
                     </div>
                 </div>
@@ -2506,7 +2506,7 @@ with tabs[4]:
                     f"""
                     <div style="margin-bottom: 1.5rem;">
                         <h3 style="color: {COLOR_GOLD};">Itens da NF-e ({len(itens)} produtos)</h3>
-                        <p style="color: {COLOR_GRAY_LIGHT};">Clique em um item para ver os detalhes da tributação IBS/CBS.</p>
+                        <p>Clique em um item para ver os detalhes da tributação IBS/CBS.</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -2617,7 +2617,7 @@ with tabs[4]:
                                                     {texto_reducao}
                                                 </div>
                                             </div>
-                                            <div style="font-size: 0.8rem; color: {COLOR_GRAY_LIGHT}; margin-top: 0.3rem;">{descricao[:80]}...</div>
+                                            <div style="font-size: 0.8rem; margin-top: 0.3rem;">{descricao[:80]}...</div>
                                         </div>
                                         """,
                                         unsafe_allow_html=True,
@@ -2705,7 +2705,7 @@ with tabs[4]:
                                             <span style="font-size: 1.5rem; color: {status_cor};">{status_icone}</span>
                                             <span style="font-weight: 700; color: {status_cor}; font-size: 1.1rem;">{status_texto}</span>
                                         </div>
-                                        <div style="font-size: 0.85rem; color: {COLOR_GRAY_LIGHT};">
+                                        <div style="font-size: 0.85rem;">
                                             Comparação entre valores destacados no XML e valores calculados pelo sistema
                                         </div>
                                     </div>
@@ -2735,31 +2735,31 @@ with tabs[4]:
                                         </thead>
                                         <tbody>
                                             <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">cClassTrib</td>
+                                                <td style="padding: 0.6rem;">cClassTrib</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{xml_cclasstrib or '—'}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{cclastrib_code or '—'}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(cclasstrib_ok)}; font-size: 1.2rem;">{status_icon(cclasstrib_ok)}</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Alíquota IBS</td>
+                                                <td style="padding: 0.6rem;">Alíquota IBS</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pibs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pibs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(pibs_ok)}; font-size: 1.2rem;">{status_icon(pibs_ok)}</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Alíquota CBS</td>
+                                                <td style="padding: 0.6rem;">Alíquota CBS</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pcbs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pcbs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(pcbs_ok)}; font-size: 1.2rem;">{status_icon(pcbs_ok)}</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Valor IBS</td>
+                                                <td style="padding: 0.6rem;">Valor IBS</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vibs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vibs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(vibs_ok)}; font-size: 1.2rem;">{status_icon(vibs_ok)}</td>
                                             </tr>
                                             <tr>
-                                                <td style="padding: 0.6rem; color: {COLOR_GRAY_LIGHT};">Valor CBS</td>
+                                                <td style="padding: 0.6rem;">Valor CBS</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vcbs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vcbs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(vcbs_ok)}; font-size: 1.2rem;">{status_icon(vcbs_ok)}</td>
@@ -2781,13 +2781,13 @@ with tabs[4]:
                                     margin: 1.5rem 0;
                                     text-align: center;
                                 ">
-                                    <div style="color: {COLOR_GRAY_LIGHT}; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                    <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
                                         cClassTrib Sugerido (NF-e)
                                     </div>
                                     <div style="color: {COLOR_GOLD}; font-size: 2rem; font-weight: 700; letter-spacing: 0.1em;">
                                         {cclastrib_code or '—'}
                                     </div>
-                                    <div style="color: {COLOR_GRAY_LIGHT}; font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
+                                    <div style="font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
                                         {cclastrib_msg[:120]}...
                                     </div>
                                 </div>
@@ -2842,8 +2842,8 @@ st.markdown(
         margin: 2rem 0;
         text-align: center;
     ">
-        <p style="color: {COLOR_GRAY_LIGHT}; line-height: 1.6; margin: 0;">
-            Esta ferramenta deve ser utilizada como <strong style="color: {COLOR_WHITE};">apoio para definição da cClassTrib</strong>, 
+        <p style="line-height: 1.6; margin: 0;">
+            Esta ferramenta deve ser utilizada como <strong ">apoio para definição da cClassTrib</strong>, 
             mas não elimina a necessidade de validação dos dados informados no resultado. 
             Para uma análise aprofundada, <strong style="color: {COLOR_GOLD};">faça um diagnóstico completo com a PRICETAX</strong>.
         </p>
