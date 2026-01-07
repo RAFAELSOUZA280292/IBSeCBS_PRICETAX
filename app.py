@@ -2842,8 +2842,8 @@ st.markdown(
         margin: 2rem 0;
         text-align: center;
     ">
-        <p style="line-height: 1.6; margin: 0;">
-            Esta ferramenta deve ser utilizada como <strong ">apoio para definição da cClassTrib</strong>, 
+        <p style="color: #111827; line-height: 1.6; margin: 0;">
+            Esta ferramenta deve ser utilizada como <strong>apoio para definição da cClassTrib</strong>, 
             mas não elimina a necessidade de validação dos dados informados no resultado. 
             Para uma análise aprofundada, <strong style="color: {COLOR_GOLD};">faça um diagnóstico completo com a PRICETAX</strong>.
         </p>
