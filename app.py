@@ -1942,6 +1942,8 @@ with tabs[0]:
                         # =============================================================================
                         # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
                         # =============================================================================
+                        beneficio_selecionado = None  # Inicializar antes do bloco
+                        
                         if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
                             st.markdown("### Benefícios Fiscais Identificados")
                             
@@ -1989,7 +1991,6 @@ with tabs[0]:
                             
                             
                             # Seletor de benefício quando houver múltiplos enquadramentos
-                            beneficio_selecionado = None
                             if beneficios_info['multi_enquadramento']:
                                 st.markdown("#### Selecione o Benefício Aplicável")
                                 opcoes_beneficios = []
