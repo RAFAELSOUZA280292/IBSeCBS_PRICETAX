@@ -1298,6 +1298,32 @@ with tabs[0]:
                     reducao_aplicada = beneficio_selecionado['reducao_aliquota']
                     ibs_efetivo = (ibs_uf + ibs_mun) * (1 - reducao_aplicada / 100)
                     cbs_efetivo = cbs * (1 - reducao_aplicada / 100)
+                    
+                    # Recalcular regime e cClassTrib baseado no benefício selecionado
+                    anexo_selecionado = beneficio_selecionado['anexo']
+                    desc_anexo = beneficio_selecionado['descricao_anexo']
+                    
+                    if reducao_aplicada == 100:
+                        regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                    elif reducao_aplicada == 60:
+                        regime = "RED_60_ESSENCIALIDADE"
+                    else:
+                        regime = f"RED_{int(reducao_aplicada)}"
+                    
+                    # Recalcular cClassTrib com o novo regime
+                    cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                        cst=cst_ibscbs, cfop="5102", regime_iva=regime
+                    )
+                    class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                    
+                    # Sobrescrever descrição com o anexo selecionado
+                    if class_info_venda:
+                        class_info_venda = class_info_venda.copy()
+                        class_info_venda['DESC_CLASS'] = desc_anexo
+                    
+                    # Atualizar variáveis de compatibilidade
+                    cclastrib_code = cclastrib_venda_code
+                    class_info = class_info_venda
                 else:
                     ibs_efetivo = ibs_uf + ibs_mun
                     cbs_efetivo = cbs
@@ -1999,6 +2025,32 @@ with tabs[0]:
                             reducao_aplicada = beneficio_selecionado['reducao_aliquota']
                             ibs_efetivo = (ibs_uf + ibs_mun) * (1 - reducao_aplicada / 100)
                             cbs_efetivo = cbs * (1 - reducao_aplicada / 100)
+                            
+                            # Recalcular regime e cClassTrib baseado no benefício selecionado
+                            anexo_selecionado = beneficio_selecionado['anexo']
+                            desc_anexo = beneficio_selecionado['descricao_anexo']
+                            
+                            if reducao_aplicada == 100:
+                                regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
+                            elif reducao_aplicada == 60:
+                                regime = "RED_60_ESSENCIALIDADE"
+                            else:
+                                regime = f"RED_{int(reducao_aplicada)}"
+                            
+                            # Recalcular cClassTrib com o novo regime
+                            cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
+                                cst=cst_ibscbs, cfop="5102", regime_iva=regime
+                            )
+                            class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                            
+                            # Sobrescrever descrição com o anexo selecionado
+                            if class_info_venda:
+                                class_info_venda = class_info_venda.copy()
+                                class_info_venda['DESC_CLASS'] = desc_anexo
+                            
+                            # Atualizar variáveis de compatibilidade
+                            cclastrib_code = cclastrib_venda_code
+                            class_info = class_info_venda
                         else:
                             ibs_efetivo = ibs_uf + ibs_mun
                             cbs_efetivo = cbs
