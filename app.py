@@ -616,16 +616,28 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         )
         return code, msg
     
-    # 2.2) Redução 60% (Cesta Estendida - Anexo VII ou Essencialidade)
+    # 2.2) Redução 60% (Cesta Estendida - Anexo VII, Segurança Nacional - Anexo XI, etc)
     if "RED_60" in regime_iva_upper:
-        # ❌ ERRO CRÍTICO: usar 000001 para produtos com redução 60%
-        # ✅ CORRETO: usar 200034 (operação onerosa com redução de 60%)
-        code = "200034"
+        # Mapear anexo específico para cClassTrib correto
         
-        # Identificar se é alimento (Anexo VII) ou essencialidade (arts. 137-145)
-        if "ALIMENTO" in regime_iva_upper:
+        # ANEXO XI - Segurança Nacional
+        if "ANEXO_XI" in regime_iva_upper:
+            code = "200043"  # Fornecimento à administração pública dos serviços e dos bens relativos à soberania
+            fundamento = "Anexo XI (Soberania e Segurança Nacional)"
+        
+        # ANEXO VII - Alimentos (Cesta Básica Estendida)
+        elif "ANEXO_VII" in regime_iva_upper or "ALIMENTO" in regime_iva_upper:
+            code = "200034"
             fundamento = "Anexo VII (Cesta Básica Estendida)"
+        
+        # ANEXO IV - Dispositivos médicos
+        elif "ANEXO_IV" in regime_iva_upper:
+            code = "200005"  # Venda de dispositivos médicos adquiridos por órgãos da administração pública
+            fundamento = "Anexo IV (Dispositivos Médicos)"
+        
+        # Fallback genérico para outras reduções de 60%
         else:
+            code = "200034"  # Código genérico para redução de 60%
             fundamento = "arts. 137 a 145 (essencialidade)"
         
         msg = (
@@ -1304,9 +1316,10 @@ with tabs[0]:
                     if reducao_aplicada == 100:
                         regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
                     elif reducao_aplicada == 60:
-                        regime = "RED_60_ESSENCIALIDADE"
+                        # Incluir anexo específico no regime para mapeamento correto de cClassTrib
+                        regime = f"RED_60_{anexo_selecionado.replace(' ', '_')}"
                     else:
-                        regime = f"RED_{int(reducao_aplicada)}"
+                        regime = f"RED_{int(reducao_aplicada)}_{anexo_selecionado.replace(' ', '_')}"
                     
                     # Recalcular cClassTrib com o novo regime
                     cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
@@ -2028,9 +2041,10 @@ with tabs[0]:
                             if reducao_aplicada == 100:
                                 regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
                             elif reducao_aplicada == 60:
-                                regime = "RED_60_ESSENCIALIDADE"
+                                # Incluir anexo específico no regime para mapeamento correto de cClassTrib
+                                regime = f"RED_60_{anexo_selecionado.replace(' ', '_')}"
                             else:
-                                regime = f"RED_{int(reducao_aplicada)}"
+                                regime = f"RED_{int(reducao_aplicada)}_{anexo_selecionado.replace(' ', '_')}"
                             
                             # Recalcular cClassTrib com o novo regime
                             cclastrib_venda_code, cclastrib_venda_msg = guess_cclasstrib(
