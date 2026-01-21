@@ -120,13 +120,8 @@ def calcular_tributacao_completa(
         if get_class_info_func:
             class_info = get_class_info_func(cclasstrib_code)
             
-            # SOBRESCREVER DESCRIÇÃO com base no anexo (se houver benefícios)
-            if beneficios_info and beneficios_info.get('total_enquadramentos', 0) > 0:
-                enq = beneficios_info['enquadramentos'][0]
-                desc_anexo = enq['descricao_anexo']
-                if class_info:
-                    class_info = class_info.copy()
-                    class_info['DESC_CLASS'] = desc_anexo
+            # Manter descrição original do cClassTrib (não sobrescrever)
+            # A descrição oficial do cClassTrib vem do arquivo de classificação tributária
     
     # =============================================================================
     # PASSO 4: RETORNAR RESULTADO COMPLETO

@@ -1187,11 +1187,7 @@ with tabs[0]:
                         cst=cst_ibscbs, cfop=cfop_para_consultar, regime_iva=regime
                     )
                     class_info_cfop = get_class_info_by_code(cclastrib_cfop_code)
-                    # Sobrescrever descrição do CFOP também (usar primeiro benefício)
-                    if beneficios_info and beneficios_info['total_enquadramentos'] > 0 and class_info_cfop:
-                        class_info_cfop = class_info_cfop.copy()
-                        desc_anexo_cfop = beneficios_info['enquadramentos'][0]['descricao_anexo']
-                        class_info_cfop['DESC_CLASS'] = desc_anexo_cfop
+                    # Manter descrição original do cClassTrib (não sobrescrever)
                 
                 # Compatibilidade
                 cclastrib_code = cclastrib_venda_code
@@ -1317,11 +1313,7 @@ with tabs[0]:
                         cst=cst_ibscbs, cfop="5102", regime_iva=regime
                     )
                     class_info_venda = get_class_info_by_code(cclastrib_venda_code)
-                    
-                    # Sobrescrever descrição com o anexo selecionado
-                    if class_info_venda:
-                        class_info_venda = class_info_venda.copy()
-                        class_info_venda['DESC_CLASS'] = desc_anexo
+                    # Manter descrição original do cClassTrib (não sobrescrever com anexo)
                     
                     # Atualizar variáveis de compatibilidade
                     cclastrib_code = cclastrib_venda_code
@@ -2045,11 +2037,7 @@ with tabs[0]:
                                 cst=cst_ibscbs, cfop="5102", regime_iva=regime
                             )
                             class_info_venda = get_class_info_by_code(cclastrib_venda_code)
-                            
-                            # Sobrescrever descrição com o anexo selecionado
-                            if class_info_venda:
-                                class_info_venda = class_info_venda.copy()
-                                class_info_venda['DESC_CLASS'] = desc_anexo
+                            # Manter descrição original do cClassTrib (não sobrescrever com anexo)
                             
                             # Atualizar variáveis de compatibilidade
                             cclastrib_code = cclastrib_venda_code
