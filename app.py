@@ -616,36 +616,45 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         )
         return code, msg
     
-    # 2.2) Redução 60% (Cesta Estendida - Anexo VII, Segurança Nacional - Anexo XI, etc)
-    if "RED_60" in regime_iva_upper:
-        # Mapear anexo específico para cClassTrib correto
+    # 2.2) Redução de alíquota (usar mapeamento oficial)
+    if "RED_" in regime_iva_upper or "ALIQ_ZERO" in regime_iva_upper:
+        # Importar função de mapeamento
+        from cclasstrib_mapping import get_cclasstrib_by_anexo
         
-        # ANEXO XI - Segurança Nacional
-        if "ANEXO_XI" in regime_iva_upper:
-            code = "200043"  # Fornecimento à administração pública dos serviços e dos bens relativos à soberania
-            fundamento = "Anexo XI (Soberania e Segurança Nacional)"
-        
-        # ANEXO VII - Alimentos (Cesta Básica Estendida)
-        elif "ANEXO_VII" in regime_iva_upper or "ALIMENTO" in regime_iva_upper:
-            code = "200034"
-            fundamento = "Anexo VII (Cesta Básica Estendida)"
-        
-        # ANEXO IV - Dispositivos médicos
-        elif "ANEXO_IV" in regime_iva_upper:
-            code = "200005"  # Venda de dispositivos médicos adquiridos por órgãos da administração pública
-            fundamento = "Anexo IV (Dispositivos Médicos)"
-        
-        # Fallback genérico para outras reduções de 60%
+        # Extrair % de redução
+        import re
+        reducao_match = re.search(r'RED_(\d+)', regime_iva_upper)
+        if reducao_match:
+            reducao = int(reducao_match.group(1))
+        elif "ALIQ_ZERO" in regime_iva_upper:
+            reducao = 100
         else:
-            code = "200034"  # Código genérico para redução de 60%
-            fundamento = "arts. 137 a 145 (essencialidade)"
+            reducao = 0
         
-        msg = (
-            f"✅ Redução 60% ({fundamento}) → cClassTrib {code}. "
-            "Operação onerosa com redução de 60%. "
-            f"Fundamento: LC 214/2025, {fundamento}."
-        )
-        return code, msg
+        # Extrair anexo
+        anexo_match = re.search(r'ANEXO_([IVXLCDM]+)', regime_iva_upper)
+        if anexo_match:
+            anexo = f"ANEXO_{anexo_match.group(1)}"
+            
+            # Usar mapeamento oficial
+            code, msg = get_cclasstrib_by_anexo(
+                reducao=reducao,
+                anexo=anexo,
+                descricao=regime_iva_upper  # Para casos especiais como ANEXO XI
+            )
+            
+            if code:
+                return code, f"✅ {msg} → cClassTrib {code}. Fundamento: LC 214/2025."
+        
+        # Fallback: regime antigo sem anexo específico
+        if reducao == 100:
+            code = "200003"
+            msg = "✅ Cesta Básica Nacional (Anexo I) → cClassTrib 200003. Fundamento: LC 214/2025, Anexo I."
+            return code, msg
+        elif reducao == 60:
+            code = "200034"
+            msg = "⚠️ Redução 60% (anexo não identificado) → cClassTrib 200034 (genérico). Revise o anexo específico."
+            return code, msg
     
     # 2.3) Outras reduções específicas (se houver)
     # Adicionar aqui se surgirem outros regimes com redução
