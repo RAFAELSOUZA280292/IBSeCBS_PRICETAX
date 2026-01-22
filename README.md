@@ -34,6 +34,7 @@ O **PRICETAX IBSeCBS** é uma aplicação web desenvolvida em Streamlit que ofer
 - ✅ **Busca semântica** por descrição de produtos (204 sinônimos validados)
 - ✅ **Ranking SPED** de vendas por NCM
 - ✅ **Análise de XML** de NF-e com cálculo automático de tributos
+- ✅ **Consulta de CNPJ** com dados cadastrais, QSA e regime tributário
 - ✅ **Inteligência jurídica** com 544 artigos da LC 214/2025
 
 ### 🔥 Diferenciais
@@ -105,7 +106,16 @@ Parser completo de XML de Nota Fiscal Eletrônica:
 
 **⚠️ IMPORTANTE:** A coleta de dados é **INVISÍVEL** ao usuário e alimenta inteligência de mercado via Google Sheets.
 
-### 6️⃣ **Inteligência Jurídica**
+### 6️⃣ **Consulta CNPJ**
+
+Consulta completa de dados de CNPJ com:
+- Integração com a BrasilAPI
+- Dados cadastrais (Razão Social, Nome Fantasia, Endereço)
+- Quadro de Sócios e Administradores (QSA)
+- Regime tributário (Simples Nacional, MEI, Lucro Real/Presumido)
+- Exportação de dados para CSV
+
+### 7️⃣ **Inteligência Jurídica**
 
 Consulta à base legal completa:
 - 544 artigos da LC 214/2025
@@ -226,6 +236,7 @@ IBSeCBS_PRICETAX/
 │
 ├── app.py                              # Aplicação principal Streamlit
 ├── cclasstrib_mapping.py               # FONTE DA VERDADE para cClassTrib (NOVO)
+├── consulta_cnpj.py                    # Lógica de consulta de CNPJ (NOVO)
 ├── calcular_tributacao.py              # Lógica de cálculo de alíquotas
 ├── beneficios_fiscais.py               # Lógica de consulta de benefícios
 ├── utils.py                            # Funções utilitárias

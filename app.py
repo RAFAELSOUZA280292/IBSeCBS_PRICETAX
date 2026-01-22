@@ -3031,12 +3031,10 @@ with tabs[6]:
             format_phone,
             to_matriz_if_filial,
             consulta_brasilapi_cnpj,
-            consulta_ie_open_cnpja,
             determinar_regime_unificado,
             normalizar_situacao_cadastral,
             badge_cor_regime,
-            cor_situacao_cadastral,
-            join_ies_for_csv
+            cor_situacao_cadastral
         )
         CONSULTA_CNPJ_DISPONIVEL = True
     except ImportError as e:
@@ -3189,25 +3187,6 @@ with tabs[6]:
                     else:
                         st.info("Nenhum CNAE secundário encontrado para este CNPJ.")
                     
-                    # Inscrições Estaduais
-                    st.markdown("---")
-                    st.markdown("### Inscrições Estaduais")
-                    ies = consulta_ie_open_cnpja(cnpj_limpo)
-                    if ies is None:
-                        st.warning("Não foi possível recuperar as Inscrições Estaduais no momento.")
-                    elif len(ies) == 0:
-                        st.info("Nenhuma Inscrição Estadual encontrada para este CNPJ.")
-                    else:
-                        for idx, ie in enumerate(ies, start=1):
-                            titulo = f"IE {idx} - {ie.get('uf') or 'UF N/A'}"
-                            with st.expander(titulo):
-                                st.write(f"**UF:** {ie.get('uf', 'N/A')}")
-                                st.write(f"**Inscrição Estadual:** {ie.get('numero', 'N/A')}")
-                                habilitada = ie.get('habilitada', False)
-                                st.write(f"**Habilitada:** {'Sim' if habilitada else 'Não'}")
-                                st.write(f"**Status:** {ie.get('status_texto', 'N/A')}")
-                                st.write(f"**Tipo:** {ie.get('tipo_texto', 'N/A')}")
-                    
                     # Exportação CSV
                     st.markdown("---")
                     st.subheader("Exportação")
@@ -3245,7 +3224,6 @@ with tabs[6]:
                         "Município": dados_cnpj.get('municipio', ''),
                         "UF": dados_cnpj.get('uf', ''),
                         "CEP": dados_cnpj.get('cep', ''),
-                        "Inscrições Estaduais": join_ies_for_csv(ies) if ies else "",
                         "Data/Hora da Consulta": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     }
                     
@@ -3255,7 +3233,7 @@ with tabs[6]:
                         "Data Início Atividade","CNAE Fiscal Código","CNAE Fiscal Descrição","Porte",
                         "Natureza Jurídica","Capital Social","Email","Telefone 1","Telefone 2",
                         "Logradouro","Número","Complemento","Bairro","Município","UF","CEP",
-                        "Inscrições Estaduais","Data/Hora da Consulta"
+                        "Data/Hora da Consulta"
                     ]
                     
                     buf = io.StringIO()

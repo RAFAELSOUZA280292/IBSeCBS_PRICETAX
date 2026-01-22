@@ -7,32 +7,41 @@ _---
 
 _##_ _v4.1_ - _Refatoração_ _e_ _Correções_ _Críticas_ _(Janeiro_ _2026)_
 
-_###_ _✨_ _Features_
+### ✨ Features
 
--   **_Refatoração_ _Completa_ _do_ _Mapeamento_ _cClassTrib_** _(Commit:_ `693b7a2`_)
+-   **_Consulta_ _de_ _CNPJ_**
+    -   _Adicionada_ _nova_ _aba_ _"Consulta_ _CNPJ"_ _para_ _busca_ _de_ _dados_ _cadastrais._
+    -   _Integração_ _com_ _a_ _BrasilAPI_ _para_ _obter_ _dados_ _de_ _QSA,_ _regime_ _tributário_ _e_ _endereço._
+    -   _Interface_ _profissional_ _com_ _padrão_ _de_ _cores_ _PRICETAX_ _(#FFDD00)._
+    -   _Funcionalidade_ _de_ _exportação_ _para_ _CSV._
+
+-   **_Refatoração_ _Completa_ _do_ _Mapeamento_ _cClassTrib_**
     -   _Criado_ _módulo_ `cclasstrib_mapping.py` _como_ _fonte_ _única_ _da_ _verdade._
     -   _Mapeamento_ _de_ **_TODOS_ _os_ _15_ _anexos_** _da_ _LC_ _214/2025_ _baseado_ _no_ _arquivo_ _oficial_ `classificacao_tributaria.xlsx`_.
     -   _Lógica_ _condicional_ _(if/elif)_ _removida_ _e_ _substituída_ _por_ _dicionário_ _de_ _mapeamento_ _robusto._
 
--   **_Seletor_ _de_ _Benefícios_ _Fiscais_** _(Commit:_ `348e5a9`_)
+-   **_Seletor_ _de_ _Benefícios_ _Fiscais_**
     -   _Adicionado_ _seletor_ _(radio_ _button)_ _para_ _NCMs_ _com_ _múltiplos_ _enquadramentos_ _(ex:_ _redução_ _60%_ _e_ _100%)._
     -   _Alíquotas_ _e_ _cClassTrib_ _são_ _recalculados_ _dinamicamente_ _baseado_ _na_ _seleção_ _do_ _usuário._
 
--   **_Persistência_ _de_ _Consulta_** _(Commit:_ `43d8c8d`_)
+-   **_Persistência_ _de_ _Consulta_**
     -   _Implementado_ `st.session_state` _para_ _manter_ _o_ _estado_ _da_ _consulta_ _ao_ _interagir_ _com_ _widgets._
     -   _Resolve_ _o_ _problema_ _de_ _reset_ _da_ _página_ _ao_ _clicar_ _no_ _seletor_ _de_ _benefícios._
+### 🐛 Bug Fixes
 
-_###_ _🐛_ _Bug_ _Fixes_
+-   **_Remoção_ _da_ _Consulta_ _de_ _Inscrição_ _Estadual_ _(IE)_**
+    -   _A_ _funcionalidade_ _de_ _consulta_ _de_ _IE_ _foi_ _removida_ _após_ _confirmação_ _de_ _que_ _a_ _API_ _pública_ _da_ _CNPJA_ _não_ _fornece_ _esses_ _dados._
+    -   _Código_ _relacionado_ _(funções,_ _UI,_ _exportação)_ _foi_ _completamente_ _removido_ _para_ _evitar_ _erros_ _e_ _confusão_ _do_ _usuário._
 
--   **_Correção_ _de_ _Cores_ _e_ _Contraste_ _(Commits:_ `e1a0687`_,_ `6036a1b`_,_ `6fe7946`_,_ `a601461`_,_ `fb8adc4`_)
+-   **_Correção_ _de_ _Cores_ _e_ _Contraste_**
     -   _Corrigido_ _problema_ _de_ _texto_ _branco_ _em_ _fundo_ _branco_ _em_ _diversos_ _componentes._
     -   _Removido_ _CSS_ _complexo_ _e_ _estilos_ _inline_ _que_ _causavam_ _conflitos._
     -   _Ajustada_ _a_ _cor_ _amarela_ _para_ _o_ _padrão_ _PRICETAX_ _(#FFDD00)._
 
--   **_Correção_ _de_ _NameError_ _(Commits:_ `ee3487f`_,_ `85b9983`_,_ `6077db8`_,_ `4f18c73`_,_ `f4556b4`_)
+-   **_Correção_ _de_ _NameError_**
     -   _Resolvido_ _erro_ _de_ _variáveis_ _não_ _definidas_ _(`COLOR_SUCCESS`,_ `ncm_clean`,_ `desc_anexo`,_ `beneficio_selecionado`)_ _em_ _diferentes_ _escopos_ _e_ _abas._
 
--   **_Correção_ _do_ _Mapeamento_ _de_ _cClassTrib_ _(Commit:_ `b8a12bc`_)
+-   **_Correção_ _do_ _Mapeamento_ _de_ _cClassTrib_**
     -   _Corrigido_ _mapeamento_ _incorreto_ _que_ _atribuía_ _cClassTrib_ _de_ _alimentos_ _(200034)_ _para_ _outros_ _anexos_ _(ex:_ _ANEXO_ _XI)._
 
 _###_ _📄_ _Documentação_

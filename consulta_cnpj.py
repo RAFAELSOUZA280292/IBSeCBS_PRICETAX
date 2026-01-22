@@ -4,11 +4,10 @@ Autor: Manus AI
 Data: 21 de Janeiro de 2026
 
 Este módulo fornece funções para consulta de dados cadastrais de CNPJ
-através de APIs públicas (BrasilAPI e Open CNPJA).
+através da API pública BrasilAPI.
 
 Funcionalidades:
 - Consulta de dados cadastrais (Razão Social, CNAE, Endereço, QSA)
-- Consulta de Inscrições Estaduais
 - Determinação de Regime Tributário
 - Validação e formatação de CNPJ
 - Cálculo de dígitos verificadores
@@ -16,7 +15,6 @@ Funcionalidades:
 
 import requests
 import re
-import time
 import datetime
 from typing import Dict, List, Optional, Tuple
 
@@ -25,7 +23,6 @@ from typing import Dict, List, Optional, Tuple
 # ============================================================================
 
 URL_BRASILAPI_CNPJ = "https://brasilapi.com.br/api/cnpj/v1/"
-URL_OPEN_CNPJA = "https://open.cnpja.com/office/"
 
 # ============================================================================
 # UTILITÁRIOS DE FORMATAÇÃO
@@ -218,66 +215,6 @@ def consulta_brasilapi_cnpj(cnpj_limpo: str) -> Dict:
         return {"__error": "unavailable"}
 
 
-def consulta_ie_open_cnpja(cnpj_limpo: str, max_retries: int = 2) -> Optional[List[Dict]]:
-    """
-    Consulta Inscrições Estaduais de um CNPJ na Open CNPJA.
-    
-    Args:
-        cnpj_limpo: CNPJ sem formatação (14 dígitos)
-        max_retries: Número máximo de tentativas em caso de rate limit (429)
-        
-    Returns:
-        Lista de dicionários com IEs ou None em caso de erro
-        Lista vazia [] se não houver IEs cadastradas
-        
-    Estrutura de cada IE:
-        {
-            "uf": "SP",
-            "numero": "123456789",
-            "habilitada": True,
-            "status_texto": "Ativo",
-            "tipo_texto": "Normal"
-        }
-    """
-    url = f"{URL_OPEN_CNPJA}{cnpj_limpo}"
-    attempt = 0
-    
-    while True:
-        try:
-            resp = requests.get(url, timeout=15)
-            
-            if resp.status_code == 200:
-                data = resp.json()
-                regs = data.get("registrations", []) if isinstance(data, dict) else []
-                
-                ies = []
-                for reg in regs:
-                    ies.append({
-                        "uf": (reg or {}).get("state"),
-                        "numero": (reg or {}).get("number"),
-                        "habilitada": (reg or {}).get("enabled"),
-                        "status_texto": ((reg or {}).get("status") or {}).get("text"),
-                        "tipo_texto": ((reg or {}).get("type") or {}).get("text"),
-                    })
-                return ies
-            
-            # CNPJ não encontrado
-            if resp.status_code == 404:
-                return []
-            
-            # Rate limit - tenta novamente com backoff exponencial
-            if resp.status_code == 429 and attempt < max_retries:
-                time.sleep(2 * (attempt + 1))
-                attempt += 1
-                continue
-            
-            return None
-            
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-            return None
-        except Exception:
-            return None
-
 
 # ============================================================================
 # DETERMINAÇÃO DE REGIME TRIBUTÁRIO
@@ -444,35 +381,4 @@ def cor_situacao_cadastral(situacao: str) -> Tuple[str, str]:
 # EXPORTAÇÃO CSV
 # ============================================================================
 
-def join_ies_for_csv(ies_list: Optional[List[Dict]]) -> str:
-    """
-    Concatena lista de IEs em uma string formatada para CSV.
-    
-    Args:
-        ies_list: Lista de dicionários com IEs
-        
-    Returns:
-        String com todas as IEs separadas por " || "
-        
-    Exemplo:
-        >>> ies = [{"uf": "SP", "numero": "123", "habilitada": True, ...}]
-        >>> join_ies_for_csv(ies)
-        'UF: SP | IE: 123 | Habilitada: Sim | ...'
-    """
-    if not ies_list:
-        return ""
-    
-    blocks = []
-    for ie in ies_list:
-        uf = ie.get("uf") or ""
-        numero = ie.get("numero") or ""
-        habil = "Sim" if ie.get("habilitada") else "Não"
-        status_txt = ie.get("status_texto") or ""
-        tipo_txt = ie.get("tipo_texto") or ""
-        
-        blocks.append(
-            f"UF: {uf} | IE: {numero} | Habilitada: {habil} | "
-            f"Status: {status_txt} | Tipo: {tipo_txt}"
-        )
-    
-    return " || ".join(blocks)
+
