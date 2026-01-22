@@ -99,6 +99,183 @@ st.markdown(
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
+    
+    /* ========================================
+       RESPONSIVE DESIGN - MOBILE OPTIMIZATION
+       ======================================== */
+    
+    /* Tablets e dispositivos médios (< 1024px) */
+    @media only screen and (max-width: 1024px) {{
+        .pricetax-header {{
+            margin: -2rem -3rem 1.5rem -3rem;
+            padding: 1rem 3rem;
+        }}
+        
+        .pricetax-logo {{
+            font-size: 1.8rem;
+        }}
+        
+        .pricetax-tagline {{
+            font-size: 1rem;
+        }}
+    }}
+    
+    /* Smartphones e dispositivos pequenos (< 768px) */
+    @media only screen and (max-width: 768px) {{
+        /* Header compacto */
+        .pricetax-header {{
+            margin: -1rem -1rem 1rem -1rem;
+            padding: 0.8rem 1rem;
+        }}
+        
+        .pricetax-logo {{
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }}
+        
+        .pricetax-tagline {{
+            font-size: 0.85rem;
+            padding-left: 0.8rem;
+            border-left-width: 2px;
+        }}
+        
+        /* Botões maiores para touch */
+        .stButton > button {{
+            padding: 0.75rem 1.5rem !important;
+            font-size: 1rem !important;
+            width: 100%;
+        }}
+        
+        /* Inputs maiores */
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input,
+        .stSelectbox > div > div > select {{
+            font-size: 16px !important; /* Evita zoom no iOS */
+            padding: 0.75rem !important;
+        }}
+        
+        /* Tabelas com scroll horizontal */
+        table {{
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }}
+        
+        /* Cards e containers */
+        div[style*="padding"] {{
+            padding: 1rem !important;
+        }}
+        
+        /* Fontes menores em mobile */
+        body {{
+            font-size: 14px;
+        }}
+        
+        h1 {{
+            font-size: 1.5rem !important;
+        }}
+        
+        h2 {{
+            font-size: 1.3rem !important;
+        }}
+        
+        h3 {{
+            font-size: 1.1rem !important;
+        }}
+        
+        /* Colunas do Streamlit empilhadas */
+        .row-widget.stHorizontal {{
+            flex-direction: column !important;
+        }}
+        
+        .row-widget.stHorizontal > div {{
+            width: 100% !important;
+            margin-bottom: 1rem;
+        }}
+        
+        /* Expanders mais compactos */
+        .streamlit-expanderHeader {{
+            font-size: 0.95rem !important;
+        }}
+        
+        /* File uploader */
+        .stFileUploader {{
+            font-size: 0.9rem;
+        }}
+        
+        /* Radio buttons e checkboxes maiores */
+        .stRadio > label,
+        .stCheckbox > label {{
+            font-size: 1rem !important;
+        }}
+        
+        /* Tabs mais compactas */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 0.5rem;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+        }}
+    }}
+    
+    /* Smartphones muito pequenos (< 480px) */
+    @media only screen and (max-width: 480px) {{
+        .pricetax-header {{
+            margin: -0.5rem -0.5rem 0.8rem -0.5rem;
+            padding: 0.6rem 0.8rem;
+        }}
+        
+        .pricetax-logo {{
+            font-size: 1.3rem;
+        }}
+        
+        .pricetax-tagline {{
+            font-size: 0.75rem;
+            padding-left: 0.6rem;
+        }}
+        
+        /* Fontes ainda menores */
+        body {{
+            font-size: 13px;
+        }}
+        
+        h1 {{
+            font-size: 1.3rem !important;
+        }}
+        
+        h2 {{
+            font-size: 1.15rem !important;
+        }}
+        
+        h3 {{
+            font-size: 1rem !important;
+        }}
+        
+        /* Botões ainda maiores para facilitar toque */
+        .stButton > button {{
+            padding: 1rem 1.5rem !important;
+            font-size: 1.1rem !important;
+        }}
+    }}
+    
+    /* Landscape em mobile */
+    @media only screen and (max-height: 500px) and (orientation: landscape) {{
+        .pricetax-header {{
+            margin: -0.5rem -1rem 0.5rem -1rem;
+            padding: 0.5rem 1rem;
+        }}
+        
+        .pricetax-logo {{
+            font-size: 1.2rem;
+        }}
+        
+        .pricetax-tagline {{
+            display: none; /* Ocultar tagline em landscape */
+        }}
+    }}
     </style>
     """,
     unsafe_allow_html=True
