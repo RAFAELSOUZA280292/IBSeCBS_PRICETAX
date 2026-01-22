@@ -3271,24 +3271,4 @@ with tabs[6]:
                         mime="text/csv",
                         help="Baixa um CSV com todas as informações principais deste CNPJ"
                     )
-                    
-                    # Integração ERP (visual pronto - fake)
-                    st.markdown("---")
-                    st.subheader("Integração ERP (SAP Business One)")
-                    st.markdown("""
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
-                                Vincular PN ao SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
-                            </div>
-                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
-                                Exportar PN para SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
-                            </div>
-                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
-                                Atualizar Cadastro no SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
-                            </div>
-                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
-                                Sincronizar IE / CNAE no SAP <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
-                            </div>
-                        </div>
-                        <div style="color:#9ca3af; font-size:12px; margin-top:6px;">Conectores prontos para ativação com credenciais do SAP Business One (Service Layer).</div>
-                    """, unsafe_allow_html=True)
+
