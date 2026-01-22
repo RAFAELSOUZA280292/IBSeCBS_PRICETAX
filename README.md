@@ -1,6 +1,6 @@
 # 🟡 PRICETAX - Sistema IBS/CBS 2026
 
-![Version](https://img.shields.io/badge/version-4.0-gold)
+![Version](https://img.shields.io/badge/version-4.1-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Streamlit](https://img.shields.io/badge/streamlit-1.40-red)
 ![License](https://img.shields.io/badge/license-Proprietary-black)
@@ -225,25 +225,23 @@ http://localhost:8501
 IBSeCBS_PRICETAX/
 │
 ├── app.py                              # Aplicação principal Streamlit
-├── utils.py                            # Funções utilitárias (NEW)
-├── tributacao.py                       # Lógica tributária (NEW)
-├── google_sheets_integration.py        # Integração Google Sheets (SILENT)
+├── cclasstrib_mapping.py               # FONTE DA VERDADE para cClassTrib (NOVO)
+├── calcular_tributacao.py              # Lógica de cálculo de alíquotas
+├── beneficios_fiscais.py               # Lógica de consulta de benefícios
+├── utils.py                            # Funções utilitárias
 ├── xml_parser.py                       # Parser de XML NF-e
-├── importar_ncm_enriquecido.py        # Script de enriquecimento NCM
 │
-├── PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx  # Base NCM (11.091 produtos)
-├── classificacao_tributaria.xlsx       # Base cClassTrib
-├── CFOP_CCLASSTRIB.xlsx               # Mapeamento CFOP → cClassTrib
-├── articles_db.json                    # Base legal LC 214/2025 (544 artigos)
-├── data/
-│   └── sinonimos_tipi.json            # Dicionário de sinônimos (204 termos)
+├── classificacao_tributaria.xlsx       # Base oficial cClassTrib
+├── BDBENEF_PRICETAX_2026.xlsx          # Base oficial de benefícios fiscais
+├── ncm_hierarquia_completa.csv         # Base NCM enriquecida
 │
 ├── requirements.txt                    # Dependências Python
-├── README.md                          # Este arquivo
-├── RELATORIO_ANALISE_CODIGO.md        # Relatório de qualidade de código
+├── README.md                           # Este arquivo
+├── ARCHITECTURE.md                     # Documentação de arquitetura (NOVO)
+├── CHANGELOG.md                        # Histórico de alterações (NOVO)
 │
 └── .streamlit/
-    └── secrets.toml                   # Credenciais (NÃO COMMITAR)
+    └── secrets.toml                    # Credenciais (NÃO COMMITAR)
 ```
 
 ---
@@ -290,13 +288,14 @@ IBSeCBS_PRICETAX/
 │  INPUT: NCM + CFOP + Regime IVA                            │
 └─────────────────────────────────────────────────────────────┘
                             │
-                            ▼
+                       ```
 ┌─────────────────────────────────────────────────────────────┐
-│  PRIORIDADE 1: Regime IVA (natureza jurídica)             │
-│  • ALIQ_ZERO_CESTA_BASICA_NACIONAL → 200003               │
-│  • RED_60_* → 200034                                       │
+│  PRIORIDADE 1: Mapeamento Oficial (cclasstrib_mapping.py)   │
+│  • (Redução%, Anexo) → cClassTrib                          │
+│  • Ex: (60, "ANEXO_XI") → 200043                           │
+│  • Ex: (100, "ANEXO_I") → 200003                          │
 └─────────────────────────────────────────────────────────────┘
-                            │
+```                            │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  PRIORIDADE 2: CFOP específico                             │
@@ -458,6 +457,14 @@ Este software é de propriedade exclusiva da PRICETAX e não pode ser copiado, m
 ---
 
 ## 📝 Changelog
+
+### **v4.1 (Janeiro 2026)**
+- ✅ **Refatoração completa do mapeamento cClassTrib**
+- ✅ Criado `cclasstrib_mapping.py` como fonte da verdade
+- ✅ Mapeamento de **TODOS os 15 anexos** da LC 214/2025
+- ✅ Lógica condicional removida e substituída por dicionário
+- ✅ Adicionado seletor de benefícios para NCMs com múltiplos enquadramentos
+- ✅ Correção de bugs de UI (cores, contraste, reset de página)
 
 ### **v4.0 (Dezembro 2024)**
 - ✅ Correção crítica: cClassTrib para cesta básica (200003/200034)
