@@ -5,6 +5,25 @@ _#_ _Changelog_ - _Histórico_ _de_ _Alterações_ _do_ _Projeto_
 
 _---
 
+_##_ _v4.2_ - _Correção_ _Estrutural_ _UnboundLocalError_ _(Janeiro_ _2026)_
+
+### 🐛 Bug Fixes
+
+-   **_Correção_ _de_ _UnboundLocalError_ _em_ _guess_cclasstrib_**
+    -   _Removido_ _import_ _redundante_ _de_ `re` _dentro_ _da_ _função_ `guess_cclasstrib()` _(linha_ _802)._
+    -   _Causa_ _raiz:_ _Python_ _marca_ `re` _como_ _variável_ _local_ _ao_ _ver_ _import_ _statement,_ _invalidando_ _o_ `re` _global._
+    -   _Impacto:_ _Corrige_ _erro_ _ao_ _consultar_ _NCM_ _com_ _formatação_ _(ex:_ _8701.93.00)_ _e_ _CFOP._
+    -   _Testado_ _com_ _16_ _casos_ _extremos:_ _100%_ _de_ _sucesso._
+
+### 📝 Documentação
+
+-   **_Análise_ _Profunda_ _do_ _Bug_**
+    -   _Criado_ `bug_fix_documentation.md` _com_ _análise_ _completa_ _da_ _causa_ _raiz._
+    -   _Documentadas_ _regras_ _de_ _escopo_ _do_ _Python_ _(LEGB)_ _e_ _prevenção_ _de_ _erros_ _similares._
+    -   _Suite_ _de_ _testes_ _criada_ _(test_ncm_validation.py)_ _para_ _validação_ _contínua._
+
+_---
+
 _##_ _v4.1_ - _Refatoração_ _e_ _Correções_ _Críticas_ _(Janeiro_ _2026)_
 
 ### ✨ Features
