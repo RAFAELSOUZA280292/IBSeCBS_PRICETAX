@@ -797,9 +797,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     if "RED_" in regime_iva_upper or "ALIQ_ZERO" in regime_iva_upper:
         # Importar função de mapeamento
         from cclasstrib_mapping import get_cclasstrib_by_anexo
-        
-        # Extrair % de redução
-        import re
+        # Extrair % de redução (re já importado globalmente no topo do arquivo)
         reducao_match = re.search(r'RED_(\d+)', regime_iva_upper)
         if reducao_match:
             reducao = int(reducao_match.group(1))
