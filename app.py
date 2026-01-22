@@ -870,6 +870,7 @@ tabs = st.tabs(
         "Download CFOP x cClassTrib",
         "Análise de XML",
         "LC 214/2025",
+        "Consulta CNPJ",
     ]
 )
 
@@ -3011,3 +3012,283 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# =============================================================================
+# ABA: CONSULTA CNPJ
+# =============================================================================
+with tabs[6]:
+    st.markdown("## Consulta de CNPJ")
+    st.markdown(
+        "Utilize este painel para consultar dados cadastrais de empresas brasileiras (Receita Federal)."
+    )
+    
+    # Importar módulo de consulta CNPJ
+    try:
+        from consulta_cnpj import (
+            only_digits,
+            format_cnpj_mask,
+            format_currency_brl,
+            format_phone,
+            to_matriz_if_filial,
+            consulta_brasilapi_cnpj,
+            consulta_ie_open_cnpja,
+            determinar_regime_unificado,
+            normalizar_situacao_cadastral,
+            badge_cor_regime,
+            cor_situacao_cadastral,
+            join_ies_for_csv
+        )
+        CONSULTA_CNPJ_DISPONIVEL = True
+    except ImportError as e:
+        st.error(f"Módulo de consulta CNPJ não disponível: {e}")
+        CONSULTA_CNPJ_DISPONIVEL = False
+        st.stop()
+    
+    # Campo de entrada
+    cnpj_input = st.text_input(
+        "Digite o CNPJ (apenas números, ou com pontos, barras e traços):",
+        placeholder="Ex: 00.000.000/0000-00 ou 00000000000000",
+        help="Serão aceitos CNPJs com ou sem formatação. Ex: 21746980000146 ou 21.746.980/0001-46",
+        key="cnpj_input_field"
+    )
+    
+    if st.button("Consultar CNPJ", key="btn_consultar_cnpj"):
+        if not cnpj_input:
+            st.warning("Por favor, digite um CNPJ para consultar.")
+        else:
+            cnpj_limpo = only_digits(cnpj_input)
+            if len(cnpj_limpo) != 14:
+                st.error("CNPJ inválido. Um CNPJ deve conter exatamente 14 dígitos numéricos.")
+            else:
+                with st.spinner(f"Consultando CNPJ {format_cnpj_mask(cnpj_limpo)}..."):
+                    dados_cnpj = consulta_brasilapi_cnpj(cnpj_limpo)
+                    
+                    if isinstance(dados_cnpj, dict) and dados_cnpj.get("__error") == "not_found":
+                        st.error("CNPJ inválido ou não encontrado. Verifique os dígitos e tente novamente.")
+                        st.stop()
+                    if isinstance(dados_cnpj, dict) and dados_cnpj.get("__error") == "unavailable":
+                        st.error("Serviço temporariamente indisponível. Tente novamente em alguns instantes.")
+                        st.stop()
+                    if not isinstance(dados_cnpj, dict) or "cnpj" not in dados_cnpj:
+                        st.error("Não foi possível concluir a consulta no momento.")
+                        st.stop()
+                    
+                    st.success(f"Dados encontrados para o CNPJ: {format_cnpj_mask(dados_cnpj.get('cnpj','N/A'))}")
+                    
+                    # Situação cadastral normalizada
+                    sit_raw = dados_cnpj.get('descricao_situacao_cadastral', 'N/A')
+                    sit_norm = normalizar_situacao_cadastral(sit_raw)
+                    
+                    # Razão Social (com indicação de BAIXADO se aplicável)
+                    razao = dados_cnpj.get('razao_social', 'N/A')
+                    razao_exibida = f"{razao} - (BAIXADO)" if sit_norm == "BAIXADO" else razao
+                    st.markdown(
+                        f"<div style='text-align:center; font-size: 1.6rem; font-weight: 800; color: {COLOR_GOLD}; margin: 6px 0 2px 0;'>{razao_exibida}</div>",
+                        unsafe_allow_html=True
+                    )
+                    
+                    # Regime Tributário (consulta matriz se for filial)
+                    cnpj_matriz = to_matriz_if_filial(cnpj_limpo)
+                    regime_source = dados_cnpj
+                    if cnpj_matriz != cnpj_limpo:
+                        dados_matriz = consulta_brasilapi_cnpj(cnpj_matriz)
+                        if isinstance(dados_matriz, dict) and not dados_matriz.get("__error") and "cnpj" in dados_matriz:
+                            regime_source = dados_matriz
+                    
+                    regime_final = determinar_regime_unificado(regime_source)
+                    
+                    st.markdown("---")
+                    st.markdown("### Regime Tributário")
+                    bg_color, fg_color = badge_cor_regime(regime_final)
+                    st.markdown(
+                        f"""<div style="display:inline-block;padding:8px 12px;border-radius:999px;font-weight:800;letter-spacing:.3px;background:{bg_color};color:{fg_color};">
+                            {regime_final}
+                        </div>""",
+                        unsafe_allow_html=True
+                    )
+                    
+                    # Badges de status (IBS/CBS)
+                    st.write("")
+                    st.markdown(
+                        f"""<div style="display:inline-block;padding:8px 12px;border-radius:999px;font-weight:600;background:#FACC15;color:#111111;">
+                            Situação do Fornecedor para crédito de CBS e IBS: Em construção
+                        </div>""",
+                        unsafe_allow_html=True
+                    )
+                    if regime_final.upper() == "SIMPLES NACIONAL":
+                        st.write("")
+                        st.markdown(
+                            f"""<div style="display:inline-block;padding:8px 12px;border-radius:999px;font-weight:600;background:#FACC15;color:#111111;">
+                                Regime do Simples (Regular ou Normal): Em construção
+                            </div>""",
+                            unsafe_allow_html=True
+                        )
+                    
+                    # Dados da Empresa
+                    st.markdown("---")
+                    st.markdown("### Dados da Empresa")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"**Razão Social:** {razao}")
+                        st.write(f"**Nome Fantasia:** {dados_cnpj.get('nome_fantasia', 'N/A')}")
+                        st.write(f"**CNPJ:** {format_cnpj_mask(dados_cnpj.get('cnpj', 'N/A'))}")
+                        
+                        # Situação cadastral com cor
+                        cor_hex, label_sit = cor_situacao_cadastral(sit_norm)
+                        st.markdown(
+                            f"**Situação Cadastral:** <span style='color:{cor_hex};font-weight:700;'>{label_sit}</span>",
+                            unsafe_allow_html=True
+                        )
+                        
+                        st.write(f"**Data Início Atividade:** {dados_cnpj.get('data_inicio_atividade', 'N/A')}")
+                        st.write(f"**CNAE Fiscal:** {dados_cnpj.get('cnae_fiscal_descricao', 'N/A')} ({dados_cnpj.get('cnae_fiscal', 'N/A')})")
+                        st.write(f"**Porte:** {dados_cnpj.get('porte', 'N/A')}")
+                    with col2:
+                        st.write(f"**Natureza Jurídica:** {dados_cnpj.get('natureza_juridica', 'N/A')}")
+                        st.write(f"**Capital Social:** {format_currency_brl(dados_cnpj.get('capital_social', 0))}")
+                        st.write(f"**Telefone:** {format_phone(dados_cnpj.get('ddd_telefone_1'), dados_cnpj.get('telefone_1'))}")
+                        tel2 = format_phone(dados_cnpj.get('ddd_telefone_2'), dados_cnpj.get('telefone_2'))
+                        if tel2 != "N/A":
+                            st.write(f"**Telefone 2:** {tel2}")
+                        st.write(f"**Email:** {dados_cnpj.get('email', 'N/A')}")
+                    
+                    # Endereço
+                    st.markdown("---")
+                    st.markdown("### Endereço")
+                    st.write(f"**Logradouro:** {dados_cnpj.get('descricao_tipo_de_logradouro', '')} {dados_cnpj.get('logradouro', 'N/A')}, {dados_cnpj.get('numero', 'N/A')}")
+                    if dados_cnpj.get('complemento'):
+                        st.write(f"**Complemento:** {dados_cnpj.get('complemento', 'N/A')}")
+                    st.write(f"**Bairro:** {dados_cnpj.get('bairro', 'N/A')}")
+                    st.write(f"**Município:** {dados_cnpj.get('municipio', 'N/A')}")
+                    st.write(f"**UF:** {dados_cnpj.get('uf', 'N/A')}")
+                    st.write(f"**CEP:** {dados_cnpj.get('cep', 'N/A')}")
+                    
+                    # QSA (Quadro de Sócios e Administradores)
+                    if dados_cnpj.get('qsa'):
+                        st.markdown("---")
+                        st.markdown("### Quadro de Sócios e Administradores (QSA)")
+                        for i, socio in enumerate(dados_cnpj['qsa']):
+                            with st.expander(f"Sócio/Adm {i+1}: {socio.get('nome_socio', 'N/A')}"):
+                                st.write(f"**Nome:** {socio.get('nome_socio', 'N/A')}")
+                                st.write(f"**Qualificação:** {socio.get('qualificacao_socio', 'N/A')}")
+                                st.write(f"**Data de Entrada:** {socio.get('data_entrada_sociedade', 'N/A')}")
+                                st.write(f"**CNPJ/CPF do Sócio:** {socio.get('cnpj_cpf_do_socio', 'N/A')}")
+                                if socio.get('nome_representante_legal'):
+                                    st.write(f"**Representante Legal:** {socio.get('nome_representante_legal', 'N/A')}")
+                                    st.write(f"**CPF do Representante Legal:** {socio.get('cpf_representante_legal', 'N/A')}")
+                                    st.write(f"**Qualificação do Representante:** {socio.get('qualificacao_representante_legal', 'N/A')}")
+                    else:
+                        st.info("Não há informações de QSA disponíveis.")
+                    
+                    # CNAEs Secundários
+                    st.markdown("---")
+                    st.markdown("### CNAEs Secundários")
+                    if dados_cnpj.get('cnaes_secundarios'):
+                        for cnae in dados_cnpj['cnaes_secundarios']:
+                            st.markdown(f"- **{cnae.get('codigo', 'N/A')}**: {cnae.get('descricao', 'N/A')}")
+                    else:
+                        st.info("Nenhum CNAE secundário encontrado para este CNPJ.")
+                    
+                    # Inscrições Estaduais
+                    st.markdown("---")
+                    st.markdown("### Inscrições Estaduais")
+                    ies = consulta_ie_open_cnpja(cnpj_limpo)
+                    if ies is None:
+                        st.warning("Não foi possível recuperar as Inscrições Estaduais no momento.")
+                    elif len(ies) == 0:
+                        st.info("Nenhuma Inscrição Estadual encontrada para este CNPJ.")
+                    else:
+                        for idx, ie in enumerate(ies, start=1):
+                            titulo = f"IE {idx} - {ie.get('uf') or 'UF N/A'}"
+                            with st.expander(titulo):
+                                st.write(f"**UF:** {ie.get('uf', 'N/A')}")
+                                st.write(f"**Inscrição Estadual:** {ie.get('numero', 'N/A')}")
+                                habilitada = ie.get('habilitada', False)
+                                st.write(f"**Habilitada:** {'Sim' if habilitada else 'Não'}")
+                                st.write(f"**Status:** {ie.get('status_texto', 'N/A')}")
+                                st.write(f"**Tipo:** {ie.get('tipo_texto', 'N/A')}")
+                    
+                    # Exportação CSV
+                    st.markdown("---")
+                    st.subheader("Exportação")
+                    
+                    import io
+                    import csv
+                    import datetime
+                    
+                    cnae_cod = dados_cnpj.get('cnae_fiscal', '')
+                    cnae_desc = dados_cnpj.get('cnae_fiscal_descricao', '')
+                    tel1 = format_phone(dados_cnpj.get('ddd_telefone_1'), dados_cnpj.get('telefone_1'))
+                    tel2 = format_phone(dados_cnpj.get('ddd_telefone_2'), dados_cnpj.get('telefone_2'))
+                    
+                    csv_row = {
+                        "CNPJ": format_cnpj_mask(dados_cnpj.get('cnpj', '')),
+                        "Razão Social": razao,
+                        "Nome Fantasia": dados_cnpj.get('nome_fantasia', ''),
+                        "Situação Cadastral": sit_norm.title() if sit_norm != "N/A" else "",
+                        "Regime Tributário": regime_final,
+                        "Situação do Fornecedor p/ crédito CBS/IBS": "Em construção",
+                        "Regime do Simples (Regular ou Normal)": "Em construção" if regime_final.upper() == "SIMPLES NACIONAL" else "",
+                        "Data Início Atividade": dados_cnpj.get('data_inicio_atividade', ''),
+                        "CNAE Fiscal Código": cnae_cod if cnae_cod is not None else "",
+                        "CNAE Fiscal Descrição": cnae_desc if cnae_desc is not None else "",
+                        "Porte": dados_cnpj.get('porte', ''),
+                        "Natureza Jurídica": dados_cnpj.get('natureza_juridica', ''),
+                        "Capital Social": dados_cnpj.get('capital_social', ''),
+                        "Email": dados_cnpj.get('email', ''),
+                        "Telefone 1": "" if tel1 == "N/A" else tel1,
+                        "Telefone 2": "" if tel2 == "N/A" else tel2,
+                        "Logradouro": f"{dados_cnpj.get('descricao_tipo_de_logradouro','') or ''} {dados_cnpj.get('logradouro','') or ''}".strip(),
+                        "Número": dados_cnpj.get('numero', ''),
+                        "Complemento": dados_cnpj.get('complemento', ''),
+                        "Bairro": dados_cnpj.get('bairro', ''),
+                        "Município": dados_cnpj.get('municipio', ''),
+                        "UF": dados_cnpj.get('uf', ''),
+                        "CEP": dados_cnpj.get('cep', ''),
+                        "Inscrições Estaduais": join_ies_for_csv(ies) if ies else "",
+                        "Data/Hora da Consulta": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    
+                    csv_cols = [
+                        "CNPJ","Razão Social","Nome Fantasia","Situação Cadastral","Regime Tributário",
+                        "Situação do Fornecedor p/ crédito CBS/IBS","Regime do Simples (Regular ou Normal)",
+                        "Data Início Atividade","CNAE Fiscal Código","CNAE Fiscal Descrição","Porte",
+                        "Natureza Jurídica","Capital Social","Email","Telefone 1","Telefone 2",
+                        "Logradouro","Número","Complemento","Bairro","Município","UF","CEP",
+                        "Inscrições Estaduais","Data/Hora da Consulta"
+                    ]
+                    
+                    buf = io.StringIO()
+                    writer = csv.DictWriter(buf, fieldnames=csv_cols, extrasaction="ignore")
+                    writer.writeheader()
+                    writer.writerow({k: ("" if csv_row.get(k) is None else str(csv_row.get(k))) for k in csv_cols})
+                    csv_bytes = buf.getvalue().encode("utf-8-sig")
+                    
+                    st.download_button(
+                        label="Exportar CSV",
+                        data=csv_bytes,
+                        file_name=f"CNPJ_{only_digits(dados_cnpj.get('cnpj',''))}.csv",
+                        mime="text/csv",
+                        help="Baixa um CSV com todas as informações principais deste CNPJ"
+                    )
+                    
+                    # Integração ERP (visual pronto - fake)
+                    st.markdown("---")
+                    st.subheader("Integração ERP (SAP Business One)")
+                    st.markdown("""
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
+                                Vincular PN ao SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
+                            </div>
+                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
+                                Exportar PN para SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
+                            </div>
+                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
+                                Atualizar Cadastro no SAP B1 <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
+                            </div>
+                            <div style="background: #2a2a2a; border: 1px dashed #6b7280; color:#9ca3af; padding:10px 14px; border-radius:10px; font-weight:700; cursor:not-allowed; position:relative;">
+                                Sincronizar IE / CNAE no SAP <span style="position:absolute; top:-10px; right:-10px; background:#374151; color:#f3f4f6; font-size:10px; padding:3px 6px; border-radius:999px; border:1px solid #6b7280;">Em breve</span>
+                            </div>
+                        </div>
+                        <div style="color:#9ca3af; font-size:12px; margin-top:6px;">Conectores prontos para ativação com credenciais do SAP Business One (Service Layer).</div>
+                    """, unsafe_allow_html=True)
