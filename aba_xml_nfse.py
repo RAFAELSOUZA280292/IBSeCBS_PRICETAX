@@ -408,6 +408,7 @@ def render_tabela_notas(df: pd.DataFrame):
     # Selecionar colunas para exibição (ordem solicitada)
     colunas_exibir = [
         # Identificação
+        "Chave de Acesso",
         "Número NFSe",
         "Status",
         "Data Emissão",
@@ -544,8 +545,57 @@ def render_graficos(df: pd.DataFrame):
         else:
             st.info("Nenhum tomador para exibir")
     
+    # Gráficos adicionais: Top 10 Prestadores e Top 10 Tomadores
+    st.markdown("---")
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        st.markdown("#### Top 10 Prestadores por Valor")
+        
+        # Ranking de prestadores
+        df_prestadores = df.groupby("Nome Prestador")["Valor Bruto"].sum().reset_index()
+        df_prestadores = df_prestadores.sort_values("Valor Bruto", ascending=False).head(10)
+        
+        if len(df_prestadores) > 0:
+            chart = alt.Chart(df_prestadores).mark_bar(color="#1f77b4").encode(
+                x=alt.X("Valor Bruto:Q", title="Valor Bruto (R$)"),
+                y=alt.Y("Nome Prestador:N", title="Prestador", sort="-x"),
+                tooltip=[
+                    alt.Tooltip("Nome Prestador:N", title="Prestador"),
+                    alt.Tooltip("Valor Bruto:Q", title="Valor Bruto", format=",.2f"),
+                ],
+            ).properties(
+                height=300,
+            )
+            st.altair_chart(chart, use_container_width=True)
+        else:
+            st.info("Nenhum prestador para exibir")
+    
+    with col4:
+        st.markdown("#### Top 10 Tomadores por Valor")
+        
+        # Ranking de tomadores (mantido do código existente)
+        df_tomadores_dup = df.groupby("Nome Tomador")["Valor Bruto"].sum().reset_index()
+        df_tomadores_dup = df_tomadores_dup.sort_values("Valor Bruto", ascending=False).head(10)
+        
+        if len(df_tomadores_dup) > 0:
+            chart = alt.Chart(df_tomadores_dup).mark_bar(color="#ff7f0e").encode(
+                x=alt.X("Valor Bruto:Q", title="Valor Bruto (R$)"),
+                y=alt.Y("Nome Tomador:N", title="Tomador", sort="-x"),
+                tooltip=[
+                    alt.Tooltip("Nome Tomador:N", title="Tomador"),
+                    alt.Tooltip("Valor Bruto:Q", title="Valor Bruto", format=",.2f"),
+                ],
+            ).properties(
+                height=300,
+            )
+            st.altair_chart(chart, use_container_width=True)
+        else:
+            st.info("Nenhum tomador para exibir")
+    
     # Gráfico de evolução temporal (se houver dados de múltiplos períodos)
     if "Data Emissão Datetime" in df.columns and df["Data Emissão Datetime"].notna().any():
+        st.markdown("---")
         st.markdown("#### Evolução Temporal de Valores")
         
         df_temporal = df.copy()
