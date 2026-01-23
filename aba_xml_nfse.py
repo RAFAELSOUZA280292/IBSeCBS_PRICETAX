@@ -173,6 +173,7 @@ def criar_dataframe_notas(notas: List[Dict[str, Any]]) -> pd.DataFrame:
     
     for nota in notas:
         row = {
+            "Chave de Acesso": nota["chave_acesso"],
             "Número NFSe": nota["numero_nfse"],
             "Número DFSe": nota["numero_dfse"],
             "Status": nota["status"],
@@ -186,6 +187,7 @@ def criar_dataframe_notas(notas: List[Dict[str, Any]]) -> pd.DataFrame:
             "Município": nota["localizacao"]["local_prestacao"],
             "Código NBS": nota["servico"]["codigo_nbs"],
             "Código Trib. Nacional": nota["servico"]["codigo_tributacao_nacional"],
+            "Descrição do Serviço": nota["servico"]["descricao_servico"],
             "Valor Bruto": nota["valor_bruto"],
             "Valor Líquido": nota["valor_liquido"],
             "Total Retido": nota["valor_total_retido"],
@@ -375,11 +377,15 @@ def render_tabela_notas(df: pd.DataFrame):
     """
     # Selecionar colunas para exibição
     colunas_exibir = [
+        "Chave de Acesso",
         "Número NFSe",
         "Status",
         "Data Emissão",
+        "Município",
         "Tomador",
         "CNPJ/CPF Tomador",
+        "Código Trib. Nacional",
+        "Descrição do Serviço",
         "Valor Bruto",
         "Valor Líquido",
         "Total Retido",
@@ -698,6 +704,7 @@ def criar_dataframe_completo(notas: List[Dict[str, Any]]) -> pd.DataFrame:
     for nota in notas:
         row = {
             # Identificação
+            "Chave de Acesso": nota["chave_acesso"],
             "Número NFSe": nota["numero_nfse"],
             "Número DFSe": nota["numero_dfse"],
             "Status": nota["status"],

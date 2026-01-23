@@ -141,6 +141,10 @@ def parse_nfse_xml(xml_path: str) -> Dict[str, Any]:
     
     # Localizar elementos principais
     inf_nfse = root.find('.//nfse:infNFSe', NAMESPACE)
+    
+    # Extrair chave de acesso (atributo Id do infNFSe)
+    chave_acesso = inf_nfse.get('Id', '') if inf_nfse is not None else ""
+    
     emit = inf_nfse.find('.//nfse:emit', NAMESPACE)
     valores_resumo = inf_nfse.find('.//nfse:valores', NAMESPACE)
     
@@ -316,6 +320,7 @@ def parse_nfse_xml(xml_path: str) -> Dict[str, Any]:
     
     nfse_data = {
         # Identificação
+        "chave_acesso": chave_acesso,
         "numero_nfse": numero_nfse,
         "numero_dfse": numero_dfse,
         "status": status,
