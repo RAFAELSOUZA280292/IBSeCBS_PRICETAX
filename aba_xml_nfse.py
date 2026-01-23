@@ -479,6 +479,33 @@ def render_tabela_notas(df: pd.DataFrame):
         use_container_width=True,
         height=400,
     )
+    
+    # Adicionar links de autenticidade abaixo da tabela
+    st.markdown("")
+    st.markdown("**Consultar Autenticidade:**")
+    st.markdown(
+        "Clique no botão ao lado de cada nota para verificar a autenticidade no Portal Nacional da NFSe. "
+        "Será necessário resolver um CAPTCHA no site."
+    )
+    
+    # Criar botões de consulta para cada nota
+    for idx, row in df.iterrows():
+        chave = row["Chave de Acesso"]
+        numero = row["Número NFSe"]
+        url = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
+        
+        col_btn, col_info = st.columns([1, 5])
+        with col_btn:
+            st.link_button(
+                f"NFSe {numero}",
+                url,
+                help="Abrir Portal Nacional para consulta de autenticidade",
+                use_container_width=True,
+            )
+        with col_info:
+            st.caption(f"Prestador: {row['Nome Prestador']} | Tomador: {row['Nome Tomador']} | Valor: {format_currency(row['Valor Bruto'])}")
+    
+    st.markdown("---")
 
 
 def render_graficos(df: pd.DataFrame):
@@ -663,6 +690,21 @@ def render_relatorio_detalhado(df: pd.DataFrame, notas: List[Dict[str, Any]]):
     
     # Exibir relatório
     st.markdown(f"#### Relatório Completo - NFSe {numero_selecionado}")
+    
+    # Botão de autenticidade
+    chave_acesso = nota_selecionada.get('chave_acesso', '')
+    if chave_acesso:
+        url_autenticidade = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave_acesso}"
+        st.link_button(
+            "Consultar Autenticidade no Portal Nacional",
+            url_autenticidade,
+            help="Abrir Portal Nacional para verificar a autenticidade desta NFSe (requer CAPTCHA)",
+            type="primary",
+            use_container_width=False,
+        )
+        st.caption(f"Chave de Acesso: {chave_acesso}")
+    
+    st.markdown("")
     
     # Identificação
     st.markdown("**Identificação**")
