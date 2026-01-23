@@ -1,12 +1,70 @@
-_#_ _Changelog_ - _Histórico_ _de_ _Alterações_ _do_ _Projeto_
+_#_ _Changelog_ - _Histórico_ _de_ _Alterações_ _do_# CHANGELOG
 
-**Autor:** _Manus_ _AI_
-**Data:** _21_ _de_ _Janeiro_ _de_ _2026_
+**Autor:** Manus AI
+**Data:** 23 de Janeiro de 2026
 
-_---
+---
 
-_##_ _v4.2_ - _Correção_ _Estrutural_ _UnboundLocalError_ _(Janeiro_ _2026)_
+## v5.0 - Nova Aba de Análise XML NFSe (Janeiro 2026)
 
+### ✨ Features
+
+- **Nova Aba: Análise XML NFSe (Nota Fiscal de Serviços Eletrônica)**
+  - Upload de múltiplos XMLs de NFSe do Portal Nacional simultaneamente
+  - Parser completo com extração de 60+ campos estruturados
+  - Dashboard executivo com métricas consolidadas:
+    - Total de notas, valores bruto/líquido/retido
+    - Tributos totalizados (PIS, COFINS, IRRF, CSLL, ISSQN)
+    - Distribuição por status (Ativas, Canceladas, Substituídas)
+  - Filtros interativos por Status, Tomador e Município
+  - Tabela interativa com todas as notas e valores formatados
+  - Gráficos de análise:
+    - Distribuição de tributos (pizza)
+    - Top 10 tomadores por valor (barras)
+    - Evolução temporal de valores (linha)
+  - Relatório detalhado por nota fiscal:
+    - Identificação completa (número, status, datas)
+    - Dados do Emitente e Tomador
+    - Serviço prestado (NBS, descrição)
+    - Valores e tributos detalhados
+    - Regime tributário
+  - Exportação de dados:
+    - CSV resumido
+    - CSV completo com todos os campos
+
+### 📚 Módulos Criados
+
+- **parser_nfse.py**
+  - Parser XML robusto para NFSe do Portal Nacional
+  - Suporte a versões 1.00 e 1.01 do schema
+  - Tratamento seguro de campos ausentes
+  - Detecção automática de tipo de pessoa (PJ/PF)
+  - Identificação de retenções (ISSQN, PIS/COFINS)
+  - Formatação de valores no padrão brasileiro
+
+- **aba_xml_nfse.py**
+  - Interface completa da aba de Análise XML NFSe
+  - Dashboard executivo com métricas consolidadas
+  - Filtros e visualizações interativas
+  - Relatórios detalhados e exportação
+
+### 🔧 Melhorias
+
+- **Renomeação de Aba Existente**
+  - "Análise de XML" → "Análise XML NF-e" (maior clareza)
+  - Diferenciação clara entre NF-e (produtos) e NFSe (serviços)
+
+### 📝 Documentação
+
+- **nfse_xml_structure_mapping.md**
+  - Mapeamento completo da estrutura XML NFSe
+  - 60+ campos documentados em 11 categorias
+  - Regras de negócio identificadas
+  - Exemplos e observações técnicas
+
+---
+
+## v4.2 - Correção Estrutural UnboundLocalError (Janeiro 2026)
 ### 🐛 Bug Fixes
 
 -   **_Correção_ _de_ _UnboundLocalError_ _em_ _guess_cclasstrib_**
