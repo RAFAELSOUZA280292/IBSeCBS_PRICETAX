@@ -128,6 +128,14 @@ def render_aba_xml_nfse():
     st.markdown("---")
     st.markdown(f"### Notas Fiscais ({len(df_filtrado)} registros)")
     
+    # Alerta de autenticidade
+    st.info(
+        "**Validação de Autenticidade:** "
+        "A autenticidade destes documentos deve ser verificada no Portal Nacional da NFSe. "
+        "Atualmente, os XMLs não contêm eventos de cancelamento. "
+        "Para consulta oficial, acesse: [Portal Nacional NFSe](https://www.nfse.gov.br/consultapublica)"
+    )
+    
     render_tabela_notas(df_filtrado)
     
     # ===========================================================================
@@ -173,31 +181,53 @@ def criar_dataframe_notas(notas: List[Dict[str, Any]]) -> pd.DataFrame:
     
     for nota in notas:
         row = {
+            # Identificação
             "Chave de Acesso": nota["chave_acesso"],
             "Número NFSe": nota["numero_nfse"],
-            "Número DFSe": nota["numero_dfse"],
             "Status": nota["status"],
             "Data Emissão": nota["data_emissao"],
-            "Data Competência": nota["data_competencia"],
-            "Emitente": nota["emitente"]["razao_social"],
-            "CNPJ Emitente": nota["emitente"]["cnpj"],
-            "Tomador": nota["tomador"]["razao_social_nome"],
+            
+            # Prestador (Emitente)
+            "Nome Prestador": nota["emitente"]["razao_social"],
+            "CNPJ/CPF Prestador": nota["emitente"]["cnpj"],
+            
+            # Tomador
+            "Nome Tomador": nota["tomador"]["razao_social_nome"],
             "CNPJ/CPF Tomador": nota["tomador"]["cnpj_cpf"],
-            "Tipo Pessoa": nota["tomador"]["tipo_pessoa"],
-            "Município": nota["localizacao"]["local_prestacao"],
+            
+            # Serviço
             "Código NBS": nota["servico"]["codigo_nbs"],
-            "Código Trib. Nacional": nota["servico"]["codigo_tributacao_nacional"],
-            "Descrição do Serviço": nota["servico"]["descricao_servico"],
+            "Descrição NBS": nota["servico"]["descricao_nbs"],
+            "Código Tributação Nacional": nota["servico"]["codigo_tributacao_nacional"],
+            "Descrição Tributação Nacional": nota["servico"]["descricao_tributacao_nacional"],
+            
+            # Valores
             "Valor Bruto": nota["valor_bruto"],
+            
+            # Tributos NÃO Retidos
+            "CST PIS": nota["pis"]["cst"],
+            "Alíquota PIS": nota["pis"]["aliquota"],
+            "Valor PIS": nota["pis"]["valor"],
+            
+            "CST COFINS": nota["cofins"]["cst"],
+            "Alíquota COFINS": nota["cofins"]["aliquota"],
+            "Valor COFINS": nota["cofins"]["valor"],
+            
+            # Tributos Retidos
+            "ISS Retido": "Sim" if nota["issqn"]["retido"] else "Não",
+            "BC ISS": nota["valor_bruto"],  # Base de cálculo do ISS é o valor bruto
+            "Alíquota ISS": nota["issqn"]["aliquota"],
+            "Valor ISS": nota["issqn"]["valor"],
+            
+            "IRRF Retido": nota["irrf"]["valor"],
+            "CSLL Retido": nota["csll"]["valor"],
+            "PIS Retido": nota["pis"]["valor"] if nota["pis"]["retido"] else 0.0,
+            "COFINS Retido": nota["cofins"]["valor"] if nota["cofins"]["retido"] else 0.0,
+            
+            # Outros
             "Valor Líquido": nota["valor_liquido"],
             "Total Retido": nota["valor_total_retido"],
-            "PIS": nota["pis"]["valor"],
-            "COFINS": nota["cofins"]["valor"],
-            "IRRF": nota["irrf"]["valor"],
-            "CSLL": nota["csll"]["valor"],
-            "ISSQN": nota["issqn"]["valor"],
-            "ISSQN Retido": "Sim" if nota["issqn"]["retido"] else "Não",
-            "PIS/COFINS Retido": "Sim" if nota["pis"]["retido"] else "Não",
+            "Município": nota["localizacao"]["local_prestacao"],
             "Simples Nacional": "Sim" if nota["regime"]["optante_simples_nacional"] else "Não",
             "Arquivo": nota["arquivo_original"],
         }
@@ -337,7 +367,7 @@ def aplicar_filtros(df: pd.DataFrame) -> pd.DataFrame:
     
     with col2:
         # Filtro por tomador
-        tomadores = ["Todos"] + sorted(df["Tomador"].unique().tolist())
+        tomadores = ["Todos"] + sorted(df["Nome Tomador"].unique().tolist())
         tomador_selecionado = st.selectbox(
             "Filtrar por Tomador",
             options=tomadores,
@@ -360,7 +390,7 @@ def aplicar_filtros(df: pd.DataFrame) -> pd.DataFrame:
         df_filtrado = df_filtrado[df_filtrado["Status"] == status_selecionado]
     
     if tomador_selecionado != "Todos":
-        df_filtrado = df_filtrado[df_filtrado["Tomador"] == tomador_selecionado]
+        df_filtrado = df_filtrado[df_filtrado["Nome Tomador"] == tomador_selecionado]
     
     if municipio_selecionado != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Município"] == municipio_selecionado]
@@ -375,31 +405,72 @@ def render_tabela_notas(df: pd.DataFrame):
     Args:
         df: DataFrame com notas fiscais
     """
-    # Selecionar colunas para exibição
+    # Selecionar colunas para exibição (ordem solicitada)
     colunas_exibir = [
-        "Chave de Acesso",
+        # Identificação
         "Número NFSe",
         "Status",
         "Data Emissão",
-        "Município",
-        "Tomador",
+        
+        # Prestador
+        "Nome Prestador",
+        "CNPJ/CPF Prestador",
+        
+        # Tomador
+        "Nome Tomador",
         "CNPJ/CPF Tomador",
-        "Código Trib. Nacional",
-        "Descrição do Serviço",
+        
+        # Serviço
+        "Código NBS",
+        "Descrição NBS",
+        "Código Tributação Nacional",
+        "Descrição Tributação Nacional",
+        
+        # Valor
         "Valor Bruto",
-        "Valor Líquido",
-        "Total Retido",
-        "PIS",
-        "COFINS",
-        "IRRF",
-        "CSLL",
+        
+        # Tributos NÃO Retidos
+        "CST PIS",
+        "Alíquota PIS",
+        "Valor PIS",
+        "CST COFINS",
+        "Alíquota COFINS",
+        "Valor COFINS",
+        
+        # Tributos Retidos
+        "ISS Retido",
+        "BC ISS",
+        "Alíquota ISS",
+        "Valor ISS",
+        "IRRF Retido",
+        "CSLL Retido",
+        "PIS Retido",
+        "COFINS Retido",
     ]
     
     df_exibir = df[colunas_exibir].copy()
     
     # Formatar valores monetários
-    for col in ["Valor Bruto", "Valor Líquido", "Total Retido", "PIS", "COFINS", "IRRF", "CSLL"]:
-        df_exibir[col] = df_exibir[col].apply(lambda x: format_currency(x))
+    colunas_monetarias = [
+        "Valor Bruto",
+        "Valor PIS",
+        "Valor COFINS",
+        "BC ISS",
+        "Valor ISS",
+        "IRRF Retido",
+        "CSLL Retido",
+        "PIS Retido",
+        "COFINS Retido",
+    ]
+    for col in colunas_monetarias:
+        if col in df_exibir.columns:
+            df_exibir[col] = df_exibir[col].apply(lambda x: format_currency(x))
+    
+    # Formatar alíquotas (percentuais)
+    colunas_percentuais = ["Alíquota PIS", "Alíquota COFINS", "Alíquota ISS"]
+    for col in colunas_percentuais:
+        if col in df_exibir.columns:
+            df_exibir[col] = df_exibir[col].apply(lambda x: f"{x:.2f}%" if x > 0 else "0,00%")
     
     # Exibir tabela
     st.dataframe(
