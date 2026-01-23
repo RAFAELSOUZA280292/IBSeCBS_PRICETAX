@@ -144,6 +144,9 @@ def parse_nfse_xml(xml_path: str) -> Dict[str, Any]:
     
     # Extrair chave de acesso (atributo Id do infNFSe)
     chave_acesso = inf_nfse.get('Id', '') if inf_nfse is not None else ""
+    # Remover prefixo "NFS" se presente (padrão do Portal Nacional)
+    if chave_acesso.startswith('NFS'):
+        chave_acesso = chave_acesso[3:]
     
     emit = inf_nfse.find('.//nfse:emit', NAMESPACE)
     valores_resumo = inf_nfse.find('.//nfse:valores', NAMESPACE)
