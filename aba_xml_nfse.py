@@ -597,7 +597,7 @@ def render_relatorio_detalhado(df: pd.DataFrame, notas: List[Dict[str, Any]]):
     numero_selecionado = st.selectbox(
         "Selecione uma nota para visualizar o relatório completo",
         options=numeros_nfse,
-        format_func=lambda x: f"NFSe {x} - {df[df['Número NFSe'] == x]['Tomador'].iloc[0]}",
+        format_func=lambda x: f"NFSe {x} - {df[df['Número NFSe'] == x]['Nome Tomador'].iloc[0]}",
     )
     
     # Encontrar nota selecionada
