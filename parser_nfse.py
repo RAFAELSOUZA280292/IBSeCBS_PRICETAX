@@ -256,7 +256,8 @@ def parse_nfse_xml(xml_path: str) -> Dict[str, Any]:
     # Tributos Municipais
     trib_mun = trib.find('.//nfse:tribMun', NAMESPACE) if trib is not None else None
     tipo_ret_issqn = safe_find_text(trib_mun, './/nfse:tpRetISSQN', NAMESPACE) if trib_mun else ""
-    issqn_retido = tipo_ret_issqn == "1"
+    # tpRetISSQN: 1 = NÃO retido (devido), 2 = Retido
+    issqn_retido = tipo_ret_issqn == "2"
     
     # Tributos Federais - PIS/COFINS
     trib_fed = trib.find('.//nfse:tribFed', NAMESPACE) if trib is not None else None
@@ -269,7 +270,8 @@ def parse_nfse_xml(xml_path: str) -> Dict[str, Any]:
     valor_pis = safe_find_float(piscofins, './/nfse:vPis', NAMESPACE) if piscofins else 0.0
     valor_cofins = safe_find_float(piscofins, './/nfse:vCofins', NAMESPACE) if piscofins else 0.0
     tipo_ret_pis_cofins = safe_find_text(piscofins, './/nfse:tpRetPisCofins', NAMESPACE) if piscofins else ""
-    pis_cofins_retido = tipo_ret_pis_cofins == "1"
+    # tpRetPisCofins: 1 = NÃO retido (devido), 2 = Retido
+    pis_cofins_retido = tipo_ret_pis_cofins == "2"
     
     # Outros Tributos Federais
     valor_irrf = safe_find_float(trib_fed, './/nfse:vRetIRRF', NAMESPACE) if trib_fed else 0.0
