@@ -291,35 +291,35 @@ def render_dashboard(df: pd.DataFrame, notas: List[Dict[str, Any]]):
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        total_pis = df["PIS"].sum()
+        total_pis = df["Valor PIS"].sum()
         st.metric(
             label="Total PIS",
             value=format_currency(total_pis),
         )
     
     with col2:
-        total_cofins = df["COFINS"].sum()
+        total_cofins = df["Valor COFINS"].sum()
         st.metric(
             label="Total COFINS",
             value=format_currency(total_cofins),
         )
     
     with col3:
-        total_irrf = df["IRRF"].sum()
+        total_irrf = df["IRRF Retido"].sum()
         st.metric(
             label="Total IRRF",
             value=format_currency(total_irrf),
         )
     
     with col4:
-        total_csll = df["CSLL"].sum()
+        total_csll = df["CSLL Retido"].sum()
         st.metric(
             label="Total CSLL",
             value=format_currency(total_csll),
         )
     
     with col5:
-        total_issqn = df["ISSQN"].sum()
+        total_issqn = df["Valor ISS"].sum()
         st.metric(
             label="Total ISSQN",
             value=format_currency(total_issqn),
@@ -493,11 +493,11 @@ def render_graficos(df: pd.DataFrame):
         st.markdown("#### Distribuição de Tributos")
         
         # Gráfico de pizza com distribuição de tributos
-        total_pis = df["PIS"].sum()
-        total_cofins = df["COFINS"].sum()
-        total_irrf = df["IRRF"].sum()
-        total_csll = df["CSLL"].sum()
-        total_issqn = df["ISSQN"].sum()
+        total_pis = df["Valor PIS"].sum()
+        total_cofins = df["Valor COFINS"].sum()
+        total_irrf = df["IRRF Retido"].sum()
+        total_csll = df["CSLL Retido"].sum()
+        total_issqn = df["Valor ISS"].sum()
         
         df_tributos = pd.DataFrame({
             "Tributo": ["PIS", "COFINS", "IRRF", "CSLL", "ISSQN"],
@@ -526,15 +526,15 @@ def render_graficos(df: pd.DataFrame):
         st.markdown("#### Top 10 Tomadores por Valor")
         
         # Ranking de tomadores
-        df_tomadores = df.groupby("Tomador")["Valor Bruto"].sum().reset_index()
+        df_tomadores = df.groupby("Nome Tomador")["Valor Bruto"].sum().reset_index()
         df_tomadores = df_tomadores.sort_values("Valor Bruto", ascending=False).head(10)
         
         if len(df_tomadores) > 0:
             chart = alt.Chart(df_tomadores).mark_bar().encode(
                 x=alt.X("Valor Bruto:Q", title="Valor Bruto (R$)"),
-                y=alt.Y("Tomador:N", title="Tomador", sort="-x"),
+                y=alt.Y("Nome Tomador:N", title="Tomador", sort="-x"),
                 tooltip=[
-                    alt.Tooltip("Tomador:N", title="Tomador"),
+                    alt.Tooltip("Nome Tomador:N", title="Tomador"),
                     alt.Tooltip("Valor Bruto:Q", title="Valor Bruto", format=",.2f"),
                 ],
             ).properties(
