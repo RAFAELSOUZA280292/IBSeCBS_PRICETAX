@@ -80,6 +80,19 @@ def check_password() -> bool:
     """, unsafe_allow_html=True)
     
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    
+    # Logo "O X da Questão"
+    try:
+        import base64
+        with open("logo_x_questao.png", "rb") as img_file:
+            logo_data = base64.b64encode(img_file.read()).decode()
+        st.markdown(
+            f'<div style="text-align: center; margin-bottom: 20px;"><img src="data:image/png;base64,{logo_data}" style="max-width: 300px; height: auto;" alt="O X da Questão"></div>',
+            unsafe_allow_html=True
+        )
+    except FileNotFoundError:
+        pass  # Se o logo não existir, continua sem ele
+    
     st.markdown('<div class="login-title">PRICETAX</div>', unsafe_allow_html=True)
     st.markdown("### Autenticação Necessária")
     
