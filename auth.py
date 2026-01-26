@@ -59,6 +59,17 @@ def check_password() -> bool:
     # CSS Premium para tela de login
     st.markdown("""
     <style>
+    /* Ocultar elementos padrão do Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display: none;}
+    
+    /* Ocultar skeleton/placeholder do Streamlit */
+    .element-container:has(.stMarkdown) {
+        display: block !important;
+    }
+    
     /* Background com gradiente sutil */
     .stApp {
         background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
