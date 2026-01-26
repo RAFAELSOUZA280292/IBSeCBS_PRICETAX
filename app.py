@@ -1054,18 +1054,22 @@ st.markdown(
 show_logout_button()
 
 # Tabs principais
-tabs = st.tabs(
-    [
-        "Consulta NCM",
-        "Ranking de Saídas SPED",
-        "cClassTrib",
-        "Download CFOP x cClassTrib",
-        "Análise XML NF-e",
-        "Análise XML NFSe",
-        "LC 214/2025",
-        "Consulta CNPJ",
-    ]
-)
+tab_names = [
+    "Consulta NCM",
+    "Ranking de Saídas SPED",
+    "cClassTrib",
+    "Download CFOP x cClassTrib",
+    "Análise XML NF-e",
+    "Análise XML NFSe",
+    "LC 214/2025",
+    "Consulta CNPJ",
+]
+
+# Adicionar aba Admin apenas para PriceADM
+if st.session_state.get("authenticated_user") == "PriceADM":
+    tab_names.append("🔒 Admin")
+
+tabs = st.tabs(tab_names)
 
 # =============================================================================
 # ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA INTEGRAL)
@@ -3450,3 +3454,11 @@ with tabs[7]:
                         help="Baixa um CSV com todas as informações principais deste CNPJ"
                     )
 
+
+# =============================================================================
+# ABA: ADMIN (LOGS DE AUTENTICAÇÃO) - RESTRITO A PriceADM
+# =============================================================================
+if st.session_state.get("authenticated_user") == "PriceADM":
+    with tabs[8]:
+        from aba_admin import render_admin_tab
+        render_admin_tab()
