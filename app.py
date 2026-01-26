@@ -22,6 +22,9 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
+# Importar módulo de autenticação
+from auth import check_password, show_logout_button
+
 # Importar módulo de benefícios fiscais
 try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
@@ -1026,6 +1029,17 @@ if logo_path.exists():
 else:
     logo_html = '<div class="pricetax-logo">PRICETAX</div>'
 
+# =============================================================================
+# AUTENTICAÇÃO OBRIGATÓRIA
+# =============================================================================
+
+if not check_password():
+    st.stop()
+
+# =============================================================================
+# HEADER PRICETAX (APÓS AUTENTICAÇÃO)
+# =============================================================================
+
 st.markdown(
     f"""
     <div class="pricetax-header">
@@ -1035,6 +1049,9 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Botão de logout no sidebar
+show_logout_button()
 
 # Tabs principais
 tabs = st.tabs(
