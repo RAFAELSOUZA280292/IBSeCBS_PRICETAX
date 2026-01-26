@@ -2,3 +2,7 @@ DADOS_MERCADO_INTERNO.xlsx
 
 # Streamlit secrets (contém senhas)
 .streamlit/secrets.toml
+
+# Logs de autenticação
+logs/
+auth_log.txt

@@ -6,6 +6,33 @@ Implementa autenticação segura com hash SHA-256 e interface elegante.
 
 import hashlib
 import streamlit as st
+from datetime import datetime
+import os
+
+
+def log_login(username: str, success: bool):
+    """
+    Registra tentativa de login em arquivo de log.
+    
+    Args:
+        username: Nome do usuário que tentou fazer login
+        success: True se login bem-sucedido, False se falhou
+    """
+    try:
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, "auth_log.txt")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        status = "SUCESSO" if success else "FALHA"
+        
+        log_entry = f"[{timestamp}] {status} - Usuário: {username}\n"
+        
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(log_entry)
+    except Exception as e:
+        # Não interromper o fluxo se houver erro no log
+        print(f"Erro ao registrar log: {e}")
 
 
 def get_password_hash(password: str) -> str:
@@ -46,11 +73,17 @@ def check_password() -> bool:
                 st.session_state["password_correct"] = True
                 st.session_state["authenticated_user"] = username
                 st.session_state["login_attempts"] = 0
+                
+                # Registrar login no log
+                log_login(username, success=True)
                 return
         
         # Credenciais inválidas
         st.session_state["password_correct"] = False
         st.session_state["login_attempts"] = st.session_state.get("login_attempts", 0) + 1
+        
+        # Registrar tentativa falha no log
+        log_login(username if username else "[vazio]", success=False)
     
     # Verificar se já está autenticado
     if st.session_state.get("password_correct", False):
@@ -336,13 +369,80 @@ def check_password() -> bool:
 
 
 def show_logout_button():
-    """Exibe botão de logout no sidebar."""
-    with st.sidebar:
-        st.markdown("---")
-        authenticated_user = st.session_state.get("authenticated_user", "Usuário")
-        st.markdown(f"**Conectado como:** {authenticated_user}")
+    """Exibe botão de logout no canto superior direito."""
+    authenticated_user = st.session_state.get("authenticated_user", "Usuário")
+    
+    # CSS para botão de logout no canto superior direito
+    st.markdown("""
+    <style>
+    /* Container do botão de logout */
+    .logout-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #ffffff;
+        padding: 10px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .logout-user {
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .logout-btn {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+    }
+    
+    .logout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+    
+    /* Responsivo para mobile */
+    @media (max-width: 768px) {
+        .logout-container {
+            top: 10px;
+            right: 10px;
+            padding: 8px 14px;
+            gap: 8px;
+        }
         
-        if st.button("Sair", type="secondary", use_container_width=True):
+        .logout-user {
+            font-size: 12px;
+        }
+        
+        .logout-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Criar container com botão de logout
+    col1, col2 = st.columns([6, 1])
+    
+    with col2:
+        if st.button("🚪 Sair", key="logout_button", help=f"Desconectar ({authenticated_user})"):
             # Limpar session state
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
