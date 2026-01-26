@@ -65,9 +65,32 @@ def check_password() -> bool:
     header {visibility: hidden;}
     .stDeployButton {display: none;}
     
-    /* Ocultar skeleton/placeholder do Streamlit */
-    .element-container:has(.stMarkdown) {
-        display: block !important;
+    /* Eliminar completamente skeleton/placeholder do Streamlit */
+    .element-container:empty {
+        display: none !important;
+    }
+    
+    .stMarkdown:empty {
+        display: none !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div:empty {
+        display: none !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div[style*="height"] {
+        height: 0 !important;
+        min-height: 0 !important;
+    }
+    
+    /* Forçar remoção de espaçamentos superiores */
+    .block-container {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    section[data-testid="stSidebar"] {
+        display: none !important;
     }
     
     /* Background com gradiente sutil */
