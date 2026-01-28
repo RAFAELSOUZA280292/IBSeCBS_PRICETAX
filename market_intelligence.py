@@ -293,26 +293,72 @@ def render_export_section(nfe_file: str = None, nfse_file: str = None):
     """Renderiza seção de exportação de dados."""
     
     st.markdown("### Exportação de Dados")
-    st.markdown("Baixe os dados capturados em formato CSV para análise externa.")
+    st.markdown("Baixe os dados capturados em CSV ou Excel para análise externa.")
     
+    # NFe Export
     if nfe_file and os.path.isfile(nfe_file):
-        with open(nfe_file, 'rb') as f:
-            st.download_button(
-                label="Baixar Dados de NFe (CSV)",
-                data=f,
-                file_name=f"nfe_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
-            )
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # CSV Export
+            with open(nfe_file, 'rb') as f:
+                st.download_button(
+                    label="Baixar Dados de NFe (CSV)",
+                    data=f,
+                    file_name=f"nfe_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        
+        with col2:
+            # Excel Export
+            try:
+                import io
+                df_nfe = pd.read_csv(nfe_file)
+                excel_buffer = io.BytesIO()
+                df_nfe.to_excel(excel_buffer, index=False, engine='openpyxl')
+                excel_buffer.seek(0)
+                
+                st.download_button(
+                    label="Baixar Dados de NFe (Excel)",
+                    data=excel_buffer,
+                    file_name=f"nfe_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar Excel: {e}")
     else:
         st.info("Nenhum dado de NFe disponível para exportação.")
     
+    # NFSe Export
     if nfse_file and os.path.isfile(nfse_file):
-        with open(nfse_file, 'rb') as f:
-            st.download_button(
-                label="Baixar Dados de NFSe (CSV)",
-                data=f,
-                file_name=f"nfse_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
-            )
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # CSV Export
+            with open(nfse_file, 'rb') as f:
+                st.download_button(
+                    label="Baixar Dados de NFSe (CSV)",
+                    data=f,
+                    file_name=f"nfse_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        
+        with col2:
+            # Excel Export
+            try:
+                import io
+                df_nfse = pd.read_csv(nfse_file)
+                excel_buffer = io.BytesIO()
+                df_nfse.to_excel(excel_buffer, index=False, engine='openpyxl')
+                excel_buffer.seek(0)
+                
+                st.download_button(
+                    label="Baixar Dados de NFSe (Excel)",
+                    data=excel_buffer,
+                    file_name=f"nfse_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar Excel: {e}")
     else:
         st.info("Nenhum dado de NFSe disponível para exportação.")
