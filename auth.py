@@ -91,7 +91,7 @@ def check_password() -> bool:
     if st.session_state.get("password_correct", False):
         return True
     
-    # CSS Premium para tela de login
+    # CSS Premium PRICETAX - Identidade Visual Oficial
     st.markdown("""
     <style>
     /* Ocultar elementos padrão do Streamlit */
@@ -100,158 +100,189 @@ def check_password() -> bool:
     header {visibility: hidden;}
     .stDeployButton {display: none;}
     
-    /* Eliminar completamente skeleton/placeholder do Streamlit */
-    .element-container:empty {
-        display: none !important;
-    }
-    
-    .stMarkdown:empty {
-        display: none !important;
-    }
-    
-    div[data-testid="stVerticalBlock"] > div:empty {
-        display: none !important;
-    }
-    
+    /* Eliminar skeleton/placeholder do Streamlit */
+    .element-container:empty {display: none !important;}
+    .stMarkdown:empty {display: none !important;}
+    div[data-testid="stVerticalBlock"] > div:empty {display: none !important;}
     div[data-testid="stVerticalBlock"] > div[style*="height"] {
         height: 0 !important;
         min-height: 0 !important;
     }
     
-    /* Forçar remoção de espaçamentos superiores */
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
     }
     
-    section[data-testid="stSidebar"] {
-        display: none !important;
-    }
+    section[data-testid="stSidebar"] {display: none !important;}
     
-    /* Background com gradiente sutil */
+    /* Background PRICETAX - Escuro profissional */
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     }
     
-    /* Container de login elegante */
+    /* Container de login - Estilo PRICETAX */
     .login-container {
         max-width: 480px;
-        margin: 80px auto;
+        margin: 60px auto;
         padding: 50px 45px;
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 221, 0, 0.3);
     }
     
     /* Logo container */
     .logo-container {
         text-align: center;
-        margin-bottom: 35px;
+        margin-bottom: 30px;
     }
     
     .logo-container img {
-        max-width: 400px;
+        max-width: 350px;
         height: auto;
-        margin-bottom: 25px;
-        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+        margin-bottom: 20px;
+        filter: drop-shadow(0 4px 12px rgba(255, 221, 0, 0.3));
     }
     
-    /* Título PRICETAX */
+    /* Título PRICETAX - Amarelo oficial */
     .login-title {
         text-align: center;
-        color: #1a202c;
-        font-size: 32px;
+        color: #1a1a1a;
+        font-size: 42px;
         font-weight: 700;
-        letter-spacing: 1px;
-        margin-bottom: 12px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        text-transform: uppercase;
     }
     
-    /* Subtítulo */
+    .login-title-highlight {
+        color: #FFDD00;
+        text-shadow: 0 2px 8px rgba(255, 221, 0, 0.3);
+    }
+    
+    /* Subtítulo - Estilo PRICETAX */
     .login-subtitle {
         text-align: center;
-        color: #64748b;
+        color: #4a4a4a;
         font-size: 15px;
         font-weight: 400;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
         line-height: 1.6;
     }
     
-    /* Estilo dos inputs */
+    /* Inputs - Foco amarelo PRICETAX */
     .stTextInput > div > div > input {
-        border: 1.5px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 14px 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 16px 20px;
         font-size: 15px;
         transition: all 0.3s ease;
-        background: #f8fafc;
+        background: #fafafa;
+        color: #1a1a1a;
     }
     
     .stTextInput > div > div > input:focus {
-        border-color: #f59e0b;
+        border-color: #FFDD00;
         background: #ffffff;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        box-shadow: 0 0 0 4px rgba(255, 221, 0, 0.15);
+        outline: none;
     }
     
-    /* Labels dos inputs */
     .stTextInput > label {
-        color: #334155;
+        color: #1a1a1a;
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 8px;
     }
     
-    /* Botão de login elegante */
+    /* Botão ENTRAR - Amarelo PRICETAX */
     .stButton > button {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: #ffffff;
+        background: #FFDD00;
+        color: #1a1a1a;
         border: none;
-        border-radius: 10px;
+        border-radius: 30px;
         padding: 16px 32px;
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1px;
         width: 100%;
         margin-top: 25px;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        box-shadow: 0 6px 20px rgba(255, 221, 0, 0.4);
+        text-transform: uppercase;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
-        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(255, 221, 0, 0.5);
+        background: #FACC15;
     }
     
     .stButton > button:active {
-        transform: translateY(0);
+        transform: translateY(-1px);
     }
     
-    /* Mensagens de erro elegantes */
+    /* Mensagens de erro */
     .stAlert {
-        border-radius: 10px;
+        border-radius: 12px;
         border-left: 4px solid #ef4444;
         background: #fef2f2;
         padding: 14px 18px;
         margin-top: 20px;
     }
     
-    /* Rodapé sutil */
-    .login-footer {
-        text-align: center;
-        color: #94a3b8;
-        font-size: 13px;
-        margin-top: 30px;
-        padding-top: 25px;
-        border-top: 1px solid #e2e8f0;
+    /* Botão WhatsApp - Verde oficial */
+    .whatsapp-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #25D366;
+        color: #ffffff;
+        border: none;
+        border-radius: 30px;
+        padding: 14px 28px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        width: 100%;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
+        cursor: pointer;
     }
     
-    /* Animação suave de entrada */
+    .whatsapp-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(37, 211, 102, 0.4);
+        background: #20BA5A;
+        text-decoration: none;
+        color: #ffffff;
+    }
+    
+    .whatsapp-button svg {
+        width: 22px;
+        height: 22px;
+        fill: #ffffff;
+    }
+    
+    /* Rodapé */
+    .login-footer {
+        text-align: center;
+        color: #999999;
+        font-size: 12px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    /* Animação de entrada */
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
         to {
             opacity: 1;
@@ -263,37 +294,20 @@ def check_password() -> bool:
         animation: fadeInUp 0.6s ease-out;
     }
     
-    /* Botão WhatsApp elegante */
-    .whatsapp-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        background: #25D366;
-        color: #ffffff;
-        border: none;
-        border-radius: 10px;
-        padding: 14px 24px;
-        font-size: 15px;
-        font-weight: 600;
-        text-decoration: none;
-        width: 100%;
-        margin-top: 15px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
-        cursor: pointer;
-    }
-    
-    .whatsapp-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35);
-        background: #20BA5A;
-    }
-    
-    .whatsapp-button svg {
-        width: 20px;
-        height: 20px;
-        fill: #ffffff;
+    /* Responsivo */
+    @media (max-width: 768px) {
+        .login-container {
+            margin: 30px 20px;
+            padding: 40px 30px;
+        }
+        
+        .login-title {
+            font-size: 32px;
+        }
+        
+        .logo-container img {
+            max-width: 280px;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -314,7 +328,7 @@ def check_password() -> bool:
     except FileNotFoundError:
         pass
     
-    st.markdown('<div class="login-title">PRICETAX</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-title"><span class="login-title-highlight">PRICE</span>TAX</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="login-subtitle">Soluções para transição inteligente na Reforma Tributária</div>',
         unsafe_allow_html=True
