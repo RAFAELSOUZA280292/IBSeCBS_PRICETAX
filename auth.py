@@ -6,7 +6,7 @@ Implementa autenticação segura com hash SHA-256 e interface elegante.
 
 import hashlib
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import os
 
 
@@ -23,7 +23,9 @@ def log_login(username: str, success: bool):
         os.makedirs(log_dir, exist_ok=True)
         
         log_file = os.path.join(log_dir, "auth_log.txt")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Ajustar para fuso horário de Brasília (GMT-3)
+        brasilia_tz = timezone(timedelta(hours=-3))
+        timestamp = datetime.now(brasilia_tz).strftime("%Y-%m-%d %H:%M:%S")
         status = "SUCESSO" if success else "FALHA"
         
         log_entry = f"[{timestamp}] {status} - Usuário: {username}\n"

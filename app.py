@@ -703,6 +703,25 @@ CFOP_CCLASSTRIB_MAP = {
     "5914": "410999",
     "6914": "410999",
     "7914": "410999",
+    
+    # Remessas para industrialização por encomenda
+    "5901": "410999",
+    "6901": "410999",
+    "7901": "410999",
+    
+    # Remessas para industrialização (outras)
+    "5902": "410999",
+    "6902": "410999",
+    "7902": "410999",
+    
+    # Retorno de industrialização (entrada - não onerosa na remessa)
+    "1901": "410999",
+    "2901": "410999",
+    "3901": "410999",
+    
+    "1902": "410999",
+    "2902": "410999",
+    "3902": "410999",
 }
 
 for _cfop in CFOP_NAO_ONEROSOS_410999:
