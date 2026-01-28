@@ -109,9 +109,20 @@ def check_password() -> bool:
         min-height: 0 !important;
     }
     
+    /* Remover TODOS os espaços e elementos brancos do topo */
     .block-container {
         padding-top: 0 !important;
         margin-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Forçar remoção de qualquer elemento branco/vazio */
+    .stApp > header {
+        display: none !important;
+    }
+    
+    div[data-testid="stAppViewContainer"] > section:first-child {
+        padding-top: 0 !important;
     }
     
     section[data-testid="stSidebar"] {display: none !important;}
@@ -145,21 +156,17 @@ def check_password() -> bool:
         filter: drop-shadow(0 4px 12px rgba(255, 221, 0, 0.3));
     }
     
-    /* Título PRICETAX - Amarelo oficial */
+    /* Título PRICETAX - TOTALMENTE AMARELO */
     .login-title {
         text-align: center;
-        color: #1a1a1a;
-        font-size: 42px;
+        color: #FFDD00;
+        font-size: 48px;
         font-weight: 700;
-        letter-spacing: 2px;
-        margin-bottom: 8px;
+        letter-spacing: 3px;
+        margin-bottom: 12px;
         font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
         text-transform: uppercase;
-    }
-    
-    .login-title-highlight {
-        color: #FFDD00;
-        text-shadow: 0 2px 8px rgba(255, 221, 0, 0.3);
+        text-shadow: 0 3px 12px rgba(255, 221, 0, 0.4);
     }
     
     /* Subtítulo - Estilo PRICETAX */
@@ -328,7 +335,7 @@ def check_password() -> bool:
     except FileNotFoundError:
         pass
     
-    st.markdown('<div class="login-title"><span class="login-title-highlight">PRICE</span>TAX</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">PRICETAX</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="login-subtitle">Soluções para transição inteligente na Reforma Tributária</div>',
         unsafe_allow_html=True
