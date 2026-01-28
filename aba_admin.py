@@ -85,15 +85,39 @@ def render_admin_tab():
         return
     
     # Header
-    st.markdown("### 🔐 Painel Administrativo - Logs de Autenticação")
+    st.markdown("### Painel Administrativo")
     st.markdown("---")
+    
+    # Tabs para diferentes seções
+    tab_logs, tab_market = st.tabs([
+        "Logs de Autenticação",
+        "Inteligência de Mercado"
+    ])
+    
+    # =========================================================================
+    # TAB: LOGS DE AUTENTICAÇÃO
+    # =========================================================================
+    with tab_logs:
+        render_auth_logs_section()
+    
+    # =========================================================================
+    # TAB: INTELIGÊNCIA DE MERCADO
+    # =========================================================================
+    with tab_market:
+        from market_intelligence import render_market_intelligence_tab
+        render_market_intelligence_tab()
+
+
+def render_auth_logs_section():
+    """Renderiza seção de logs de autenticação."""
+    st.markdown("## Logs de Autenticação")
     
     # Carregar logs
     log_file = "logs/auth_log.txt"
     df_logs = parse_log_file(log_file)
     
     if df_logs.empty:
-        st.info("📋 Nenhum registro de autenticação encontrado.")
+        st.info("Nenhum registro de autenticação encontrado.")
         st.markdown("Os logs serão gerados automaticamente quando usuários fizerem login.")
         return
     

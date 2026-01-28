@@ -2837,6 +2837,15 @@ with tabs[4]:
             import os
             os.unlink(tmp_path)
             
+            # CAPTURA AUTOMÁTICA DE DADOS (oculta, para análise de mercado)
+            try:
+                from data_collector import save_nfe_data
+                usuario_atual = st.session_state.get("authenticated_user", "Desconhecido")
+                save_nfe_data(dados_xml, usuario_atual, anonimizar=False)
+            except Exception as e:
+                # Não interromper fluxo se captura falhar
+                print(f"Aviso: Falha na captura de dados: {e}")
+            
             # Exibir dados do emitente
             emitente = dados_xml['emitente']
             st.markdown(
