@@ -8,3 +8,4 @@ logs/
 auth_log.txt
 xml_nfe_data.csv
 xml_nfse_data.csv
+.streamlit/secrets.toml
