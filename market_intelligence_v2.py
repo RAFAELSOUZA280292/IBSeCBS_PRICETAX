@@ -500,10 +500,45 @@ def render_market_intelligence_dashboard():
         
         # Seleção de colunas para exibição
         colunas_disponiveis = df_filtrado.columns.tolist()
+        # Definir colunas padrão mais completas
+        colunas_default = [
+            'timestamp_captura',
+            'usuario',
+            'data_emissao',
+            'tipo_operacao',
+            'emitente_cnpj',
+            'emitente_razao',
+            'emitente_uf',
+            'destinatario_cnpj',
+            'destinatario_razao',
+            'destinatario_uf',
+            'ncm',
+            'cfop',
+            'descricao_produto',
+            'valor_unitario',
+            'quantidade',
+            'valor_total',
+            'cst_icms',
+            'vicms',
+            'cst_pis',
+            'vpis',
+            'cst_cofins',
+            'vcofins',
+            'cst_ipi',
+            'vipi',
+            'cst_ibscbs',
+            'cclasstrib',
+            'vibs',
+            'vcbs'
+        ]
+        
+        # Filtrar apenas colunas que existem no DataFrame
+        colunas_default_existentes = [col for col in colunas_default if col in colunas_disponiveis]
+        
         colunas_selecionadas = st.multiselect(
             "Selecione as colunas para exibir",
             colunas_disponiveis,
-            default=['timestamp_captura', 'ncm', 'cfop', 'valor_total', 'cclasstrib', 'vibs', 'vcbs']
+            default=colunas_default_existentes
         )
         
         if colunas_selecionadas:
