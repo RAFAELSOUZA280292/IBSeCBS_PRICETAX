@@ -34,7 +34,29 @@ def render_market_intelligence_dashboard():
     
     # Carregar dados
     try:
-        df = pd.read_csv(data_file)
+        # Tentar migração automática se houver erro de campos
+        try:
+            df = pd.read_csv(data_file)
+        except pd.errors.ParserError as e:
+            if "Expected" in str(e) and "fields" in str(e):
+                st.warning("Detectado formato antigo de dados. Migrando automaticamente...")
+                
+                # Executar migração
+                import subprocess
+                result = subprocess.run(
+                    ['python3.11', 'migrate_csv.py'],
+                    capture_output=True,
+                    text=True,
+                    cwd=os.path.dirname(os.path.abspath(__file__))
+                )
+                
+                if result.returncode == 0:
+                    st.success("Migração concluída! Recarregando dados...")
+                    df = pd.read_csv(data_file)
+                else:
+                    raise Exception(f"Erro na migração: {result.stderr}")
+            else:
+                raise
         
         if len(df) == 0:
             st.info("Nenhum registro encontrado no banco de dados.")
