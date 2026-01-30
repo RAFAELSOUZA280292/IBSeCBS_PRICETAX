@@ -104,8 +104,8 @@ def render_admin_tab():
     # TAB: INTELIGÊNCIA DE MERCADO
     # =========================================================================
     with tab_market:
-        from market_intelligence import render_market_intelligence_tab
-        render_market_intelligence_tab()
+        from market_intelligence_v2 import render_market_intelligence_dashboard
+        render_market_intelligence_dashboard()
 
 
 def render_auth_logs_section():

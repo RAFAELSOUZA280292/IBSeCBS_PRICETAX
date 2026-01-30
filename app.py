@@ -3031,8 +3031,9 @@ with tabs[4]:
                             # Calcular valores esperados (já em formato decimal %)
                             calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
                             calc_pcbs = cbs  # Já é 0.90 = 0,9%
-                            calc_vibs = valor_total * (ibs_uf + ibs_mun)
-                            calc_vcbs = valor_total * cbs
+                            # CORREÇÃO: Dividir por 100 porque alíquotas estão em formato decimal
+                            calc_vibs = valor_total * (ibs_uf + ibs_mun) / 100
+                            calc_vcbs = valor_total * cbs / 100
                             
                             # Tolerâncias
                             tol_valor = 0.02  # R$ 0,02
@@ -3109,34 +3110,34 @@ with tabs[4]:
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem;">cClassTrib</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{xml_cclasstrib or '—'}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white; font-weight: 600;">{cclastrib_code or '—'}</td>
+                                            <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: #111827;">cClassTrib</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{xml_cclasstrib or '—'}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{cclastrib_code or '—'}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(cclasstrib_ok)}; font-size: 1.2rem;">{status_icon(cclasstrib_ok)}</td>
                                             </tr>
-                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem;">Alíquota IBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pibs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pibs:.4f}%</td>
+                                            <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: #111827;">Alíquota IBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pibs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pibs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(pibs_ok)}; font-size: 1.2rem;">{status_icon(pibs_ok)}</td>
                                             </tr>
-                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem;">Alíquota CBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">{xml_pcbs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">{calc_pcbs:.4f}%</td>
+                                            <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: #111827;">Alíquota CBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pcbs:.4f}%</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pcbs:.4f}%</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(pcbs_ok)}; font-size: 1.2rem;">{status_icon(pcbs_ok)}</td>
                                             </tr>
-                                            <tr style="border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem;">Valor IBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vibs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vibs:.2f}</td>
+                                            <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                                <td style="padding: 0.6rem; color: #111827;">Valor IBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vibs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vibs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(vibs_ok)}; font-size: 1.2rem;">{status_icon(vibs_ok)}</td>
                                             </tr>
-                                            <tr>
-                                                <td style="padding: 0.6rem;">Valor CBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {xml_vcbs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: white;">R$ {calc_vcbs:.2f}</td>
+                                            <tr style="background: #F3F4F6;">
+                                                <td style="padding: 0.6rem; color: #111827;">Valor CBS</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vcbs:.2f}</td>
+                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vcbs:.2f}</td>
                                                 <td style="padding: 0.6rem; text-align: center; color: {status_color(vcbs_ok)}; font-size: 1.2rem;">{status_icon(vcbs_ok)}</td>
                                             </tr>
                                         </tbody>

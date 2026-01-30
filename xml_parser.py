@@ -90,6 +90,11 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
                 'vpis': 0.0,
                 'vbc_cofins': 0.0,
                 'vcofins': 0.0,
+                # IPI
+                'cst_ipi': '',
+                'vbc_ipi': 0.0,
+                'pipi': 0.0,
+                'vipi': 0.0,
                 # Campos IBS/CBS (Reforma Tributária)
                 'cst_ibscbs': '',
                 'cclasstrib': '',
@@ -149,6 +154,33 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
                             item['vbc_cofins'] = float(vbc_elem.text)
                         if vcofins_elem is not None:
                             item['vcofins'] = float(vcofins_elem.text)
+                
+                # IPI
+                ipi = imposto.find('nfe:IPI', ns)
+                if ipi is not None:
+                    # IPI pode ter IPITrib ou IPINT
+                    ipi_trib = ipi.find('nfe:IPITrib', ns)
+                    if ipi_trib is not None:
+                        cst_elem = ipi_trib.find('nfe:CST', ns)
+                        vbc_elem = ipi_trib.find('nfe:vBC', ns)
+                        pipi_elem = ipi_trib.find('nfe:pIPI', ns)
+                        vipi_elem = ipi_trib.find('nfe:vIPI', ns)
+                        
+                        if cst_elem is not None:
+                            item['cst_ipi'] = cst_elem.text
+                        if vbc_elem is not None:
+                            item['vbc_ipi'] = float(vbc_elem.text)
+                        if pipi_elem is not None:
+                            item['pipi'] = float(pipi_elem.text)
+                        if vipi_elem is not None:
+                            item['vipi'] = float(vipi_elem.text)
+                    else:
+                        # IPINT (não tributado)
+                        ipi_nt = ipi.find('nfe:IPINT', ns)
+                        if ipi_nt is not None:
+                            cst_elem = ipi_nt.find('nfe:CST', ns)
+                            if cst_elem is not None:
+                                item['cst_ipi'] = cst_elem.text
                 
                 # IBSCBS (Grupo IBS/CBS - Reforma Tributária 2026)
                 ibscbs = imposto.find('nfe:IBSCBS', ns)
