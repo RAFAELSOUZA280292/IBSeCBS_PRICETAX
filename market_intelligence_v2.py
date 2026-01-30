@@ -65,11 +65,19 @@ def render_market_intelligence_dashboard():
     except Exception as e:
         st.error(f"Erro ao carregar dados: {e}")
         return
+        # ===== FILTROS =====
+    st.markdown("### Filtros")
     
-    # ===== FILTROS AVANÇADOS =====
-    st.markdown("#### Filtros")
+    # Primeira linha de filtros (chave de acesso - campo largo)
+    filtro_chave = st.text_input(
+        "Chave de Acesso NFe (44 dígitos)",
+        placeholder="Digite a chave completa ou parcial",
+        key="filtro_chave",
+        help="Busca parcial: digite qualquer parte da chave"
+    )
     
-    col1, col2, col3, col4 = st.columns(4)
+    # Segunda linha de filtros
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
     
     with col1:
         # Filtro por Emitente
@@ -115,11 +123,15 @@ def render_market_intelligence_dashboard():
     # Aplicar filtros
     df_filtrado = df.copy()
     
+    # Filtro de chave de acesso (busca parcial)
+    if filtro_chave:
+        df_filtrado = df_filtrado[df_filtrado['chave_acesso'].str.contains(filtro_chave, case=False, na=False)]
+    
     if filtro_emitente != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['razao_emitente'] == filtro_emitente]
+        df_filtrado = df_filtrado[df_filtrado['emitente_razao'] == filtro_emitente]
     
     if filtro_destinatario != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['razao_destinatario'] == filtro_destinatario]
+        df_filtrado = df_filtrado[df_filtrado['destinatario_razao'] == filtro_destinatario]
     
     if filtro_ncm != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['ncm'] == filtro_ncm]
@@ -128,10 +140,10 @@ def render_market_intelligence_dashboard():
         df_filtrado = df_filtrado[df_filtrado['cfop'] == filtro_cfop]
     
     if filtro_uf_origem != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['uf_emitente'] == filtro_uf_origem]
+        df_filtrado = df_filtrado[df_filtrado['emitente_uf'] == filtro_uf_origem]
     
     if filtro_uf_destino != 'Todos':
-        df_filtrado = df_filtrado[df_filtrado['uf_destinatario'] == filtro_uf_destino]
+        df_filtrado = df_filtrado[df_filtrado['destinatario_uf'] == filtro_uf_destino]
     
     if filtro_cclasstrib != 'Todos':
         df_filtrado = df_filtrado[df_filtrado['cclasstrib'] == filtro_cclasstrib]
@@ -504,6 +516,7 @@ def render_market_intelligence_dashboard():
         colunas_default = [
             'timestamp_captura',
             'usuario',
+            'chave_acesso',
             'data_emissao',
             'tipo_operacao',
             'emitente_cnpj',
