@@ -81,12 +81,12 @@ def render_market_intelligence_dashboard():
     
     with col1:
         # Filtro por Emitente
-        emitentes = ['Todos'] + sorted(df['razao_emitente'].dropna().unique().tolist())
+        emitentes = ['Todos'] + sorted(df['emitente_razao'].dropna().unique().tolist())
         filtro_emitente = st.selectbox("Emitente", emitentes, key="filtro_emitente")
     
     with col2:
         # Filtro por Destinatário
-        destinatarios = ['Todos'] + sorted(df['razao_destinatario'].dropna().unique().tolist())
+        destinatarios = ['Todos'] + sorted(df['destinatario_razao'].dropna().unique().tolist())
         filtro_destinatario = st.selectbox("Destinatário", destinatarios, key="filtro_destinatario")
     
     with col3:
@@ -103,12 +103,12 @@ def render_market_intelligence_dashboard():
     
     with col5:
         # Filtro por UF Origem
-        ufs_origem = ['Todos'] + sorted(df['uf_emitente'].dropna().unique().tolist())
+        ufs_origem = ['Todos'] + sorted(df['emitente_uf'].dropna().unique().tolist())
         filtro_uf_origem = st.selectbox("UF Origem", ufs_origem, key="filtro_uf_origem")
     
     with col6:
         # Filtro por UF Destino
-        ufs_destino = ['Todos'] + sorted(df['uf_destinatario'].dropna().unique().tolist())
+        ufs_destino = ['Todos'] + sorted(df['destinatario_uf'].dropna().unique().tolist())
         filtro_uf_destino = st.selectbox("UF Destino", ufs_destino, key="filtro_uf_destino")
     
     with col7:
