@@ -107,6 +107,26 @@ def check_password() -> bool:
         background: transparent !important;
         padding: 0 !important;
         border-radius: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Remover TODOS os elementos vazios do Streamlit */
+    .element-container:empty,
+    .stMarkdown:empty,
+    div[data-testid="stVerticalBlock"] > div:empty {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Forçar fundo transparente em containers do Streamlit */
+    div[data-testid="stVerticalBlock"],
+    div[data-testid="column"],
+    .block-container {
+        background: transparent !important;
     }
     .stDeployButton {display: none;}
     
