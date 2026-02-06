@@ -1080,6 +1080,7 @@ tab_names = [
     "Download CFOP x cClassTrib",
     "Análise XML NF-e",
     "Análise XML NFSe",
+    "Processamento em Lote",
     "LC 214/2025",
     "Consulta CNPJ",
 ]
@@ -1093,7 +1094,7 @@ tabs = st.tabs(tab_names)
 # =============================================================================
 # ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA INTEGRAL)
 # =============================================================================
-with tabs[6]:
+with tabs[7]:
     st.markdown(
         f"""
         <div class="pricetax-card">
@@ -3495,6 +3496,13 @@ with tabs[5]:
     from aba_xml_nfse import render_aba_xml_nfse
     render_aba_xml_nfse()
 
+# =============================================================================
+# ABA: PROCESSAMENTO EM LOTE DE XMLs
+# =============================================================================
+with tabs[6]:
+    from aba_batch_xml import render_aba_batch_xml
+    render_aba_batch_xml()
+
 st.markdown("---")
 st.markdown(
     f"""
@@ -3509,7 +3517,7 @@ st.markdown(
 # =============================================================================
 # ABA: CONSULTA CNPJ
 # =============================================================================
-with tabs[7]:
+with tabs[8]:
     st.markdown("## Consulta de CNPJ")
     st.markdown(
         "Utilize este painel para consultar dados cadastrais de empresas brasileiras (Receita Federal)."
