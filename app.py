@@ -1141,11 +1141,30 @@ with tabs[6]:
             artigos_db[art_id]["nota"] = nota
 
     with lc_tabs[0]:
+        # Cabeçalho da busca
+        st.markdown(
+            f"""
+            <div style="
+                background: {COLOR_CARD_BG};
+                border-left: 4px solid {COLOR_GOLD};
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+            ">
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">🔍 Consulta Inteligente</h3>
+                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                    Pesquise por número de artigo ou palavra-chave. Base com 544 artigos.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
         c1, c2 = st.columns([1, 2])
         with c1:
-            art_search = st.text_input("Digite o número do Artigo (1-544):", placeholder="Ex: 31", key="art_search_input")
+            art_search = st.text_input("Número do Artigo (1-544)", placeholder="Ex: 31", key="art_search_input")
         with c2:
-            key_search = st.text_input("Busca Semântica / Palavra-chave:", placeholder="Ex: split payment, cashback...", key="key_search_input")
+            key_search = st.text_input("Busca por Palavra-chave", placeholder="Ex: split payment, cashback", key="key_search_input")
 
         # Lógica de Busca
         result_art = None
@@ -1159,17 +1178,111 @@ with tabs[6]:
 
         if result_art:
             data = artigos_db[result_art]
-            st.markdown(f"### Artigo {result_art}: {data['titulo']}")
-            st.markdown(f'<div style="background:white; padding:20px; border:1px solid {COLOR_BORDER}; border-radius:8px; color:{COLOR_TEXT_MAIN}; font-size:1.1rem;">{data["texto"]}</div>', unsafe_allow_html=True)
             
+            # Card do artigo encontrado
+            st.markdown(
+                f"""
+                <div style="
+                    background: linear-gradient(135deg, {COLOR_BLUE} 0%, #003d82 100%);
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    margin: 1.5rem 0;
+                    border: 1px solid {COLOR_BORDER};
+                ">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="
+                            background: {COLOR_GOLD};
+                            color: #000;
+                            font-weight: bold;
+                            padding: 0.5rem 1rem;
+                            border-radius: 4px;
+                            font-size: 1.2rem;
+                        ">
+                            Art. {result_art}
+                        </div>
+                        <h2 style="color: {COLOR_TEXT_MAIN}; margin: 0; font-size: 1.3rem;">
+                            {data['titulo']}
+                        </h2>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Conteúdo do artigo
+            st.markdown(
+                f"""
+                <div style="
+                    background: {COLOR_CARD_BG};
+                    padding: 1.5rem;
+                    border: 1px solid {COLOR_BORDER};
+                    border-radius: 8px;
+                    color: {COLOR_TEXT_MAIN};
+                    font-size: 1rem;
+                    line-height: 1.7;
+                ">
+                    {data["texto"]}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Notas e correlações
             sc1, sc2 = st.columns(2)
-            # Verificar se 'nota' existe antes de exibir
+            
             if "nota" in data and data["nota"]:
-                sc1.markdown(f'<div style="border-left:4px solid {COLOR_BLUE}; background:rgba(0,86,179,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Nota PriceTax:</strong><br>{data["nota"]}</div>', unsafe_allow_html=True)
-            sc2.markdown(f'<div style="border-left:4px solid {COLOR_GOLD}; background:rgba(255,221,0,0.05); padding:15px; border-radius:8px; margin-top:10px;"><strong>Correlação:</strong><br>Vinculado à EC 132/2023 e Art. 156-A da CF/88.</div>', unsafe_allow_html=True)
+                with sc1:
+                    st.markdown(
+                        f"""
+                        <div style="
+                            border-left: 4px solid {COLOR_BLUE};
+                            background: {COLOR_CARD_BG};
+                            padding: 1rem;
+                            border-radius: 4px;
+                            margin-top: 1rem;
+                        ">
+                            <strong style="color: {COLOR_BLUE};">💡 Nota PriceTax</strong><br>
+                            <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">{data["nota"]}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            
+            with sc2:
+                st.markdown(
+                    f"""
+                    <div style="
+                        border-left: 4px solid {COLOR_GOLD};
+                        background: {COLOR_CARD_BG};
+                        padding: 1rem;
+                        border-radius: 4px;
+                        margin-top: 1rem;
+                    ">
+                        <strong style="color: {COLOR_GOLD};">📚 Correlação</strong><br>
+                        <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">Vinculado à EC 132/2023 e Art. 156-A da CF/88</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
         else:
             if art_search or key_search:
-                st.warning("Artigo não mapeado nesta versão rápida. Tente os artigos chave: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 31, 47, 143, 342, 409 ou 544.")
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: {COLOR_CARD_BG};
+                        border-left: 4px solid #F59E0B;
+                        padding: 1rem;
+                        border-radius: 8px;
+                        margin-top: 1rem;
+                    ">
+                        <strong style="color: #F59E0B;">⚠ Artigo não encontrado</strong><br>
+                        <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">
+                            Tente os artigos principais: <strong>1, 2, 4, 11, 31, 47, 143, 342, 409, 544</strong>
+                        </span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     with lc_tabs[1]:
         # Nova aba: Blocos Temáticos
@@ -1190,9 +1303,110 @@ with tabs[6]:
         st.caption("Base de dados atualizada conforme legislação oficial da Reforma Tributária.")
 
     with lc_tabs[3]:
-        st.subheader("Central de Q&A — 50 Perguntas e Respostas")
-        qa_filter = st.text_input("Filtrar perguntas do Q&A:", placeholder="Ex: crédito, transição...", key="qa_filter_input")
+        # Cabeçalho Q&A
+        st.markdown(
+            f"""
+            <div style="
+                background: {COLOR_CARD_BG};
+                border-left: 4px solid {COLOR_GOLD};
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+            ">
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">❓ Central de Q&A</h3>
+                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                    50 perguntas frequentes organizadas por categoria. Use o filtro para buscar temas específicos.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         
+        qa_filter = st.text_input("🔍 Filtrar por palavra-chave", placeholder="Ex: crédito, transição, cashback", key="qa_filter_input")
+        
+        # Organizar Q&A por categorias
+        qa_categories = {
+            "📚 Conceitos Fundamentais": [
+                {"q": "O que é o IVA Dual?", "a": "É o sistema composto pelo IBS (Estados/Municípios) e pela CBS (União), com base de cálculo e regras harmonizadas."},
+                {"q": "O IBS substitui quais impostos?", "a": "O ICMS (Estadual) e o ISS (Municipal)."},
+                {"q": "A CBS substitui quais impostos?", "a": "O PIS e a COFINS (Federais)."},
+                {"q": "O que acontece com o IPI?", "a": "O IPI será extinto, exceto para produtos que tenham industrialização na Zona Franca de Manaus."},
+                {"q": "O que é a harmonização de bases?", "a": "IBS e CBS terão sempre a mesma base de cálculo e as mesmas hipóteses de incidência."},
+            ],
+            "💰 Tributação e Alíquotas": [
+                {"q": "Quando começa a transição?", "a": "Em 2026, com alíquotas de 0,1% (IBS) e 0,9% (CBS)."},
+                {"q": "Haverá alíquota uniforme?", "a": "Sim, cada ente federativo fixará sua alíquota, que será a mesma para todos os bens e serviços."},
+                {"q": "O que é the alíquota de referência?", "a": "Valor fixado pelo Senado para garantir que a carga tributária total não aumente."},
+                {"q": "O que é a trava da carga tributária?", "a": "Mecanismo que reduz as alíquotas se a arrecadação superar a média histórica."},
+                {"q": "O que é o imposto por fora?", "a": "O IBS e a CBS não integram sua própria base de cálculo nem a base um do outro."},
+            ],
+            "💳 Pagamento e Arrecadação": [
+                {"q": "O que é o Split Payment?", "a": "É o recolhimento automático do imposto no ato do pagamento eletrônico, segregando o tributo do valor líquido."},
+                {"q": "Como será a cobrança no destino?", "a": "O imposto pertencerá ao ente federativo onde o bem ou serviço for consumido."},
+                {"q": "O que é o Comitê Gestor do IBS?", "a": "Entidade nacional responsável por centralizar a arrecadação e distribuição do IBS entre Estados e Municípios."},
+                {"q": "Qual o papel do CGIBS?", "a": "Harmonizar as normas e julgar processos administrativos do IBS."},
+                {"q": "O que é o IBS/CBS na importação?", "a": "Cobrado no desembaraço aduaneiro, com as mesmas alíquotas do mercado interno."},
+            ],
+            "💸 Créditos e Compensação": [
+                {"q": "Haverá crédito sobre bens de uso e consumo?", "a": "Sim, a regra é o crédito financeiro amplo, desde que haja o pagamento do imposto na etapa anterior."},
+                {"q": "O que é o crédito financeiro?", "a": "Diferente do crédito físico, permite abater o imposto pago em qualquer aquisição necessária à atividade."},
+                {"q": "Como funciona a não cumulatividade plena?", "a": "Permite o crédito de qualquer imposto pago na aquisição de bens e serviços para a atividade econômica."},
+                {"q": "Como será a devolução de créditos acumulados?", "a": "A lei prevê prazos rápidos para a devolução de créditos que não puderem ser compensados."},
+                {"q": "Como funciona o crédito presumido?", "a": "Concedido em situações específicas, como na aquisição de produtos de produtores rurais não contribuintes."},
+            ],
+            "🍽 Regimes Especiais": [
+                {"q": "O que é a cesta básica nacional?", "a": "Lista de produtos essenciais que terão alíquota zero de IBS e CBS."},
+                {"q": "O que são regimes diferenciados?", "a": "Setores com redução de alíquota (ex: 60% para saúde e educação)."},
+                {"q": "O que são regimes específicos?", "a": "Setores com regras próprias de base de cálculo e alíquota (ex: combustíveis e serviços financeiros)."},
+                {"q": "O que é a CBS monofásica?", "a": "Regime aplicado a combustíveis, onde o imposto é cobrado uma única vez na cadeia."},
+                {"q": "Como fica a Zona Franca de Manaus?", "a": "Terá tratamento diferenciado para manter sua competitividade e diferencial comparativo."},
+            ],
+            "🏛 Impostos Seletivos e Extrafiscais": [
+                {"q": "O que é o Imposto Seletivo?", "a": "Um tributo extrafiscal sobre produtos nocivos à saúde ou ao meio ambiente (Sin Tax)."},
+                {"q": "O que é o Sin Tax?", "a": "Apelido do Imposto Seletivo, focado em desestimular o consumo de itens prejudiciais."},
+                {"q": "O que é o princípio da neutralidade?", "a": "Garante que o imposto não influencie as decisões de produção e consumo."},
+            ],
+            "🏠 Cashback e Benefícios Sociais": [
+                {"q": "Como funciona o Cashback?", "a": "Devolução de parte do imposto pago para famílias de baixa renda cadastradas no CadÚnico."},
+                {"q": "O que é o cashback de energia elétrica?", "a": "Devolução de imposto sobre a conta de luz para famílias de baixa renda."},
+            ],
+            "🌎 Exportações e Turismo": [
+                {"q": "As exportações são tributadas?", "a": "Não, as exportações são imunes para garantir a competitividade do produto brasileiro."},
+                {"q": "Como funciona a devolução ao turista estrangeiro?", "a": "Turistas podem solicitar o estorno do IBS/CBS pago em compras no Brasil ao sair do país."},
+            ],
+            "📱 Economia Digital": [
+                {"q": "Haverá imposto sobre serviços digitais?", "a": "Sim, a lei prevê a tributação de plataformas e serviços de streaming."},
+                {"q": "Como funciona a responsabilidade do marketplace?", "a": "Plataformas digitais podem ser responsáveis pelo recolhimento do imposto de seus vendedores."},
+            ],
+            "🏢 Simples Nacional e Empresas": [
+                {"q": "Como fica o Simples Nacional?", "a": "As empresas podem optar por recolher o IBS/CBS por fora do Simples para garantir créditos aos seus clientes."},
+                {"q": "Como será a tributação de imóveis?", "a": "Terá regime específico com redutores de base de cálculo."},
+                {"q": "O que é o regime de caixa?", "a": "Possibilidade de recolher o imposto apenas no recebimento, prevista para alguns setores específicos."},
+            ],
+            "📝 Fiscalização e Conformidade": [
+                {"q": "Como será a fiscalização?", "a": "Será integrada entre a Receita Federal e o Comitê Gestor do IBS."},
+                {"q": "Como será a nota fiscal eletrônica?", "a": "Haverá um modelo nacional unificado para IBS e CBS."},
+                {"q": "Como funciona a consulta formal?", "a": "O contribuinte poderá consultar o CGIBS sobre a interpretação da lei com efeito vinculante."},
+                {"q": "O que é o contencioso administrativo?", "a": "Julgamento de disputas tributárias de forma unificada para o IBS."},
+                {"q": "O que é o padrão de conformidade?", "a": "Programas de estímulo à autorregularização e conformidade fiscal."},
+            ],
+            "🔄 Transição e Mudanças": [
+                {"q": "O que é o período de teste?", "a": "O ano de 2026, onde as alíquotas serão mínimas para testar a operacionalização do sistema."},
+                {"q": "Como ficam os benefícios fiscais atuais?", "a": "Serão extintos gradualmente durante o período de transição."},
+                {"q": "Como será a transição da arrecadação?", "a": "Ocorrerá ao longo de 50 anos para não prejudicar o caixa de Estados e Municípios."},
+                {"q": "O que é o fundo de desenvolvimento regional?", "a": "Fundo para compensar o fim dos incentivos fiscais e promover o desenvolvimento."},
+            ],
+            "📊 Outros Impostos": [
+                {"q": "Haverá incidência sobre heranças?", "a": "Não, o IBS/CBS incide apenas sobre o consumo. O ITCMD continua regendo heranças."},
+                {"q": "Como fica o IPVA?", "a": "Passará a incidir também sobre veículos aquáticos e aéreos de luxo."},
+                {"q": "Como fica o ITCMD?", "a": "Terá alíquotas progressivas obrigatórias em todo o país."},
+            ],
+            "👥 Impacto no Consumidor": [
+                {"q": "Qual o impacto final para o consumidor?", "a": "Maior transparência, com o valor real do imposto destacado na nota fiscal."},
+            ],
+        }
+        
+        # Flatten para busca
         qa_list = [
             {"q": "O que é o IVA Dual?", "a": "É o sistema composto pelo IBS (Estados/Municípios) e pela CBS (União), com base de cálculo e regras harmonizadas."},
             {"q": "Quando começa a transição?", "a": "Em 2026, com alíquotas de 0,1% (IBS) e 0,9% (CBS)."},
@@ -1245,12 +1459,50 @@ with tabs[6]:
             {"q": "O que é o padrão de conformidade?", "a": "Programas de estímulo à autorregularização e conformidade fiscal."},
             {"q": "Qual o impacto final para o consumidor?", "a": "Maior transparência, com o valor real do imposto destacado na nota fiscal."}
         ]
+        for cat, items in qa_categories.items():
+            qa_list.extend(items)
         
-        # Exibindo as perguntas de forma organizada
-        for i, item in enumerate(qa_list):
-            if not qa_filter or qa_filter.lower() in item["q"].lower() or qa_filter.lower() in item["a"].lower():
-                with st.expander(f"Q{i+1}: {item['q']}"):
-                    st.info(item["a"])
+        # Exibir por categorias
+        for categoria, perguntas in qa_categories.items():
+            # Filtrar perguntas da categoria
+            perguntas_filtradas = [
+                p for p in perguntas
+                if not qa_filter or qa_filter.lower() in p["q"].lower() or qa_filter.lower() in p["a"].lower()
+            ]
+            
+            if perguntas_filtradas:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: {COLOR_CARD_BG};
+                        border-left: 4px solid {COLOR_BLUE};
+                        padding: 0.8rem 1rem;
+                        border-radius: 4px;
+                        margin: 1rem 0 0.5rem 0;
+                    ">
+                        <strong style="color: {COLOR_BLUE}; font-size: 1.1rem;">{categoria}</strong>
+                        <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem; margin-left: 0.5rem;">({len(perguntas_filtradas)} perguntas)</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                for item in perguntas_filtradas:
+                    with st.expander(f"❓ {item['q']}", expanded=False):
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background: {COLOR_CARD_BG};
+                                padding: 1rem;
+                                border-radius: 4px;
+                                border-left: 3px solid {COLOR_GOLD};
+                                color: {COLOR_TEXT_MAIN};
+                            ">
+                                {item["a"]}
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
     st.markdown(
         f"""

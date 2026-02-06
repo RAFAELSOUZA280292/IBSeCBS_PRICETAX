@@ -3,6 +3,14 @@ import json
 import os
 import re
 
+# Cores PRICETAX
+COLOR_GOLD = "#FFDD00"
+COLOR_BLUE = "#0056B3"
+COLOR_CARD_BG = "#1E1E1E"
+COLOR_TEXT_MAIN = "#FFFFFF"
+COLOR_TEXT_MUTED = "#AAAAAA"
+COLOR_BORDER = "#333333"
+
 def limpar_formatacao(texto):
     """
     Remove linhas de formatação (===), barras invertidas e outros elementos visuais do texto.
@@ -34,7 +42,7 @@ def limpar_formatacao(texto):
 def render_blocos_navigation():
     """
     Renderiza navegação por blocos temáticos da LC 214/2025
-    Design simples e funcional
+    Design profissional PRICETAX
     """
     
     # Carregar blocos
@@ -53,51 +61,84 @@ def render_blocos_navigation():
     else:
         blocos = data
     
-    # Cabeçalho com mapeamento de blocos e artigos
-    st.markdown("""
-    ### 📚 Navegação por Blocos Temáticos
+    # Cabeçalho profissional
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, #2a2a2a 100%);
+            border-left: 4px solid {COLOR_GOLD};
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        ">
+            <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
+                📚 Navegação por Blocos Temáticos
+            </h3>
+            <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.95rem;">
+                32 blocos comentados pela PriceTax com análise estruturada da LC 214/2025
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
-    32 blocos comentados pela PriceTax com análise estruturada da LC 214/2025.
-    
-    **Mapeamento completo:**
-    
-    | Bloco | Tema | Artigos |
-    |-------|------|----------|
-    | **01** | Disposições preliminares | 1–4 |
-    | **02** | Operações tributáveis | 5–9 |
-    | **03** | Contribuintes e responsáveis | 10–11 |
-    | **04** | Base de cálculo e alíquotas | 12–15 |
-    | **05** | Alíquotas de referência | 16–20 |
-    | **06** | Sujeição passiva | 21–27 |
-    | **07** | Regimes diferenciados | 28–33 |
-    | **08** | Cesta básica nacional | 34–41 |
-    | **09** | Cesta estendida | 42–49 |
-    | **10** | Saúde e educação | 50–57 |
-    | **11** | Serviços financeiros | 58–67 |
-    | **12** | Planos de saúde | 68–75 |
-    | **13** | Transporte | 76–83 |
-    | **14** | Combustíveis e energia | 84–92 |
-    | **15** | Bens imóveis | 93–102 |
-    | **16** | Economia digital | 103–111 |
-    | **17** | Operações internacionais | 112–121 |
-    | **18** | Cashback | 122–128 |
-    | **19** | Não cumulatividade | 129–137 |
-    | **20** | Ressarcimento e compensação | 138–146 |
-    | **21** | Obrigações acessórias | 147–158 |
-    | **22** | Apuração e recolhimento | 159–170 |
-    | **23** | Penalidades | 171–184 |
-    | **24** | Processo administrativo | 185–197 |
-    | **25** | Comitê Gestor do IBS | 198–214 |
-    | **26** | Distribuição de receitas | 215–232 |
-    | **27** | Fundos de compensação | 233–250 |
-    | **28** | Regimes específicos | 251–268 |
-    | **29** | Regimes favorecidos | 269–286 |
-    | **30** | Administração da CBS | 287–304 |
-    | **31** | Disposições transitórias | 305–330 |
-    | **32** | Disposições finais | 331–354 |
-    
-    ---
-    """)
+    # Mapeamento em grid compacto (4 colunas)
+    st.markdown(
+        f"""
+        <div style="
+            background: {COLOR_CARD_BG};
+            border: 1px solid {COLOR_BORDER};
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        ">
+            <h4 style="color: {COLOR_TEXT_MAIN}; margin: 0 0 1rem 0; font-size: 1rem;">
+                Mapeamento Completo (32 Blocos)
+            </h4>
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+                font-size: 0.85rem;
+                color: {COLOR_TEXT_MUTED};
+            ">
+                <div><strong>01</strong> Preliminares (1-4)</div>
+                <div><strong>02</strong> Tributáveis (5-9)</div>
+                <div><strong>03</strong> Contribuintes (10-11)</div>
+                <div><strong>04</strong> Base/Alíquotas (12-15)</div>
+                <div><strong>05</strong> Referência (16-20)</div>
+                <div><strong>06</strong> Passiva (21-27)</div>
+                <div><strong>07</strong> Diferenciados (28-33)</div>
+                <div><strong>08</strong> Cesta Básica (34-41)</div>
+                <div><strong>09</strong> Cesta Estendida (42-49)</div>
+                <div><strong>10</strong> Saúde/Educação (50-57)</div>
+                <div><strong>11</strong> Financeiros (58-67)</div>
+                <div><strong>12</strong> Planos Saúde (68-75)</div>
+                <div><strong>13</strong> Transporte (76-83)</div>
+                <div><strong>14</strong> Combustíveis (84-92)</div>
+                <div><strong>15</strong> Imóveis (93-102)</div>
+                <div><strong>16</strong> Digital (103-111)</div>
+                <div><strong>17</strong> Internacionais (112-121)</div>
+                <div><strong>18</strong> Cashback (122-128)</div>
+                <div><strong>19</strong> Não Cumulatividade (129-137)</div>
+                <div><strong>20</strong> Ressarcimento (138-146)</div>
+                <div><strong>21</strong> Obrigações (147-158)</div>
+                <div><strong>22</strong> Apuração (159-170)</div>
+                <div><strong>23</strong> Penalidades (171-184)</div>
+                <div><strong>24</strong> Processo Adm (185-197)</div>
+                <div><strong>25</strong> Comitê Gestor (198-214)</div>
+                <div><strong>26</strong> Distribuição (215-232)</div>
+                <div><strong>27</strong> Fundos (233-250)</div>
+                <div><strong>28</strong> Específicos (251-268)</div>
+                <div><strong>29</strong> Favorecidos (269-286)</div>
+                <div><strong>30</strong> CBS Adm (287-304)</div>
+                <div><strong>31</strong> Transitórias (305-330)</div>
+                <div><strong>32</strong> Finais (331-354)</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     # Dropdown de seleção com títulos corretos do anexo
     from blocos_titulos_map import BLOCOS_TITULOS
@@ -122,30 +163,110 @@ def render_blocos_navigation():
     from blocos_artigos_map import BLOCOS_ARTIGOS
     artigos_corretos = BLOCOS_ARTIGOS.get(bloco['numero'], bloco['artigos'])
     
-    # Exibir bloco selecionado com design simples
+    # Exibir bloco selecionado com design profissional
     titulo_exibicao = BLOCOS_TITULOS.get(bloco['numero'], bloco['titulo'])
     
-    st.markdown("---")
-    st.markdown(f"## Bloco {bloco['numero']:02d}")
-    st.markdown(f"### {titulo_exibicao}")
-    st.markdown(f"**Artigos:** {artigos_corretos}")
+    # Card do bloco selecionado
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, {COLOR_BLUE} 0%, #003d82 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid {COLOR_BORDER};
+        ">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="
+                    background: {COLOR_GOLD};
+                    color: #000;
+                    font-weight: bold;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    font-size: 1.2rem;
+                ">
+                    {bloco['numero']:02d}
+                </div>
+                <h2 style="color: {COLOR_TEXT_MAIN}; margin: 0; font-size: 1.5rem;">
+                    {titulo_exibicao}
+                </h2>
+            </div>
+            <p style="color: {COLOR_TEXT_MUTED}; margin: 0.5rem 0 0 0; font-size: 0.95rem;">
+                <strong>Artigos:</strong> {artigos_corretos}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     # Tags de palavras-chave
     if bloco['palavras_chave']:
-        st.markdown("**Temas:** " + " • ".join(bloco['palavras_chave']))
-    
-    st.markdown("---")
+        tags_html = " ".join([
+            f'<span style="background: {COLOR_CARD_BG}; color: {COLOR_GOLD}; padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.85rem; border: 1px solid {COLOR_BORDER};">{tag}</span>'
+            for tag in bloco['palavras_chave']
+        ])
+        st.markdown(
+            f"""
+            <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {tags_html}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # Seções do bloco
     if bloco['secoes']:
-        st.markdown("### 📋 Estrutura do Bloco")
+        st.markdown(
+            f"""
+            <h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 1rem 0; font-size: 1.2rem;">
+                📋 Estrutura do Bloco
+            </h3>
+            """,
+            unsafe_allow_html=True
+        )
         
         for secao in bloco['secoes']:
-            with st.expander(f"{secao['numero']}. {secao['titulo']}", expanded=False):
+            with st.expander(f"**{secao['numero']}.** {secao['titulo']}", expanded=False):
                 conteudo_limpo = limpar_formatacao(secao['conteudo'])
-                st.markdown(conteudo_limpo)
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: {COLOR_CARD_BG};
+                        padding: 1rem;
+                        border-radius: 4px;
+                        border-left: 3px solid {COLOR_BLUE};
+                        color: {COLOR_TEXT_MAIN};
+                    ">
+                        {conteudo_limpo}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
     
     # Conteúdo completo
-    with st.expander("📄 Ver Conteúdo Completo do Bloco", expanded=False):
+    st.markdown(
+        f"""
+        <h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 1rem 0; font-size: 1.2rem;">
+            📄 Conteúdo Completo
+        </h3>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    with st.expander("Ver análise completa do bloco", expanded=False):
         conteudo_completo_limpo = limpar_formatacao(bloco['conteudo_completo'])
-        st.markdown(conteudo_completo_limpo)
+        st.markdown(
+            f"""
+            <div style="
+                background: {COLOR_CARD_BG};
+                padding: 1.5rem;
+                border-radius: 4px;
+                border: 1px solid {COLOR_BORDER};
+                color: {COLOR_TEXT_MAIN};
+                line-height: 1.6;
+            ">
+                {conteudo_completo_limpo}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
