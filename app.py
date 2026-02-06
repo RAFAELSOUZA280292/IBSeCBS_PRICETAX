@@ -3031,9 +3031,17 @@ with tabs[4]:
                             # Calcular valores esperados (já em formato decimal %)
                             calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
                             calc_pcbs = cbs  # Já é 0.90 = 0,9%
+                            
+                            # BASE LÍQUIDA 2026: Excluir ICMS, PIS e COFINS da base de cálculo
+                            # Conforme legislação de transição, IBS/CBS não integram base de ICMS/PIS/COFINS e vice-versa
+                            vicms = item.get('vicms', 0.0)
+                            vpis = item.get('vpis', 0.0)
+                            vcofins = item.get('vcofins', 0.0)
+                            base_liquida = valor_total - vicms - vpis - vcofins
+                            
                             # CORREÇÃO: Dividir por 100 porque alíquotas estão em formato decimal
-                            calc_vibs = valor_total * (ibs_uf + ibs_mun) / 100
-                            calc_vcbs = valor_total * cbs / 100
+                            calc_vibs = base_liquida * (ibs_uf + ibs_mun) / 100
+                            calc_vcbs = base_liquida * cbs / 100
                             
                             # Tolerâncias
                             tol_valor = 0.02  # R$ 0,02
