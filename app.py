@@ -3842,17 +3842,44 @@ with tabs[8]:
                     # QSA (Quadro de Sócios e Administradores)
                     if dados_cnpj.get('qsa'):
                         st.markdown("---")
-                        st.markdown("### Quadro de Sócios e Administradores (QSA)")
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background: {COLOR_GRAY_DARKER};
+                                padding: 1.5rem;
+                                border-radius: 12px;
+                                border-left: 4px solid {COLOR_GOLD};
+                                margin: 1rem 0;
+                            ">
+                                <h3 style="color: {COLOR_GOLD}; margin: 0 0 1rem 0; font-weight: 500;">Quadro de Sócios e Administradores (QSA)</h3>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
                         for i, socio in enumerate(dados_cnpj['qsa']):
-                            with st.expander(f"Sócio/Adm {i+1}: {socio.get('nome_socio', 'N/A')}"):
-                                st.write(f"**Nome:** {socio.get('nome_socio', 'N/A')}")
-                                st.write(f"**Qualificação:** {socio.get('qualificacao_socio', 'N/A')}")
-                                st.write(f"**Data de Entrada:** {socio.get('data_entrada_sociedade', 'N/A')}")
-                                st.write(f"**CNPJ/CPF do Sócio:** {socio.get('cnpj_cpf_do_socio', 'N/A')}")
-                                if socio.get('nome_representante_legal'):
-                                    st.write(f"**Representante Legal:** {socio.get('nome_representante_legal', 'N/A')}")
-                                    st.write(f"**CPF do Representante Legal:** {socio.get('cpf_representante_legal', 'N/A')}")
-                                    st.write(f"**Qualificação do Representante:** {socio.get('qualificacao_representante_legal', 'N/A')}")
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    background: {COLOR_GRAY_DARK};
+                                    padding: 1.5rem;
+                                    border-radius: 8px;
+                                    margin: 1rem 0;
+                                    border: 1px solid rgba(255, 255, 255, 0.05);
+                                ">
+                                    <div style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 1rem; font-size: 1.1rem;">
+                                        Sócio/Administrador {i+1}
+                                    </div>
+                                    <div style="color: {COLOR_WHITE}; line-height: 1.8;">
+                                        <div style="margin-bottom: 0.5rem;"><strong>Nome:</strong> {socio.get('nome_socio', 'N/A')}</div>
+                                        <div style="margin-bottom: 0.5rem;"><strong>Qualificação:</strong> {socio.get('qualificacao_socio', 'N/A')}</div>
+                                        <div style="margin-bottom: 0.5rem;"><strong>Data de Entrada:</strong> {socio.get('data_entrada_sociedade', 'N/A')}</div>
+                                        <div style="margin-bottom: 0.5rem;"><strong>CNPJ/CPF:</strong> {socio.get('cnpj_cpf_do_socio', 'N/A')}</div>
+                                        {f'<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);"><div style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Representante Legal</div><div style="margin-bottom: 0.5rem;"><strong>Nome:</strong> {socio.get("nome_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>CPF:</strong> {socio.get("cpf_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>Qualificação:</strong> {socio.get("qualificacao_representante_legal", "N/A")}</div></div>' if socio.get('nome_representante_legal') else ''}
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
                     else:
                         st.info("Não há informações de QSA disponíveis.")
                     
