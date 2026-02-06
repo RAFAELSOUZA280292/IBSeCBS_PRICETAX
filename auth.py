@@ -168,12 +168,19 @@ def check_password() -> bool:
     .login-container {
         max-width: 420px;
         margin: 0 auto;
-        padding: 0;
+        padding: 2rem 1rem;
         background: transparent;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        min-height: auto;
+    }
+    
+    /* Forçar scroll para o topo */
+    .stApp {
+        overflow-y: auto !important;
+    }
+    
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
     }
     
     /* Logo container */
