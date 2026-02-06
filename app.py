@@ -135,9 +135,13 @@ st.markdown(
         font-weight: 500 !important;
     }}
     
-    p, span, div {{
+    p, span {{
         font-family: 'Poppins', sans-serif !important;
-        color: {COLOR_GRAY_LIGHT} !important;
+    }}
+    
+    /* Textos em fundos escuros */
+    .stApp p, .stApp span, .stApp div {{
+        font-family: 'Poppins', sans-serif !important;
     }}
 
     /* Botões - Estilo C6 Premium */
@@ -165,8 +169,7 @@ st.markdown(
         transform: translateY(0) !important;
     }}
     
-    /* Cards e Containers */
-    .stMarkdown > div,
+    /* Cards e Containers - REMOVIDO para não afetar todos os elementos */
     .stDataFrame,
     .stTable {{
         background: {COLOR_GRAY_DARKER} !important;
@@ -178,21 +181,26 @@ st.markdown(
     
     /* Tabs - Estilo Premium */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 1rem;
+        gap: 0.5rem;
         background: {COLOR_GRAY_DARKER};
         padding: 1rem;
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow-x: auto;
+        white-space: nowrap;
     }}
     
     .stTabs [data-baseweb="tab"] {{
         background: transparent;
         color: {COLOR_GRAY_LIGHT};
         border-radius: 8px;
-        padding: 0.75rem 1.5rem;
+        padding: 0.75rem 1rem;
         font-weight: 500;
         font-family: 'Poppins', sans-serif;
         transition: all 0.3s ease;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        min-width: auto;
     }}
     
     .stTabs [data-baseweb="tab"]:hover {{
@@ -3165,25 +3173,26 @@ with tabs[3]:
     st.markdown(
         f"""
         <div style="
-            background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
+            background: {COLOR_GRAY_DARKER};
             padding: 2rem;
-            border-radius: 8px;
+            border-radius: 12px;
             border-left: 4px solid {COLOR_GOLD};
             margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         ">
-            <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem;">Download: Correlação CFOP x cClassTrib</h2>
-            <p style="line-height: 1.8; margin-bottom: 1rem;">
+            <h2 style="color: {COLOR_GOLD}; margin-bottom: 1rem; font-weight: 400;">Download: Correlação CFOP x cClassTrib</h2>
+            <p style="line-height: 1.8; margin-bottom: 1rem; color: {COLOR_GRAY_LIGHT};">
                 Disponibilizamos uma planilha de referência com o DE/PARA entre CFOP e cClassTrib para facilitar a parametrização inicial do seu sistema.
             </p>
             <div style="
-                background-color: rgba(255, 215, 0, 0.1);
+                background: {COLOR_GRAY_DARK};
                 border: 1px solid {COLOR_GOLD};
-                border-radius: 4px;
+                border-radius: 8px;
                 padding: 1.5rem;
                 margin-top: 1.5rem;
             ">
                 <p style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Atenção</p>
-                <p style="line-height: 1.6; margin: 0;">
+                <p style="line-height: 1.6; margin: 0; color: {COLOR_WHITE};">
                     Esta planilha atende aos cenários em que <strong>não há redução de IBS e CBS</strong> para a NCM ou serviço pesquisado. 
                     Antes de utilizar, valide se não existem regras específicas aplicáveis ao seu segmento ou operação.
                 </p>
