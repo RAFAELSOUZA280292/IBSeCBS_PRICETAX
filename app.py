@@ -52,50 +52,218 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Apenas a cor dourada da PRICETAX - resto usa padrão Streamlit
+# Design System PRICETAX 2.0 - Inspirado em C6 Bank
 COLOR_GOLD = "#FFDD00"  # Amarelo PRICETAX
+COLOR_BLACK = "#000000"
+COLOR_GRAY_DARKER = "#1A1A1A"
+COLOR_GRAY_DARK = "#2A2A2A"
+COLOR_GRAY_MEDIUM = "#666666"
+COLOR_GRAY_LIGHT = "#999999"
+COLOR_WHITE = "#FFFFFF"
 
 st.markdown(
     f"""
     <style>
-    /* Apenas customizações mínimas - deixar Streamlit gerenciar cores */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
-    /* Cabeçalho PRICETAX */
+    /* Reset e Base */
+    .stApp {{
+        background: {COLOR_BLACK};
+        background: radial-gradient(circle at bottom left, {COLOR_GRAY_DARKER} 0%, {COLOR_BLACK} 100%);
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
+    
+    /* Container Principal */
+    .block-container {{
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1400px !important;
+    }}
+    
+    /* Cabeçalho PRICETAX 2.0 - Estilo C6 Premium */
     .pricetax-header {{
         text-align: left;
-        margin: -3rem -5rem 2rem -5rem;
-        padding: 1.5rem 5rem;
-        background-color: #1F2937;
-        border-bottom: 4px solid {COLOR_GOLD};
+        margin: -2rem -3rem 3rem -3rem;
+        padding: 2rem 3rem;
+        background: {COLOR_GRAY_DARKER};
+        border-bottom: 1px solid rgba(255, 221, 0, 0.2);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }}
 
     .pricetax-logo {{
-        font-size: 2.2rem;
-        font-weight: 800;
+        font-size: 2rem;
+        font-weight: 300;
         color: {COLOR_GOLD};
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-family: 'Poppins', sans-serif;
     }}
 
     .pricetax-tagline {{
-        font-size: 1.15rem;
-        color: #FFFFFF;
-        opacity: 0.85;
-        border-left: 3px solid {COLOR_GOLD};
-        padding-left: 1.2rem;
-        margin-top: 0.8rem;
+        font-size: 0.95rem;
+        color: {COLOR_GRAY_LIGHT};
+        border-left: 2px solid {COLOR_GOLD};
+        padding-left: 1rem;
+        margin-top: 0.5rem;
+        font-family: 'Poppins', sans-serif;
+    }}
+    
+    /* Tipografia Global */
+    h1, h2, h3, h4, h5, h6 {{
+        font-family: 'Poppins', sans-serif !important;
+        color: {COLOR_WHITE} !important;
+    }}
+    
+    h1 {{
+        font-size: 2.5rem !important;
+        font-weight: 300 !important;
+        letter-spacing: 1px !important;
+    }}
+    
+    h2 {{
+        font-size: 2rem !important;
+        font-weight: 400 !important;
+    }}
+    
+    h3 {{
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+    }}
+    
+    p, span, div {{
+        font-family: 'Poppins', sans-serif !important;
+        color: {COLOR_GRAY_LIGHT} !important;
     }}
 
-    /* Botão de ação com cor PRICETAX */
+    /* Botões - Estilo C6 Premium */
     .stButton > button {{
-        background-color: {COLOR_GOLD} !important;
-        color: #000000 !important;
+        background: {COLOR_GOLD} !important;
+        color: {COLOR_BLACK} !important;
         font-weight: 600 !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
+        border-radius: 24px !important;
+        padding: 0.75rem 1.5rem !important;
+        border: none !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 16px rgba(255, 221, 0, 0.3) !important;
+        font-family: 'Poppins', sans-serif !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
     }}
 
     .stButton > button:hover {{
-        background-color: #FACC15 !important;
+        background: #E6C700 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(255, 221, 0, 0.4) !important;
+    }}
+    
+    .stButton > button:active {{
+        transform: translateY(0) !important;
+    }}
+    
+    /* Cards e Containers */
+    .stMarkdown > div,
+    .stDataFrame,
+    .stTable {{
+        background: {COLOR_GRAY_DARKER} !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }}
+    
+    /* Tabs - Estilo Premium */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 1rem;
+        background: {COLOR_GRAY_DARKER};
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        background: transparent;
+        color: {COLOR_GRAY_LIGHT};
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.3s ease;
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover {{
+        background: {COLOR_GRAY_DARK};
+        color: {COLOR_WHITE};
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background: {COLOR_GOLD} !important;
+        color: {COLOR_BLACK} !important;
+    }}
+    
+    /* Inputs - Estilo C6 */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > select {{
+        background: {COLOR_GRAY_DARK} !important;
+        color: {COLOR_WHITE} !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1rem !important;
+        font-family: 'Poppins', sans-serif !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus,
+    .stSelectbox > div > div > select:focus {{
+        border-color: {COLOR_GOLD} !important;
+        box-shadow: 0 0 0 3px rgba(255, 221, 0, 0.15) !important;
+    }}
+    
+    /* File Uploader */
+    .stFileUploader > div {{
+        background: {COLOR_GRAY_DARK} !important;
+        border: 2px dashed rgba(255, 221, 0, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 2rem !important;
+    }}
+    
+    /* Expander */
+    .streamlit-expanderHeader {{
+        background: {COLOR_GRAY_DARKER} !important;
+        border-radius: 8px !important;
+        color: {COLOR_WHITE} !important;
+        font-family: 'Poppins', sans-serif !important;
+    }}
+    
+    /* Sidebar (se usado) */
+    section[data-testid="stSidebar"] {{
+        background: {COLOR_GRAY_DARKER} !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }}
+    
+    /* Scrollbar Customizado */
+    ::-webkit-scrollbar {{
+        width: 8px;
+        height: 8px;
+    }}
+    
+    ::-webkit-scrollbar-track {{
+        background: {COLOR_BLACK};
+    }}
+    
+    ::-webkit-scrollbar-thumb {{
+        background: {COLOR_GRAY_DARK};
+        border-radius: 4px;
+    }}
+    
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {COLOR_GOLD};
     }}
 
     /* Ocultar elementos padrão Streamlit */

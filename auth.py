@@ -92,9 +92,11 @@ def check_password() -> bool:
     if st.session_state.get("password_correct", False):
         return True
     
-    # CSS Premium PRICETAX - Identidade Visual Oficial
+    # CSS Premium PRICETAX 2.0 - Design System Inspirado em C6 Bank
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
     /* Ocultar elementos padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -128,117 +130,147 @@ def check_password() -> bool:
     
     section[data-testid="stSidebar"] {display: none !important;}
     
-    /* Background PRICETAX - Escuro profissional */
+    /* Background PRICETAX 2.0 - Preto Profundo com Gradiente Radial */
     .stApp {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        background: #000000;
+        background: radial-gradient(circle at top right, #1A1A1A 0%, #000000 100%);
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Container de login - Estilo PRICETAX */
+    /* Container de login - Estilo C6 Premium */
     .login-container {
         max-width: 480px;
-        margin: 60px auto;
-        padding: 50px 45px;
-        background: rgba(255, 255, 255, 0.98);
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        border: 2px solid rgba(255, 221, 0, 0.3);
+        margin: 0 auto;
+        padding: 3rem 2.5rem;
+        background: #1A1A1A;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 221, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Efeito de brilho sutil no card */
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #FFDD00, transparent);
     }
     
     /* Logo container */
     .logo-container {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 2rem;
     }
     
     .logo-container img {
-        max-width: 350px;
+        max-width: 280px;
         height: auto;
-        margin-bottom: 20px;
-        filter: drop-shadow(0 4px 12px rgba(255, 221, 0, 0.3));
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 4px 16px rgba(255, 221, 0, 0.4));
     }
     
-    /* Título PRICETAX - TOTALMENTE AMARELO */
+    /* Título PRICETAX 2.0 - Tipografia Premium */
     .login-title {
         text-align: center;
         color: #FFDD00;
-        font-size: 48px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        margin-bottom: 12px;
-        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 3rem;
+        font-weight: 300;
+        letter-spacing: 4px;
+        margin-bottom: 0.5rem;
+        font-family: 'Poppins', sans-serif;
         text-transform: uppercase;
-        text-shadow: 0 3px 12px rgba(255, 221, 0, 0.4);
+        text-shadow: 0 4px 24px rgba(255, 221, 0, 0.5);
     }
     
-    /* Subtítulo - Estilo PRICETAX */
+    /* Subtítulo - Estilo C6 */
     .login-subtitle {
         text-align: center;
-        color: #4a4a4a;
-        font-size: 15px;
+        color: #999999;
+        font-size: 0.95rem;
         font-weight: 400;
-        margin-bottom: 35px;
+        margin-bottom: 2.5rem;
         line-height: 1.6;
+        font-family: 'Poppins', sans-serif;
     }
     
-    /* Inputs - Foco amarelo PRICETAX */
+    /* Inputs - Estilo C6 Premium */
     .stTextInput > div > div > input {
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 16px 20px;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        background: #fafafa;
-        color: #1a1a1a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #2A2A2A;
+        color: #FFFFFF;
+        font-family: 'Poppins', sans-serif;
     }
     
     .stTextInput > div > div > input:focus {
         border-color: #FFDD00;
-        background: #ffffff;
-        box-shadow: 0 0 0 4px rgba(255, 221, 0, 0.15);
+        background: #2A2A2A;
+        box-shadow: 0 0 0 3px rgba(255, 221, 0, 0.15);
         outline: none;
     }
     
-    .stTextInput > label {
-        color: #1a1a1a;
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 8px;
+    .stTextInput > div > div > input::placeholder {
+        color: #666666;
     }
     
-    /* Botão ENTRAR - Amarelo PRICETAX */
+    .stTextInput > label {
+        color: #999999;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    /* Botão ENTRAR - Estilo C6 Premium */
     .stButton > button {
         background: #FFDD00;
-        color: #1a1a1a;
+        color: #000000;
         border: none;
-        border-radius: 30px;
-        padding: 16px 32px;
-        font-size: 17px;
-        font-weight: 700;
-        letter-spacing: 1px;
+        border-radius: 24px;
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
         width: 100%;
-        margin-top: 25px;
-        transition: all 0.3s ease;
-        box-shadow: 0 6px 20px rgba(255, 221, 0, 0.4);
+        margin-top: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 8px 24px rgba(255, 221, 0, 0.4);
         text-transform: uppercase;
+        font-family: 'Poppins', sans-serif;
     }
     
     .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(255, 221, 0, 0.5);
-        background: #FACC15;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(255, 221, 0, 0.5);
+        background: #E6C700;
     }
     
     .stButton > button:active {
-        transform: translateY(-1px);
+        transform: translateY(0);
     }
     
-    /* Mensagens de erro */
+    /* Mensagens de erro - Estilo C6 */
     .stAlert {
-        border-radius: 12px;
-        border-left: 4px solid #ef4444;
-        background: #fef2f2;
-        padding: 14px 18px;
-        margin-top: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #EF4444;
+        background: rgba(239, 68, 68, 0.1);
+        padding: 1rem 1.25rem;
+        margin-top: 1.5rem;
+        color: #EF4444;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.875rem;
     }
     
     /* Botão WhatsApp - Verde oficial */
@@ -279,18 +311,19 @@ def check_password() -> bool:
     /* Rodapé */
     .login-footer {
         text-align: center;
-        color: #999999;
-        font-size: 12px;
-        margin-top: 30px;
-        padding-top: 25px;
-        border-top: 1px solid #e0e0e0;
+        color: #666666;
+        font-size: 0.75rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-family: 'Poppins', sans-serif;
     }
     
-    /* Animação de entrada */
+    /* Animação de entrada - Estilo C6 */
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(40px);
         }
         to {
             opacity: 1;
@@ -298,23 +331,40 @@ def check_password() -> bool:
         }
     }
     
+    @keyframes glow {
+        0%, 100% {
+            opacity: 0.5;
+        }
+        50% {
+            opacity: 1;
+        }
+    }
+    
     .login-container {
-        animation: fadeInUp 0.6s ease-out;
+        animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .login-container::before {
+        animation: glow 3s ease-in-out infinite;
     }
     
     /* Responsivo */
     @media (max-width: 768px) {
         .login-container {
-            margin: 30px 20px;
-            padding: 40px 30px;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
         }
         
         .login-title {
-            font-size: 32px;
+            font-size: 2rem;
         }
         
         .logo-container img {
-            max-width: 280px;
+            max-width: 220px;
+        }
+        
+        .stButton > button {
+            padding: 0.875rem 1.5rem;
         }
     }
     </style>
