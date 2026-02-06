@@ -164,32 +164,16 @@ def check_password() -> bool:
         font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Container de login - Estilo C6 Premium */
+    /* Container de login - Minimalista Premium (SEM CARD) */
     .login-container {
-        max-width: 480px;
+        max-width: 420px;
         margin: 0 auto;
-        padding: 3rem 2.5rem;
-        background: #1A1A1A;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 221, 0, 0.2);
-        position: relative;
-        overflow: hidden;
+        padding: 0;
+        background: transparent;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         justify-content: center;
-    }
-    
-    /* Efeito de brilho sutil no card */
-    .login-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #FFDD00, transparent);
     }
     
     /* Logo container */
@@ -227,6 +211,16 @@ def check_password() -> bool:
         margin-bottom: 2.5rem;
         line-height: 1.6;
         font-family: 'Poppins', sans-serif;
+    }
+    
+    /* Card de formulário - Flutuante e compacto */
+    .stTextInput,
+    .stButton {
+        background: #1A1A1A;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 221, 0, 0.15);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     }
     
     /* Inputs - Estilo C6 Premium */
