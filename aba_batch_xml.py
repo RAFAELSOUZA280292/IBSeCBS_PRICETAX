@@ -50,7 +50,7 @@ def render_aba_batch_xml():
             margin-bottom: 1.5rem;
         ">
             <h2 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
-                📦 Processamento em Lote de XMLs NFe
+                Processamento em Lote de XMLs NFe
             </h2>
             <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.95rem;">
                 Processe até 500 XMLs simultaneamente com validação completa de IBS/CBS,
@@ -74,7 +74,7 @@ def render_aba_batch_xml():
                 padding: 1rem;
                 text-align: center;
             ">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;"></div>
                 <strong style="color: {COLOR_GOLD};">Validação Completa</strong><br>
                 <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem;">
                     IBS/CBS, cClassTrib, estrutura XML
@@ -94,7 +94,7 @@ def render_aba_batch_xml():
                 padding: 1rem;
                 text-align: center;
             ">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;"></div>
                 <strong style="color: {COLOR_GOLD};">Relatório Excel</strong><br>
                 <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem;">
                     4 abas profissionais com análise detalhada
@@ -114,10 +114,10 @@ def render_aba_batch_xml():
                 padding: 1rem;
                 text-align: center;
             ">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🕵️</div>
-                <strong style="color: {COLOR_GOLD};">Espião Ativo</strong><br>
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;"></div>
+                <strong style="color: {COLOR_GOLD};">Processamento Rápido</strong><br>
                 <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem;">
-                    Dados salvos automaticamente no dashboard
+                    Até 500 XMLs em poucos minutos
                 </span>
             </div>
             """,
@@ -136,7 +136,7 @@ def render_aba_batch_xml():
             border-radius: 4px;
             margin-bottom: 1rem;
         ">
-            <strong style="color: {COLOR_BLUE};">📁 Upload de XMLs</strong><br>
+            <strong style="color: {COLOR_BLUE};">Upload de XMLs</strong><br>
             <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">
                 Envie um arquivo ZIP contendo até 500 XMLs ou selecione múltiplos arquivos XML
             </span>
@@ -148,14 +148,14 @@ def render_aba_batch_xml():
     # Opções de upload
     upload_option = st.radio(
         "Escolha o método de upload:",
-        ["📦 Arquivo ZIP (recomendado para grandes volumes)", "📄 Múltiplos XMLs"],
+        ["Arquivo ZIP (recomendado para grandes volumes)", "Múltiplos XMLs"],
         key="upload_option"
     )
     
     xml_files = []
     temp_dir = None
     
-    if upload_option.startswith("📦"):
+    if "ZIP" in upload_option:
         # Upload de ZIP
         zip_file = st.file_uploader(
             "Selecione o arquivo ZIP",
@@ -168,10 +168,10 @@ def render_aba_batch_xml():
                 with st.spinner("Extraindo arquivos..."):
                     temp_dir, xml_files = extract_zip_to_temp(zip_file)
                 
-                st.success(f"✅ {len(xml_files)} XMLs encontrados no ZIP")
+                st.success(f"{len(xml_files)} XMLs encontrados no ZIP")
             
             except Exception as e:
-                st.error(f"❌ Erro ao extrair ZIP: {str(e)}")
+                st.error(f"Erro ao extrair ZIP: {str(e)}")
     
     else:
         # Upload de múltiplos XMLs
@@ -192,11 +192,11 @@ def render_aba_batch_xml():
                     f.write(uploaded_file.getvalue())
                 xml_files.append(file_path)
             
-            st.success(f"✅ {len(xml_files)} XMLs carregados")
+            st.success(f"{len(xml_files)} XMLs carregados")
     
     # Validar limite
     if len(xml_files) > 500:
-        st.error(f"❌ Limite excedido! Máximo de 500 XMLs por lote. Você enviou {len(xml_files)}.")
+        st.error(f"Limite excedido! Máximo de 500 XMLs por lote. Você enviou {len(xml_files)}.")
         xml_files = []
     
     # Configurações
@@ -212,7 +212,7 @@ def render_aba_batch_xml():
                 border-radius: 4px;
                 margin-bottom: 1rem;
             ">
-                <strong style="color: {COLOR_GOLD};">⚙️ Configurações</strong>
+                <strong style="color: {COLOR_GOLD};">Configurações</strong>
             </div>
             """,
             unsafe_allow_html=True
@@ -222,9 +222,9 @@ def render_aba_batch_xml():
         
         with col1:
             save_to_collector = st.checkbox(
-                "🕵️ Salvar dados no Dashboard de Inteligência de Mercado",
-                value=True,
-                help="Os dados dos XMLs serão salvos automaticamente para análise no dashboard"
+                "Habilitar coleta de dados para análise",
+                value=False,
+                help="Salvar dados anonimizados para melhorias do sistema"
             )
         
         with col2:
@@ -240,7 +240,7 @@ def render_aba_batch_xml():
         # Botão de processar
         st.markdown("<br>", unsafe_allow_html=True)
         
-        if st.button("🚀 Processar Lote", type="primary", use_container_width=True):
+        if st.button("Processar Lote", type="primary", use_container_width=True):
             # Processar
             progress_bar = st.progress(0)
             status_text = st.empty()
@@ -274,7 +274,7 @@ def render_aba_batch_xml():
                     border-radius: 8px;
                     margin: 1.5rem 0;
                 ">
-                    <h3 style="color: white; margin: 0 0 1rem 0;">✅ Processamento Concluído!</h3>
+                    <h3 style="color: white; margin: 0 0 1rem 0;">Processamento Concluído</h3>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; color: white;">
                         <div>
                             <div style="font-size: 2rem; font-weight: bold;">{stats['total_xmls']}</div>

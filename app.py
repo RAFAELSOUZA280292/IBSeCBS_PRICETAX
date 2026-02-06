@@ -1255,7 +1255,7 @@ tab_names = [
 
 # Adicionar aba Admin apenas para PriceADM
 if st.session_state.get("authenticated_user") == "PriceADM":
-    tab_names.append("🔒 Admin")
+    tab_names.append("Admin")
 
 tabs = st.tabs(tab_names)
 
@@ -3924,6 +3924,6 @@ with tabs[8]:
 # ABA: ADMIN (LOGS DE AUTENTICAÇÃO) - RESTRITO A PriceADM
 # =============================================================================
 if st.session_state.get("authenticated_user") == "PriceADM":
-    with tabs[8]:
+    with tabs[9]:
         from aba_admin import render_admin_tab
         render_admin_tab()
