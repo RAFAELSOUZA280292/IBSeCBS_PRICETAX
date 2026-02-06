@@ -1665,21 +1665,40 @@ with tabs[7]:
                 )
                 
                 for item in perguntas_filtradas:
-                    with st.expander(f"❓ {item['q']}", expanded=False):
-                        st.markdown(
-                            f"""
+                    st.markdown(
+                        f"""
+                        <details style="
+                            background: {COLOR_GRAY_DARK};
+                            padding: 1rem;
+                            border-radius: 8px;
+                            margin: 0.5rem 0;
+                            border: 1px solid rgba(255, 255, 255, 0.05);
+                        ">
+                            <summary style="
+                                color: {COLOR_GOLD};
+                                font-weight: 600;
+                                cursor: pointer;
+                                padding: 0.5rem;
+                                list-style: none;
+                                user-select: none;
+                            ">
+                                {item['q']}
+                            </summary>
                             <div style="
-                                background: {COLOR_CARD_BG};
+                                background: {COLOR_GRAY_DARKER};
                                 padding: 1rem;
                                 border-radius: 4px;
                                 border-left: 3px solid {COLOR_GOLD};
-                                color: {COLOR_TEXT_MAIN};
+                                color: {COLOR_WHITE};
+                                margin-top: 1rem;
+                                line-height: 1.8;
                             ">
                                 {item["a"]}
                             </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                        </details>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
     st.markdown(
         f"""
@@ -3124,47 +3143,71 @@ with tabs[2]:
             cst_desc = CST_DESCRICOES.get(cst, "Descrição não disponível")
             count = len(group)
             
-            with st.expander(f"**{cst}** - {cst_desc} ({count} código{'s' if count > 1 else ''})", expanded=False):
-                # Preparar dados para a tabela
-                tabela_dados = []
-                for idx, row in group.iterrows():
-                    codigo = str(int(row['Código da Classificação Tributária'])).zfill(6)
-                    descricao = str(row.get('Descrição da Classificação Tributária', '')).strip()
-                    red_ibs = float(row.get('Redução IBS (%)', 0.0))
-                    red_cbs = float(row.get('Redução CBS (%)', 0.0))
-                    tipo_aliq = str(row.get('Tipo de Alíquota', '')).strip()
-                    dfes = str(row.get('DFes Relacionados', '')).strip()
-                    
-                    # Calcular alíquotas efetivas
-                    # Alíquota base: IBS = 0,1% | CBS = 0,9%
-                    aliq_ibs_base = 0.1
-                    aliq_cbs_base = 0.9
-                    
-                    # Alíquota efetiva = base × (1 - redução/100)
-                    aliq_ibs_efetiva = aliq_ibs_base * (1 - red_ibs / 100)
-                    aliq_cbs_efetiva = aliq_cbs_base * (1 - red_cbs / 100)
-                    
-                    tabela_dados.append({
-                        'Código': codigo,
-                        'Descrição Reduzida': descricao,
-                        '% Redução IBS': f"{red_ibs:.2f}".replace('.', ','),
-                        '% Redução CBS': f"{red_cbs:.2f}".replace('.', ','),
-                        'Alíquota IBS Efetiva': f"{aliq_ibs_efetiva:.4f}%".replace('.', ','),
-                        'Alíquota CBS Efetiva': f"{aliq_cbs_efetiva:.4f}%".replace('.', ','),
-                        'Tipo de Alíquota': tipo_aliq if tipo_aliq else '—',
-                        'DFes Relacionados': dfes if dfes else '—',
-                    })
+            # Preparar dados para a tabela
+            tabela_dados = []
+            for idx, row in group.iterrows():
+                codigo = str(int(row['Código da Classificação Tributária'])).zfill(6)
+                descricao = str(row.get('Descrição da Classificação Tributária', '')).strip()
+                red_ibs = float(row.get('Redução IBS (%)', 0.0))
+                red_cbs = float(row.get('Redução CBS (%)', 0.0))
+                tipo_aliq = str(row.get('Tipo de Alíquota', '')).strip()
+                dfes = str(row.get('DFes Relacionados', '')).strip()
                 
-                # Criar DataFrame e exibir tabela
-                df_tabela = pd.DataFrame(tabela_dados)
+                # Calcular alíquotas efetivas
+                # Alíquota base: IBS = 0,1% | CBS = 0,9%
+                aliq_ibs_base = 0.1
+                aliq_cbs_base = 0.9
                 
-                # Exibir tabela
-                st.dataframe(
-                    df_tabela,
-                    use_container_width=True,
-                    hide_index=True,
-                    height=min(len(df_tabela) * 35 + 38, 600),
-                )
+                # Alíquota efetiva = base × (1 - redução/100)
+                aliq_ibs_efetiva = aliq_ibs_base * (1 - red_ibs / 100)
+                aliq_cbs_efetiva = aliq_cbs_base * (1 - red_cbs / 100)
+                
+                tabela_dados.append({
+                    'Código': codigo,
+                    'Descrição Reduzida': descricao,
+                    '% Redução IBS': f"{red_ibs:.2f}".replace('.', ','),
+                    '% Redução CBS': f"{red_cbs:.2f}".replace('.', ','),
+                    'Alíquota IBS Efetiva': f"{aliq_ibs_efetiva:.4f}%".replace('.', ','),
+                    'Alíquota CBS Efetiva': f"{aliq_cbs_efetiva:.4f}%".replace('.', ','),
+                    'Tipo de Alíquota': tipo_aliq if tipo_aliq else '—',
+                    'DFes Relacionados': dfes if dfes else '—',
+                })
+            
+            # Criar DataFrame
+            df_tabela = pd.DataFrame(tabela_dados)
+            
+            # Card com details/summary HTML
+            st.markdown(
+                f"""
+                <details style="
+                    background: {COLOR_GRAY_DARK};
+                    padding: 1rem;
+                    border-radius: 8px;
+                    margin: 0.5rem 0;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                ">
+                    <summary style="
+                        color: {COLOR_GOLD};
+                        font-weight: 600;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        list-style: none;
+                        user-select: none;
+                    ">
+                        {cst} - {cst_desc} ({count} código{'s' if count > 1 else ''})
+                    </summary>
+                </details>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Exibir tabela logo após o card
+            st.dataframe(
+                df_tabela,
+                use_container_width=True,
+                hide_index=True,
+                height=min(len(df_tabela) * 35 + 38, 600),
+            )
 
 # =============================================================================
 # ABA 4 - DOWNLOAD CFOP x cClassTrib
