@@ -98,9 +98,16 @@ def check_password() -> bool:
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
     /* Ocultar elementos padrão do Streamlit */
+    header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    
+    /* CORRIGIR: Remover retângulo cinza acima do logo */
+    .stMarkdown > div {
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+    }
     .stDeployButton {display: none;}
     
     /* Eliminar skeleton/placeholder do Streamlit */
