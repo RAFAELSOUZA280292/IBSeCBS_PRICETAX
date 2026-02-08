@@ -16,6 +16,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import os
+from excel_exporter import exportar_dataframe_para_excel
 
 
 def render_market_intelligence_dashboard():
@@ -566,13 +567,18 @@ def render_market_intelligence_dashboard():
         col1, col2 = st.columns(2)
         
         with col1:
-            # Exportar CSV
-            csv_data = df_filtrado.to_csv(index=False, encoding='utf-8-sig')
+            # Exportar Excel
+            colunas_monetarias = ['vProd', 'vICMS', 'vPIS', 'vCOFINS', 'vIPI', 'vIBS', 'vCBS']
+            excel_data = exportar_dataframe_para_excel(
+                df_filtrado,
+                nome_aba="Inteligência de Mercado",
+                colunas_monetarias=colunas_monetarias
+            )
             st.download_button(
-                label="Baixar Dados Filtrados (CSV)",
-                data=csv_data,
-                file_name=f"inteligencia_mercado_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
+                label="Baixar Dados Filtrados (Excel)",
+                data=excel_data,
+                file_name=f"inteligencia_mercado_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         
         with col2:

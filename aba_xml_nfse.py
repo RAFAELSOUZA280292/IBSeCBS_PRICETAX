@@ -33,6 +33,9 @@ from pathlib import Path
 # Importar parser NFSe
 from parser_nfse import parse_nfse_xml, parse_multiple_nfse, format_currency, format_percentage
 
+# Importar exportador Excel
+from excel_exporter import exportar_dataframe_para_excel
+
 
 def render_aba_xml_nfse():
     """
@@ -806,24 +809,34 @@ def render_exportacao(df: pd.DataFrame, notas: List[Dict[str, Any]]):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Exportar tabela resumida
-        csv_resumido = df.to_csv(index=False, encoding="utf-8-sig", sep=";", decimal=",")
+        # Exportar tabela resumida em Excel
+        colunas_monetarias = ['Valor Total', 'ISS', 'Base de Cálculo ISS']
+        excel_resumido = exportar_dataframe_para_excel(
+            df,
+            nome_aba="Resumo NFSe",
+            colunas_monetarias=colunas_monetarias
+        )
         st.download_button(
-            label="Baixar Tabela Resumida (CSV)",
-            data=csv_resumido,
-            file_name=f"nfse_resumo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
+            label="Baixar Tabela Resumida (Excel)",
+            data=excel_resumido,
+            file_name=f"nfse_resumo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
     
     with col2:
-        # Exportar dados completos
+        # Exportar dados completos em Excel
         df_completo = criar_dataframe_completo(notas)
-        csv_completo = df_completo.to_csv(index=False, encoding="utf-8-sig", sep=";", decimal=",")
+        colunas_monetarias_completo = ['Valor Total', 'ISS', 'Base de Cálculo ISS', 'Valor Serviços', 'Valor Deduções']
+        excel_completo = exportar_dataframe_para_excel(
+            df_completo,
+            nome_aba="Dados Completos NFSe",
+            colunas_monetarias=colunas_monetarias_completo
+        )
         st.download_button(
-            label="Baixar Dados Completos (CSV)",
-            data=csv_completo,
-            file_name=f"nfse_completo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
+            label="Baixar Dados Completos (Excel)",
+            data=excel_completo,
+            file_name=f"nfse_completo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
 

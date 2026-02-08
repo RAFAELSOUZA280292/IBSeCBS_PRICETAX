@@ -28,6 +28,9 @@ from auth import check_password, show_logout_button
 # Importar módulo de validações
 from validators import validar_ncm, validar_cfop, validar_cnpj
 
+# Importar exportador Excel
+from excel_exporter import exportar_dataframe_para_excel
+
 # Importar módulo de benefícios fiscais
 try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
@@ -4004,18 +4007,25 @@ with tabs[8]:
                         "Data/Hora da Consulta"
                     ]
                     
-                    buf = io.StringIO()
-                    writer = csv.DictWriter(buf, fieldnames=csv_cols, extrasaction="ignore")
-                    writer.writeheader()
-                    writer.writerow({k: ("" if csv_row.get(k) is None else str(csv_row.get(k))) for k in csv_cols})
-                    csv_bytes = buf.getvalue().encode("utf-8-sig")
+                    # Criar DataFrame para export Excel
+                    df_cnpj = pd.DataFrame([csv_row])
+                    
+                    # Colunas monetárias
+                    colunas_monetarias = ['Capital Social']
+                    
+                    # Exportar para Excel
+                    excel_bytes = exportar_dataframe_para_excel(
+                        df_cnpj,
+                        nome_aba="Dados CNPJ",
+                        colunas_monetarias=colunas_monetarias
+                    )
                     
                     st.download_button(
-                        label="Exportar CSV",
-                        data=csv_bytes,
-                        file_name=f"CNPJ_{only_digits(dados_cnpj.get('cnpj',''))}.csv",
-                        mime="text/csv",
-                        help="Baixa um CSV com todas as informações principais deste CNPJ"
+                        label="Exportar Excel",
+                        data=excel_bytes,
+                        file_name=f"CNPJ_{only_digits(dados_cnpj.get('cnpj',''))}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        help="Baixa um arquivo Excel com todas as informações principais deste CNPJ"
                     )
 
 

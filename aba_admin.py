@@ -10,6 +10,7 @@ import os
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
+from excel_exporter import exportar_dataframe_para_excel
 
 
 def parse_log_file(log_file_path: str) -> pd.DataFrame:
@@ -286,12 +287,15 @@ def render_auth_logs_section():
     col_export1, col_export2 = st.columns([1, 5])
     
     with col_export1:
-        csv = df_display.to_csv(index=False, encoding="utf-8-sig")
+        excel_bytes = exportar_dataframe_para_excel(
+            df_display,
+            nome_aba="Logs de Autenticação"
+        )
         st.download_button(
-            label="📥 Exportar CSV",
-            data=csv,
-            file_name=f"logs_autenticacao_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
+            label="Exportar Excel",
+            data=excel_bytes,
+            file_name=f"logs_autenticacao_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
     
