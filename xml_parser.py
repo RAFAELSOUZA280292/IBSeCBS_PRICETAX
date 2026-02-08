@@ -1,18 +1,54 @@
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import re
+from logger_config import get_logger
+
+# Configurar logging
+logger = get_logger(__name__)
 
 def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
     """
     Extrai dados estruturados de um XML de NF-e (incluindo IBS/CBS da Reforma Tributária).
     
+    Args:
+        xml_path: Caminho para o arquivo XML
+    
     Retorna:
         dict com:
         - emitente: {cnpj, razao_social, uf}
         - itens: lista com dados completos incluindo IBS/CBS
+        - erro: str (se houver erro no processamento)
     """
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+    except ET.ParseError as e:
+        logger.error(f"XML corrompido ou inválido ({xml_path}): {e}")
+        return {
+            'erro': 'XML_INVALIDO',
+            'detalhes': f"Erro ao fazer parse do XML: {str(e)}",
+            'emitente': {},
+            'destinatario': {},
+            'itens': []
+        }
+    except FileNotFoundError:
+        logger.error(f"Arquivo XML não encontrado: {xml_path}")
+        return {
+            'erro': 'ARQUIVO_NAO_ENCONTRADO',
+            'detalhes': f"Arquivo não encontrado: {xml_path}",
+            'emitente': {},
+            'destinatario': {},
+            'itens': []
+        }
+    except Exception as e:
+        logger.error(f"Erro inesperado ao processar XML ({xml_path}): {e}")
+        return {
+            'erro': 'ERRO_INESPERADO',
+            'detalhes': str(e),
+            'emitente': {},
+            'destinatario': {},
+            'itens': []
+        }
     
     # Namespace padrão NFe
     ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}

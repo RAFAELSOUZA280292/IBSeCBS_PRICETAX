@@ -12,10 +12,14 @@ Data: 06/02/2026
 import os
 import zipfile
 import tempfile
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
 import pandas as pd
 from io import BytesIO
+from logger_config import get_logger
+
+# Configurar logging
+logger = get_logger(__name__)
 
 # Importar módulos existentes
 from xml_parser import parse_nfe_xml
@@ -31,6 +35,9 @@ def extract_zip_to_temp(zip_file) -> Tuple[str, List[str]]:
         
     Returns:
         Tupla (diretório temporário, lista de caminhos de XMLs)
+        
+    Raises:
+        Exception: Se houver erro ao extrair o ZIP
     """
     temp_dir = tempfile.mkdtemp(prefix="pricetax_batch_")
     xml_files = []
@@ -46,7 +53,11 @@ def extract_zip_to_temp(zip_file) -> Tuple[str, List[str]]:
                     if file.lower().endswith('.xml'):
                         xml_files.append(os.path.join(root, file))
     
+    except zipfile.BadZipFile as e:
+        logger.error(f"Arquivo ZIP corrompido ou inválido: {e}")
+        raise Exception(f"Arquivo ZIP inválido: {str(e)}")
     except Exception as e:
+        logger.error(f"Erro ao extrair ZIP: {e}")
         raise Exception(f"Erro ao extrair ZIP: {str(e)}")
     
     return temp_dir, xml_files
@@ -54,29 +65,38 @@ def extract_zip_to_temp(zip_file) -> Tuple[str, List[str]]:
 
 def validate_xml_structure(xml_path: str) -> Dict[str, Any]:
     """
-    Valida estrutura básica do XML NFe.
+    Valida estrutura básica do XML NFe com tratamento robusto de erros.
+    
+    Args:
+        xml_path: Caminho para o arquivo XML
     
     Returns:
-        Dict com status e mensagem
+        Dict com status e mensagem de erro (se houver)
     """
     try:
         # Tentar fazer parse
         resultado = parse_nfe_xml(xml_path)
         
+        # Verificar se houve erro no parse
+        if 'erro' in resultado:
+            logger.warning(f"Erro ao validar XML {xml_path}: {resultado.get('detalhes')}")
+            return {'valid': False, 'error': resultado.get('detalhes', 'Erro desconhecido')}
+        
         # Verificar campos obrigatórios
-        if not resultado.get('emitente'):
-            return {'valid': False, 'error': 'Emitente não encontrado'}
+        if not resultado.get('emitente') or not resultado['emitente'].get('cnpj'):
+            return {'valid': False, 'error': 'Emitente não encontrado ou CNPJ ausente'}
         
         if not resultado.get('destinatario'):
             return {'valid': False, 'error': 'Destinatário não encontrado'}
         
         if not resultado.get('itens') or len(resultado['itens']) == 0:
-            return {'valid': False, 'error': 'Nenhum item encontrado'}
+            return {'valid': False, 'error': 'Nenhum item encontrado na nota'}
         
         return {'valid': True, 'error': None}
     
     except Exception as e:
-        return {'valid': False, 'error': f'Erro no parse: {str(e)}'}
+        logger.error(f"Erro inesperado ao validar XML {xml_path}: {e}")
+        return {'valid': False, 'error': f'Erro inesperado: {str(e)}'}
 
 
 def calculate_expected_ibs_cbs(item: Dict[str, Any]) -> Dict[str, float]:

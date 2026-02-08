@@ -25,6 +25,9 @@ import altair as alt
 # Importar módulo de autenticação
 from auth import check_password, show_logout_button
 
+# Importar módulo de validações
+from validators import validar_ncm, validar_cfop, validar_cnpj
+
 # Importar módulo de benefícios fiscais
 try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
@@ -1793,10 +1796,27 @@ with tabs[0]:
             st.write("")
             consultar = st.button("Consultar", type="primary")
         
-        # Armazenar NCM consultado em session_state
-        if consultar and ncm_input.strip():
-            st.session_state['ultimo_ncm_consultado'] = ncm_input.strip()
-            st.session_state['ultimo_cfop_consultado'] = cfop_input.strip() if cfop_input else ""
+        # Validar e armazenar NCM consultado em session_state
+        if consultar:
+            if not ncm_input.strip():
+                st.error("Por favor, informe um NCM para consultar.")
+            else:
+                # Validar NCM
+                ncm_valido, erro_ncm = validar_ncm(ncm_input.strip())
+                if not ncm_valido:
+                    st.error(f"NCM inválido: {erro_ncm}")
+                else:
+                    # Validar CFOP (se informado)
+                    if cfop_input.strip():
+                        cfop_valido, erro_cfop = validar_cfop(cfop_input.strip())
+                        if not cfop_valido:
+                            st.error(f"CFOP inválido: {erro_cfop}")
+                        else:
+                            st.session_state['ultimo_ncm_consultado'] = ncm_input.strip()
+                            st.session_state['ultimo_cfop_consultado'] = cfop_input.strip()
+                    else:
+                        st.session_state['ultimo_ncm_consultado'] = ncm_input.strip()
+                        st.session_state['ultimo_cfop_consultado'] = ""
         
         # Usar NCM do session_state se existir
         ncm_para_consultar = st.session_state.get('ultimo_ncm_consultado', '')
