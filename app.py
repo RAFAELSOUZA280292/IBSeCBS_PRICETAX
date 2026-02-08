@@ -53,7 +53,7 @@ except ImportError as e:
 
 st.set_page_config(
     page_title="PRICETAX - IBS/CBS 2026",
-    page_icon="https://pricetax.com.br/favicon.ico",
+    page_icon="pricetax_favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
