@@ -461,7 +461,7 @@ def check_password() -> bool:
     
     # Rodapé
     st.markdown(
-        '<div class="login-footer">Sistema protegido por autenticação SHA-256</div>',
+        '<div class="login-footer">Autenticação segura com criptografia de padrão internacional e conformidade com LGPD</div>',
         unsafe_allow_html=True
     )
     
