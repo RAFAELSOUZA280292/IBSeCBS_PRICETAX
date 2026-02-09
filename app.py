@@ -1759,7 +1759,7 @@ with tabs[0]:
         """
         <div class="pricetax-card">
             <div class="pricetax-card-header">Consulta Inteligente de Tributação IBS/CBS</div>
-            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+            <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
                 Utilize este painel para consultar a tributação de produtos e operações:<br><br>
                 • <strong>NCM + CFOP:</strong> Consulta completa com NCM e opcionalmente CFOP<br>
                 • <strong>Somente CFOP:</strong> Tributação padrão da operação fiscal<br>
@@ -2909,7 +2909,7 @@ with tabs[1]:
         """
         <div class="pricetax-card">
             <div class="pricetax-card-header">Ranking de Vendas - SPED PIS/COFINS</div>
-            <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+            <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
                 Utilize este painel para identificar os itens mais relevantes na receita e preparar a base
                 para IBS/CBS 2026:<br><br>
                 • Importa arquivos SPED PIS/COFINS (<strong>.txt</strong> ou <strong>.zip</strong>)<br>
@@ -3118,7 +3118,7 @@ with tabs[2]:
             f"""
             <div class="pricetax-card">
                 <div class="pricetax-card-header">Classificação Tributária (cClassTrib)</div>
-                <div style="font-size:0.95rem;color:#CCCCCC;line-height:1.6;">
+                <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
                     Navegue pelos códigos de Classificação Tributária utilizados na Reforma Tributária.<br>
                     Clique em cada categoria para expandir e visualizar os códigos detalhados.
                 </div>

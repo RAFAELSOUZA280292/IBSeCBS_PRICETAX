@@ -25,8 +25,8 @@
     --color-gray-darkest: #0A0A0A;
     --color-gray-darker: #1A1A1A;
     --color-gray-dark: #2A2A2A;
-    --color-gray-medium: #666666;
-    --color-gray-light: #999999;
+    --color-gray-medium: #808080;  /* 25% mais claro que #666666 para melhor contraste */
+    --color-gray-light: #BFBFBF;   /* 25% mais claro que #999999 para melhor contraste */
     --color-white: #FFFFFF;
     
     /* Cor Primária - Amarelo Riqueza PRICETAX */
