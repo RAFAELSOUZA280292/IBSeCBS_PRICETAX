@@ -3939,8 +3939,8 @@ with tabs[8]:
                                         <div style="margin-bottom: 0.5rem;"><strong>Qualificação:</strong> {socio.get('qualificacao_socio', 'N/A')}</div>
                                         <div style="margin-bottom: 0.5rem;"><strong>Data de Entrada:</strong> {socio.get('data_entrada_sociedade', 'N/A')}</div>
                                         <div style="margin-bottom: 0.5rem;"><strong>CNPJ/CPF:</strong> {socio.get('cnpj_cpf_do_socio', 'N/A')}</div>
-                                        {f'<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);"><div style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Representante Legal</div><div style="margin-bottom: 0.5rem;"><strong>Nome:</strong> {socio.get("nome_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>CPF:</strong> {socio.get("cpf_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>Qualificação:</strong> {socio.get("qualificacao_representante_legal", "N/A")}</div></div>' if socio.get('nome_representante_legal') else ''}
                                     </div>
+                                    {f'<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1); color: {COLOR_WHITE};"><div style="color: {COLOR_GOLD}; font-weight: 600; margin-bottom: 0.5rem;">Representante Legal</div><div style="margin-bottom: 0.5rem;"><strong>Nome:</strong> {socio.get("nome_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>CPF:</strong> {socio.get("cpf_representante_legal", "N/A")}</div><div style="margin-bottom: 0.5rem;"><strong>Qualificação:</strong> {socio.get("qualificacao_representante_legal", "N/A")}</div></div>' if socio.get('nome_representante_legal') else ''}
                                 </div>
                                 """,
                                 unsafe_allow_html=True
