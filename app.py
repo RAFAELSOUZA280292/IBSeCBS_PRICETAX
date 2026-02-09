@@ -3317,7 +3317,10 @@ with tabs[4]:
     
     if uploaded_file is not None:
         try:
-            # Importar o parser
+            # Importar o parser (forçar reload para garantir versão mais recente)
+            import importlib
+            import xml_parser
+            importlib.reload(xml_parser)
             from xml_parser import parse_nfe_xml
             import tempfile
             
