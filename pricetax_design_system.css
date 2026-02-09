@@ -741,3 +741,39 @@ p {
     transform: translateY(-2px) !important;
     box-shadow: var(--shadow-gold) !important;
 }
+
+/* ============================================================================
+   EXPANDER - Limpeza de artefatos visuais
+   ============================================================================ */
+
+/* Esconder textos internos do Streamlit que vazam para interface */
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"]::before {
+    content: none !important;
+}
+
+/* Limpar qualquer texto "arrItem_" que apareça */
+[data-testid="stExpander"] summary {
+    font-family: var(--font-primary) !important;
+    font-size: var(--font-size-base) !important;
+    color: var(--color-white) !important;
+    padding: 1rem !important;
+    background: var(--color-gray-darker) !important;
+    border-radius: var(--radius-md) !important;
+    transition: all 0.3s ease !important;
+}
+
+[data-testid="stExpander"] summary:hover {
+    background: var(--color-gray-dark) !important;
+}
+
+/* Garantir que apenas o conteúdo do f-string apareça */
+[data-testid="stExpander"] summary span {
+    display: inline !important;
+}
+
+/* Esconder elementos vazios ou com IDs internos */
+[data-testid="stExpander"] summary::before,
+[data-testid="stExpander"] summary::after {
+    content: none !important;
+    display: none !important;
+}
