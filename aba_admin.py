@@ -80,9 +80,8 @@ def render_admin_tab():
     authenticated_user = st.session_state.get("authenticated_user", "")
     
     if authenticated_user != "PriceADM":
-        st.error("🔒 Acesso Negado")
-        st.warning("Esta área é restrita ao administrador do sistema.")
-        st.info("Apenas o usuário **PriceADM** pode acessar os logs de autenticação.")
+        st.error("Acesso Negado")
+        st.warning("Esta área é restrita ao administrador do sistema. Apenas o usuário PriceADM tem acesso aos logs de autenticação.")
         return
     
     # Header

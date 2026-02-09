@@ -40,9 +40,7 @@ def render_market_intelligence_dashboard():
             df = pd.read_csv(data_file)
         except pd.errors.ParserError as e:
             if "Expected" in str(e) and "fields" in str(e):
-                st.warning("Detectado formato antigo de dados. Migrando automaticamente...")
-                
-                # Executar migração
+                # Executar migração silenciosa
                 import subprocess
                 result = subprocess.run(
                     ['python3.11', 'migrate_csv.py'],

@@ -2538,7 +2538,7 @@ with tabs[0]:
                     opcoes.append(f"{ncm_fmt} - {desc}")
                 
                 if len(resultados) > 50:
-                    st.warning(f"⚠️ Exibindo os primeiros 50 resultados de {len(resultados)} encontrados. Refine sua busca para resultados mais precisos.")
+                    st.warning(f"Exibindo os primeiros 50 resultados de {len(resultados)} encontrados. Refine sua busca para resultados mais precisos.")
                 
                 produto_selecionado = st.selectbox(
                     "Produtos encontrados:",
@@ -3371,7 +3371,7 @@ with tabs[4]:
             itens = dados_xml['itens']
             
             if len(itens) == 0:
-                st.warning("⚠️ Nenhum item encontrado no XML.")
+                st.warning("Nenhum item encontrado no XML.")
             else:
                 st.markdown(
                     f"""
@@ -3689,7 +3689,7 @@ with tabs[4]:
                                     st.markdown(f"**Tipo de Alíquota:** —")
                                     st.markdown(f"**Descrição:** —")
                         else:
-                            st.warning(f"⚠️ NCM {ncm} não encontrado na base TIPI.")
+                            st.warning(f"NCM {ncm} não encontrado na base TIPI.")
                 
                 # Armazenamento automático e silencioso no Google Sheets
                 try:
@@ -3705,8 +3705,7 @@ with tabs[4]:
                     pass
         
         except Exception as e:
-            st.error(f"❌ Erro ao processar XML: {str(e)}")
-            st.exception(e)
+            st.error("Erro ao processar XML. Verifique se o arquivo está no formato correto.")
 
 # RODAPÉ
 # =============================================================================
