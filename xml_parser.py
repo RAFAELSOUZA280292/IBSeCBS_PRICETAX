@@ -110,10 +110,10 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             qcom_elem = prod.find('nfe:qCom', ns)
             vprod_elem = prod.find('nfe:vProd', ns)
             
-            # Sanitizar descrição (remover prefixos técnicos como "arrItem_1")
+            # Sanitizar descrição (remover prefixos técnicos como "arrItem_1right")
             descricao_raw = desc_elem.text if desc_elem is not None else ''
-            # Regex: ^arrItem_\d+ captura "arrItem_" seguido de um ou mais dígitos
-            descricao_limpa = re.sub(r'^arrItem_\d+', '', descricao_raw).strip()
+            # Regex: ^arrItem_\d+[a-z]*\s* captura "arrItem_" + dígitos + letras minúsculas opcionais + espaços
+            descricao_limpa = re.sub(r'^arrItem_\d+[a-z]*\s*', '', descricao_raw).strip()
             
             item = {
                 'ncm': ncm_elem.text if ncm_elem is not None else '',
