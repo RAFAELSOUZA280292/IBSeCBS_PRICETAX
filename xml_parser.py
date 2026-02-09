@@ -112,7 +112,8 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             
             # Sanitizar descrição (remover prefixos técnicos como "arrItem_1")
             descricao_raw = desc_elem.text if desc_elem is not None else ''
-            descricao_limpa = re.sub(r'^arr[A-Za-z_0-9]+', '', descricao_raw).strip()
+            # Regex: ^arrItem_\d+ captura "arrItem_" seguido de um ou mais dígitos
+            descricao_limpa = re.sub(r'^arrItem_\d+', '', descricao_raw).strip()
             
             item = {
                 'ncm': ncm_elem.text if ncm_elem is not None else '',
