@@ -110,10 +110,14 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             qcom_elem = prod.find('nfe:qCom', ns)
             vprod_elem = prod.find('nfe:vProd', ns)
             
+            # Sanitizar descrição (remover prefixos técnicos como "arrItem_1")
+            descricao_raw = desc_elem.text if desc_elem is not None else ''
+            descricao_limpa = re.sub(r'^arr[A-Za-z_0-9]+', '', descricao_raw).strip()
+            
             item = {
                 'ncm': ncm_elem.text if ncm_elem is not None else '',
                 'cfop': cfop_elem.text if cfop_elem is not None else '',
-                'descricao': desc_elem.text if desc_elem is not None else '',
+                'descricao': descricao_limpa,
                 'valor_unitario': float(vuncom_elem.text) if vuncom_elem is not None else 0.0,
                 'quantidade': float(qcom_elem.text) if qcom_elem is not None else 0.0,
                 'valor_total': float(vprod_elem.text) if vprod_elem is not None else 0.0,
