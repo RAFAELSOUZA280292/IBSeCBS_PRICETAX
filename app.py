@@ -3390,7 +3390,8 @@ with tabs[4]:
                 for idx, item in enumerate(itens, 1):
                     ncm = item['ncm']
                     cfop = item['cfop']
-                    desc = item['descricao']
+                    # FALLBACK: Sanitizar descrição aqui também (caso parser não tenha feito)
+                    desc = re.sub(r'^arrItem_\d+[a-z]*\s*', '', item['descricao']).strip()
                     valor_unit = item['valor_unitario']
                     qtd = item['quantidade']
                     valor_total = item['valor_total']

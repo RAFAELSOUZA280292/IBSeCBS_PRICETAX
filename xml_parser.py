@@ -114,6 +114,9 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             descricao_raw = desc_elem.text if desc_elem is not None else ''
             # Regex: ^arrItem_\d+[a-z]*\s* captura "arrItem_" + dígitos + letras minúsculas opcionais + espaços
             descricao_limpa = re.sub(r'^arrItem_\d+[a-z]*\s*', '', descricao_raw).strip()
+            # DEBUG: Log se houve sanitização
+            if descricao_raw != descricao_limpa:
+                logger.info(f"Sanitização aplicada: '{descricao_raw}' -> '{descricao_limpa}'")
             
             item = {
                 'ncm': ncm_elem.text if ncm_elem is not None else '',
