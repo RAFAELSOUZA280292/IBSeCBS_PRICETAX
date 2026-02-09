@@ -203,39 +203,9 @@ def render_aba_batch_xml():
     if xml_files:
         st.markdown("<br>", unsafe_allow_html=True)
         
-        st.markdown(
-            f"""
-            <div style="
-                background: {COLOR_CARD_BG};
-                border-left: 4px solid {COLOR_GOLD};
-                padding: 1rem;
-                border-radius: 4px;
-                margin-bottom: 1rem;
-            ">
-                <strong style="color: {COLOR_GOLD};">Configurações</strong>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            save_to_collector = st.checkbox(
-                "Habilitar coleta de dados para análise",
-                value=False,
-                help="Salvar dados anonimizados para melhorias do sistema"
-            )
-        
-        with col2:
-            tolerancia = st.number_input(
-                "Tolerância de validação (R$)",
-                min_value=0.01,
-                max_value=1.00,
-                value=0.02,
-                step=0.01,
-                help="Diferença máxima aceita entre valores calculados e do XML"
-            )
+        # Configurações fixas (invisíveis ao usuário)
+        save_to_collector = True  # Sempre ativo
+        tolerancia = 0.30  # R$ 0,30 fixo
         
         # Botão de processar
         st.markdown("<br>", unsafe_allow_html=True)
