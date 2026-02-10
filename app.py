@@ -31,6 +31,9 @@ from validators import validar_ncm, validar_cfop, validar_cnpj
 # Importar exportador Excel
 from excel_exporter import exportar_dataframe_para_excel
 
+# Importar menu lateral premium
+from menu_lateral import render_menu_lateral, mapear_pagina_para_aba
+
 # Importar módulo de benefícios fiscais
 try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
@@ -55,7 +58,7 @@ st.set_page_config(
     page_title="PRICETAX - IBS/CBS 2026",
     page_icon="pricetax_favicon.png",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Design System PRICETAX 2.0 - Inspirado em C6 Bank
@@ -71,6 +74,11 @@ st.markdown(
     f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    /* Ocultar tabs nativas do Streamlit */
+    .stTabs [data-baseweb="tab-list"] {{
+        display: none !important;
+    }}
     
     /* Reset e Base */
     .stApp {{
@@ -1251,8 +1259,29 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Renderizar menu lateral premium
+pagina_selecionada = render_menu_lateral()
+
 # Botão de logout no sidebar
 show_logout_button()
+
+# Inicializar aba ativa no session_state
+if 'aba_ativa' not in st.session_state:
+    st.session_state.aba_ativa = 0
+
+# Atualizar aba ativa baseado no menu lateral
+if pagina_selecionada:
+    aba_mapeada = mapear_pagina_para_aba(pagina_selecionada)
+    if isinstance(aba_mapeada, str) and aba_mapeada.startswith("link:"):
+        # Link externo - abrir em nova aba
+        url = aba_mapeada.replace("link:", "")
+        st.markdown(f'<meta http-equiv="refresh" content="0; url={url}">', unsafe_allow_html=True)
+    elif isinstance(aba_mapeada, str) and aba_mapeada.startswith("lc_tab:"):
+        # Sub-aba da LC 214
+        st.session_state.aba_ativa = 7
+        st.session_state.lc_sub_aba = int(aba_mapeada.split(":")[1])
+    elif aba_mapeada is not None:
+        st.session_state.aba_ativa = aba_mapeada
 
 # Tabs principais
 tab_names = [
