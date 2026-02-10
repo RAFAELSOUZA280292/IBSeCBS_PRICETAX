@@ -1281,32 +1281,104 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# =============================================================================
+# MENU HIERÁRQUICO PREMIUM NO SIDEBAR
+# =============================================================================
+
+with st.sidebar:
+    st.markdown('<div style="margin-bottom: 2rem;"></div>', unsafe_allow_html=True)
+    
+    # Inicializar página ativa
+    if 'pagina_ativa' not in st.session_state:
+        st.session_state.pagina_ativa = "Consulta NCM"
+    
+    # FERRAMENTAS PRICETAX
+    st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">FERRAMENTAS PRICETAX</div>', unsafe_allow_html=True)
+    
+    ferramentas = [
+        "Consulta NCM",
+        "Ranking de Saídas SPED",
+        "cClassTrib",
+        "Download CFOP x cClassTrib",
+        "Análise XML NF-e",
+        "Análise XML NFSe",
+        "Processamento em Lote",
+        "Consulta CNPJ"
+    ]
+    
+    for ferramenta in ferramentas:
+        if st.button(ferramenta, key=f"menu_{ferramenta}", use_container_width=True):
+            st.session_state.pagina_ativa = ferramenta
+            st.rerun()
+    
+    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+    
+    # LEGISLAÇÃO FACILITADA
+    st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">LEGISLAÇÃO FACILITADA</div>', unsafe_allow_html=True)
+    
+    if st.button("LC 214/2025", key="menu_lc214", use_container_width=True):
+        st.session_state.pagina_ativa = "LC 214/2025"
+        st.rerun()
+    
+    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+    
+    # ADMIN (apenas para PriceADM)
+    if st.session_state.get("authenticated_user") == "PriceADM":
+        st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">ADMINISTRAÇÃO</div>', unsafe_allow_html=True)
+        if st.button("⚙️ Admin", key="menu_admin", use_container_width=True, type="primary"):
+            st.session_state.pagina_ativa = "Admin"
+            st.rerun()
+        st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+
 # Botão de logout no sidebar
 show_logout_button()
 
-# Tabs principais
-tab_names = [
-    "Consulta NCM",
-    "Ranking de Saídas SPED",
-    "cClassTrib",
-    "Download CFOP x cClassTrib",
-    "Análise XML NF-e",
-    "Análise XML NFSe",
-    "Processamento em Lote",
-    "LC 214/2025",
-    "Consulta CNPJ",
-]
+# =============================================================================
+# RENDERIZAÇÃO CONDICIONAL BASEADA NO MENU
+# =============================================================================
 
-# Adicionar aba Admin apenas para PriceADM
-if st.session_state.get("authenticated_user") == "PriceADM":
-    tab_names.append("Admin")
-
-tabs = st.tabs(tab_names)
+pagina = st.session_state.pagina_ativa
 
 # =============================================================================
-# ABA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA INTEGRAL)
+# CARREGAMENTO DA PLANILHA CFOP x cClassTrib
 # =============================================================================
-with tabs[7]:
+
+@st.cache_data(show_spinner=False)
+def load_cfop_cclasstrib() -> pd.DataFrame:
+    """
+    Carrega a planilha de correlação CFOP x cClassTrib.
+    Retorna DataFrame com CFOP, descrição, cClassTrib e alíquotas.
+    """
+    paths = [
+        Path("CFOP_CCLASSTRIB.xlsx"),
+        Path.cwd() / "CFOP_CCLASSTRIB.xlsx",
+    ]
+    try:
+        paths.append(Path(__file__).parent / "CFOP_CCLASSTRIB.xlsx")
+    except Exception:
+        pass
+
+    df = None
+    for p in paths:
+        if p.exists():
+            try:
+                df = pd.read_excel(p, sheet_name="Correlação", skiprows=2)
+                break
+            except Exception:
+                continue
+
+    if df is None or df.empty:
+        return pd.DataFrame()
+
+    return df.copy()
+
+# Carregar dados necessários para as páginas
+df_cfop_class = load_cfop_cclasstrib()
+
+# =============================================================================
+# PÁGINA: LC 214/2025 (PLATAFORMA DE INTELIGÊNCIA JURÍDICA INTEGRAL)
+# =============================================================================
+if pagina == "LC 214/2025":
     st.markdown(
         f"""
         <div class="pricetax-card">
@@ -1746,45 +1818,10 @@ with tabs[7]:
     )
 
 # =============================================================================
-# CARREGAMENTO DA PLANILHA CFOP x cClassTrib
-# =============================================================================
-
-@st.cache_data(show_spinner=False)
-def load_cfop_cclasstrib() -> pd.DataFrame:
-    """
-    Carrega a planilha de correlação CFOP x cClassTrib.
-    Retorna DataFrame com CFOP, descrição, cClassTrib e alíquotas.
-    """
-    paths = [
-        Path("CFOP_CCLASSTRIB.xlsx"),
-        Path.cwd() / "CFOP_CCLASSTRIB.xlsx",
-    ]
-    try:
-        paths.append(Path(__file__).parent / "CFOP_CCLASSTRIB.xlsx")
-    except Exception:
-        pass
-
-    df = None
-    for p in paths:
-        if p.exists():
-            try:
-                df = pd.read_excel(p, sheet_name="Correlação", skiprows=2)
-                break
-            except Exception:
-                continue
-
-    if df is None or df.empty:
-        return pd.DataFrame()
-
-    return df.copy()
-
-df_cfop_class = load_cfop_cclasstrib()
-
-# =============================================================================
 # ABA 1 - CONSULTA NCM
 # =============================================================================
 
-with tabs[0]:
+elif pagina == "Consulta NCM":
     st.markdown(
         """
         <div class="pricetax-card">
@@ -2934,7 +2971,7 @@ with tabs[0]:
 # ABA 2 - RANKING DE SAÍDAS SPED
 # =============================================================================
 
-with tabs[1]:
+elif pagina == "Ranking de Saídas SPED":
     st.markdown(
         """
         <div class="pricetax-card">
@@ -3105,31 +3142,29 @@ with tabs[1]:
 # ABA 3 - CONSULTA CCLASSTRIB
 # =============================================================================
 
-
-# Mapeamento CST -> Descrição (baseado no portal SEFAZ)
-CST_DESCRICOES = {
-    '000': 'Tributação integral',
-    '010': 'Tributação com alíquotas uniformes',
-    '011': 'Tributação com alíquotas uniformes reduzidas',
-    '200': 'Alíquota reduzida',
-    '220': 'Alíquota fixa',
-    '221': 'Alíquota fixa proporcional',
-    '222': 'Redução de Base de Cálculo',
-    '400': 'Isenção',
-    '410': 'Imunidade e não incidência',
-    '510': 'Diferimento',
-    '515': 'Diferimento com redução de alíquota',
-    '550': 'Suspensão',
-    '620': 'Tributação Monofásica',
-    '800': 'Transferência de crédito',
-    '810': 'Ajuste de IBS na ZFM',
-    '811': 'Ajustes',
-    '820': 'Tributação em declaração de regime específico',
-    '830': 'Exclusão da Base de Cálculo',
-}
-
-
-with tabs[2]:
+elif pagina == "cClassTrib":
+    # Mapeamento CST -> Descrição (baseado no portal SEFAZ)
+    CST_DESCRICOES = {
+        '000': 'Tributação integral',
+        '010': 'Tributação com alíquotas uniformes',
+        '011': 'Tributação com alíquotas uniformes reduzidas',
+        '200': 'Alíquota reduzida',
+        '220': 'Alíquota fixa',
+        '221': 'Alíquota fixa proporcional',
+        '222': 'Redução de Base de Cálculo',
+        '400': 'Isenção',
+        '410': 'Imunidade e não incidência',
+        '510': 'Diferimento',
+        '515': 'Diferimento com redução de alíquota',
+        '550': 'Suspensão',
+        '620': 'Tributação Monofásica',
+        '800': 'Transferência de crédito',
+        '810': 'Ajuste de IBS na ZFM',
+        '811': 'Ajustes',
+        '820': 'Tributação em declaração de regime específico',
+        '830': 'Exclusão da Base de Cálculo',
+    }
+    
     # Verificar se a base foi carregada
     if df_class.empty:
         st.error(
@@ -3265,7 +3300,7 @@ with tabs[2]:
 # =============================================================================
 # ABA 4 - DOWNLOAD CFOP x cClassTrib
 # =============================================================================
-with tabs[3]:
+elif pagina == "Download CFOP x cClassTrib":
     st.markdown(
         f"""
         <div style="
@@ -3317,7 +3352,7 @@ with tabs[3]:
 # =============================================================================
 # ABA 5 - ANÁLISE DE XML
 # =============================================================================
-with tabs[4]:
+elif pagina == "Análise XML NF-e":
     st.markdown(
         f"""
         <div style="
@@ -3753,55 +3788,55 @@ with tabs[4]:
 # =============================================================================
 
 # Disclaimer profissional
-st.markdown(
-    f"""
-    <div style="
-        background-color: {COLOR_CARD_BG};
-        border: 1px solid {COLOR_BORDER};
-        border-radius: 4px;
-        padding: 1.5rem;
-        margin: 2rem 0;
-        text-align: center;
-    ">
-        <p style="color: #111827; line-height: 1.6; margin: 0;">
-            Esta ferramenta deve ser utilizada como <strong>apoio para definição da cClassTrib</strong>, 
-            mas não elimina a necessidade de validação dos dados informados no resultado. 
-            Para uma análise aprofundada, <strong style="color: {COLOR_GOLD};">faça um diagnóstico completo com a PRICETAX</strong>.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {COLOR_CARD_BG};
+            border: 1px solid {COLOR_BORDER};
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        ">
+            <p style="color: #111827; line-height: 1.6; margin: 0;">
+                Esta ferramenta deve ser utilizada como <strong>apoio para definição da cClassTrib</strong>, 
+                mas não elimina a necessidade de validação dos dados informados no resultado. 
+                Para uma análise aprofundada, <strong style="color: {COLOR_GOLD};">ça um diagnóstico completo com a PRICETAX</strong>.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =============================================================================
 # ABA: ANÁLISE XML NFSe (NOTA FISCAL DE SERVIÇOS ELETRÔNICA)
 # =============================================================================
-with tabs[5]:
+elif pagina == "Análise XML NFSe":
     from aba_xml_nfse import render_aba_xml_nfse
     render_aba_xml_nfse()
 
 # =============================================================================
 # ABA: PROCESSAMENTO EM LOTE DE XMLs
 # =============================================================================
-with tabs[6]:
+elif pagina == "Processamento em Lote":
     from aba_batch_xml import render_aba_batch_xml
     render_aba_batch_xml()
-
-st.markdown("---")
-st.markdown(
-    f"""
-    <div style="text-align:center;color:{COLOR_GRAY_MEDIUM};font-size:0.85rem;padding:2rem 0;">
-        <strong style="color:{COLOR_GOLD};">PRICETAX</strong> - Soluções para transição inteligente na Reforma Tributária<br>
-        Simplificando o complexo, potencializando os seus resultados.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="text-align:center;color:{COLOR_GRAY_MEDIUM};font-size:0.85rem;padding:2rem 0;">
+            <strong style="color:{COLOR_GOLD};">PRICETAX</strong> - Soluções para transição inteligente na Reforma Tributária<br>
+            Simplificando o complexo, potencializando os seus resultados.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =============================================================================
 # ABA: CONSULTA CNPJ
 # =============================================================================
-with tabs[8]:
+elif pagina == "Consulta CNPJ":
     st.markdown("## Consulta de CNPJ")
     st.markdown(
         "Utilize este painel para consultar dados cadastrais de empresas brasileiras (Receita Federal)."
@@ -4073,7 +4108,6 @@ with tabs[8]:
 # =============================================================================
 # ABA: ADMIN (LOGS DE AUTENTICAÇÃO) - RESTRITO A PriceADM
 # =============================================================================
-if st.session_state.get("authenticated_user") == "PriceADM":
-    with tabs[9]:
-        from aba_admin import render_admin_tab
-        render_admin_tab()
+elif pagina == "Admin" and st.session_state.get("authenticated_user") == "PriceADM":
+    from aba_admin import render_admin_tab
+    render_admin_tab()
