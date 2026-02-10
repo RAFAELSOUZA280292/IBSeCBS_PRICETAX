@@ -280,6 +280,259 @@ def render_aba_batch_xml():
             with col3:
                 st.metric("Valor Total", f"R$ {stats['valor_total']:,.2f}")
             
+            # DASHBOARDS DE GOVERNANÇA FISCAL IBS/CBS
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div style="
+                    background: {COLOR_CARD_BG};
+                    border-left: 4px solid {COLOR_GOLD};
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    margin-bottom: 1.5rem;
+                ">
+                    <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
+                        📈 Dashboards de Governança Fiscal IBS/CBS
+                    </h3>
+                    <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                        Análise visual de conformidade e distribuição de itens
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Cards de métricas principais
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {COLOR_SUCCESS} 0%, #059669 100%);
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                            {stats['itens_conformes']:,}
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            Itens Conformes
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">
+                            {(stats['itens_conformes']/stats['total_itens']*100) if stats['total_itens'] > 0 else 0:.1f}%
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {COLOR_ERROR} 0%, #DC2626 100%);
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                            {stats['itens_divergentes']:,}
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            Itens Divergentes
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">
+                            {(stats['itens_divergentes']/stats['total_itens']*100) if stats['total_itens'] > 0 else 0:.1f}%
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col3:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {COLOR_BLUE} 0%, #0047AB 100%);
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                            {stats['xmls_conformes']}
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            NFes Conformes
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">
+                            {stats['percentual_conformes']:.1f}%
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with col4:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {COLOR_WARNING} 0%, #D97706 100%);
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        text-align: center;
+                        color: white;
+                    ">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                            {stats['xmls_divergentes']}
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            NFes Divergentes
+                        </div>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">
+                            {(100 - stats['percentual_conformes']):.1f}%
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            # Gráficos de conformidade
+            st.markdown("<br>", unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Gráfico de pizza - Conformidade de Itens
+                import plotly.graph_objects as go
+                
+                fig_itens = go.Figure(data=[go.Pie(
+                    labels=['Conformes', 'Divergentes'],
+                    values=[stats['itens_conformes'], stats['itens_divergentes']],
+                    hole=0.4,
+                    marker=dict(
+                        colors=[COLOR_SUCCESS, COLOR_ERROR],
+                        line=dict(color='#000000', width=2)
+                    ),
+                    textinfo='label+percent',
+                    textfont=dict(size=14, color='white'),
+                    hovertemplate='<b>%{label}</b><br>%{value:,} itens<br>%{percent}<extra></extra>'
+                )])
+                
+                fig_itens.update_layout(
+                    title=dict(
+                        text='Conformidade de Itens',
+                        font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
+                    ),
+                    paper_bgcolor=COLOR_CARD_BG,
+                    plot_bgcolor=COLOR_CARD_BG,
+                    font=dict(color=COLOR_TEXT_MAIN),
+                    showlegend=True,
+                    legend=dict(
+                        bgcolor=COLOR_CARD_BG,
+                        bordercolor=COLOR_BORDER,
+                        borderwidth=1
+                    ),
+                    height=400
+                )
+                
+                st.plotly_chart(fig_itens, use_container_width=True)
+            
+            with col2:
+                # Gráfico de pizza - Conformidade de NFes
+                fig_nfes = go.Figure(data=[go.Pie(
+                    labels=['Conformes', 'Divergentes'],
+                    values=[stats['xmls_conformes'], stats['xmls_divergentes']],
+                    hole=0.4,
+                    marker=dict(
+                        colors=[COLOR_BLUE, COLOR_WARNING],
+                        line=dict(color='#000000', width=2)
+                    ),
+                    textinfo='label+percent',
+                    textfont=dict(size=14, color='white'),
+                    hovertemplate='<b>%{label}</b><br>%{value:,} NFes<br>%{percent}<extra></extra>'
+                )])
+                
+                fig_nfes.update_layout(
+                    title=dict(
+                        text='Conformidade de NFes',
+                        font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
+                    ),
+                    paper_bgcolor=COLOR_CARD_BG,
+                    plot_bgcolor=COLOR_CARD_BG,
+                    font=dict(color=COLOR_TEXT_MAIN),
+                    showlegend=True,
+                    legend=dict(
+                        bgcolor=COLOR_CARD_BG,
+                        bordercolor=COLOR_BORDER,
+                        borderwidth=1
+                    ),
+                    height=400
+                )
+                
+                st.plotly_chart(fig_nfes, use_container_width=True)
+            
+            # Tabelas de itens conformes e divergentes
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Separar itens conformes e divergentes
+            itens_conformes_lista = []
+            itens_divergentes_lista = []
+            
+            for resultado in resultados:
+                if resultado['status'] == 'sucesso':
+                    for item in resultado.get('itens_conformes', []):
+                        itens_conformes_lista.append({
+                            'NFe': os.path.basename(resultado['arquivo']),
+                            'Item': item['item'],
+                            'NCM': item['ncm'],
+                            'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                            'Valor (R$)': f"R$ {item['valor']:,.2f}",
+                            'IBS XML (R$)': f"R$ {item['ibs_xml']:.2f}",
+                            'CBS XML (R$)': f"R$ {item['cbs_xml']:.2f}"
+                        })
+                    
+                    for item in resultado.get('itens_divergentes', []):
+                        itens_divergentes_lista.append({
+                            'NFe': os.path.basename(resultado['arquivo']),
+                            'Item': item['item'],
+                            'NCM': item['ncm'],
+                            'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                            'Valor (R$)': f"R$ {item['valor']:,.2f}",
+                            'IBS Dif (R$)': f"R$ {item['diff_ibs']:.2f}",
+                            'CBS Dif (R$)': f"R$ {item['diff_cbs']:.2f}"
+                        })
+            
+            # Tabs para conformes e divergentes
+            tab1, tab2 = st.tabs([f"✅ Itens Conformes ({len(itens_conformes_lista)})", f"⚠️ Itens Divergentes ({len(itens_divergentes_lista)})"])
+            
+            with tab1:
+                if itens_conformes_lista:
+                    import pandas as pd
+                    df_conformes = pd.DataFrame(itens_conformes_lista)
+                    st.dataframe(
+                        df_conformes,
+                        use_container_width=True,
+                        height=400
+                    )
+                else:
+                    st.info("Nenhum item conforme encontrado.")
+            
+            with tab2:
+                if itens_divergentes_lista:
+                    import pandas as pd
+                    df_divergentes = pd.DataFrame(itens_divergentes_lista)
+                    st.dataframe(
+                        df_divergentes,
+                        use_container_width=True,
+                        height=400
+                    )
+                else:
+                    st.success("Nenhum item divergente encontrado! Todos os itens estão conformes.")
+            
             # Gerar Excel
             st.markdown("<br>", unsafe_allow_html=True)
             
