@@ -285,10 +285,48 @@ st.markdown(
         font-family: 'Poppins', sans-serif !important;
     }}
     
-    /* Sidebar (se usado) */
+    /* Sidebar - Forçar visibilidade e fixar */
     section[data-testid="stSidebar"] {{
         background: {COLOR_GRAY_DARKER} !important;
         border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 21rem !important;
+        min-width: 21rem !important;
+        max-width: 21rem !important;
+        position: relative !important;
+        transform: none !important;
+        transition: none !important;
+    }}
+    
+    /* Container do sidebar */
+    section[data-testid="stSidebar"] > div {{
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }}
+    
+    /* Botão de colapsar sidebar - manter visível */
+    section[data-testid="stSidebar"] button[kind="header"] {{
+        display: block !important;
+        visibility: visible !important;
+    }}
+    
+    /* Prevenir colapso do sidebar */
+    section[data-testid="stSidebar"][aria-expanded="false"] {{
+        display: block !important;
+        width: 21rem !important;
+        min-width: 21rem !important;
+        transform: translateX(0) !important;
+    }}
+    
+    /* Garantir que o conteúdo do sidebar seja sempre visível */
+    section[data-testid="stSidebar"] .css-1d391kg,
+    section[data-testid="stSidebar"] .st-emotion-cache-1d391kg {{
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }}
     
     /* Scrollbar Customizado */
