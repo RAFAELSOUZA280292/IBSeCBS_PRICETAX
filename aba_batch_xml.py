@@ -475,6 +475,130 @@ def render_aba_batch_xml():
                 
                 st.plotly_chart(fig_nfes, use_container_width=True)
             
+            # PAINEL DE FORNECEDORES/EMITENTES DIVERGENTES
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Agregar dados por fornecedor
+            fornecedores_div = {}
+            
+            for resultado in resultados:
+                if resultado['status'] == 'DIVERGENTE':
+                    cnpj = resultado['emitente_cnpj']
+                    razao = resultado['emitente_razao']
+                    uf = resultado['emitente_uf']
+                    
+                    if cnpj not in fornecedores_div:
+                        fornecedores_div[cnpj] = {
+                            'razao': razao,
+                            'cnpj': cnpj,
+                            'uf': uf,
+                            'qtd_nfes': 0,
+                            'qtd_itens_div': 0,
+                            'valor_total': 0.0
+                        }
+                    
+                    fornecedores_div[cnpj]['qtd_nfes'] += 1
+                    fornecedores_div[cnpj]['qtd_itens_div'] += resultado['itens_divergentes']
+                    fornecedores_div[cnpj]['valor_total'] += resultado['valor_total_nfe']
+            
+            if fornecedores_div:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: {COLOR_CARD_BG};
+                        border-left: 4px solid {COLOR_ERROR};
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        margin-bottom: 1.5rem;
+                    ">
+                        <h3 style="color: {COLOR_ERROR}; margin: 0 0 0.5rem 0;">
+                            ⚠️ Fornecedores/Emitentes com Divergências
+                        </h3>
+                        <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                            Ranking por valor total das notas fiscais com itens divergentes
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Ordenar por valor total (métrica primária)
+                fornecedores_lista = sorted(
+                    fornecedores_div.values(),
+                    key=lambda x: x['valor_total'],
+                    reverse=True
+                )
+                
+                # Top 10 fornecedores
+                top_fornecedores = fornecedores_lista[:10]
+                
+                # Tabela de fornecedores
+                import pandas as pd
+                df_fornecedores = pd.DataFrame([{
+                    'Posição': idx,
+                    'Razão Social': f['razao'][:40] + '...' if len(f['razao']) > 40 else f['razao'],
+                    'CNPJ': f['cnpj'],
+                    'UF': f['uf'],
+                    'NFes Div.': f['qtd_nfes'],
+                    'Itens Div.': f['qtd_itens_div'],
+                    'Valor Total (R$)': f"R$ {f['valor_total']:,.2f}"
+                } for idx, f in enumerate(top_fornecedores, 1)])
+                
+                st.dataframe(
+                    df_fornecedores,
+                    use_container_width=True,
+                    height=400
+                )
+                
+                # Gráfico de barras - Top 5 fornecedores por valor
+                if len(top_fornecedores) >= 5:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    
+                    import plotly.graph_objects as go
+                    
+                    top5 = top_fornecedores[:5]
+                    
+                    fig_fornecedores = go.Figure(data=[
+                        go.Bar(
+                            x=[f['razao'][:30] + '...' if len(f['razao']) > 30 else f['razao'] for f in top5],
+                            y=[f['valor_total'] for f in top5],
+                            marker=dict(
+                                color=[COLOR_ERROR, COLOR_WARNING, COLOR_GOLD, COLOR_BLUE, '#6B7280'],
+                                line=dict(color='#000000', width=1)
+                            ),
+                            text=[f"R$ {f['valor_total']:,.2f}" for f in top5],
+                            textposition='outside',
+                            textfont=dict(size=12, color=COLOR_TEXT_MAIN),
+                            hovertemplate='<b>%{x}</b><br>Valor: R$ %{y:,.2f}<br>NFes: %{customdata[0]}<br>Itens Div: %{customdata[1]}<extra></extra>',
+                            customdata=[[f['qtd_nfes'], f['qtd_itens_div']] for f in top5]
+                        )
+                    ])
+                    
+                    fig_fornecedores.update_layout(
+                        title=dict(
+                            text='Top 5 Fornecedores com Divergências (por Valor Total)',
+                            font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
+                        ),
+                        xaxis=dict(
+                            title='Fornecedor',
+                            titlefont=dict(color=COLOR_TEXT_MAIN),
+                            tickfont=dict(color=COLOR_TEXT_MAIN),
+                            gridcolor=COLOR_BORDER
+                        ),
+                        yaxis=dict(
+                            title='Valor Total (R$)',
+                            titlefont=dict(color=COLOR_TEXT_MAIN),
+                            tickfont=dict(color=COLOR_TEXT_MAIN),
+                            gridcolor=COLOR_BORDER
+                        ),
+                        paper_bgcolor=COLOR_CARD_BG,
+                        plot_bgcolor=COLOR_CARD_BG,
+                        font=dict(color=COLOR_TEXT_MAIN),
+                        height=500
+                    )
+                    
+                    st.plotly_chart(fig_fornecedores, use_container_width=True)
+            
             # Tabelas de itens conformes e divergentes
             st.markdown("<br>", unsafe_allow_html=True)
             
