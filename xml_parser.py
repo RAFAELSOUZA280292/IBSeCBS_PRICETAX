@@ -110,6 +110,12 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
             qcom_elem = prod.find('nfe:qCom', ns)
             vprod_elem = prod.find('nfe:vProd', ns)
             
+            # Componentes da base de cálculo IBS/CBS
+            vfrete_elem = prod.find('nfe:vFrete', ns)
+            vseg_elem = prod.find('nfe:vSeg', ns)
+            voutro_elem = prod.find('nfe:vOutro', ns)
+            vdesc_elem = prod.find('nfe:vDesc', ns)
+            
             # Sanitizar descrição (remover prefixos técnicos como "arrItem_1right")
             descricao_raw = desc_elem.text if desc_elem is not None else ''
             # Regex: ^arrItem_\d+[a-z]*\s* captura "arrItem_" + dígitos + letras minúsculas opcionais + espaços
@@ -125,6 +131,11 @@ def parse_nfe_xml(xml_path: str) -> Dict[str, Any]:
                 'valor_unitario': float(vuncom_elem.text) if vuncom_elem is not None else 0.0,
                 'quantidade': float(qcom_elem.text) if qcom_elem is not None else 0.0,
                 'valor_total': float(vprod_elem.text) if vprod_elem is not None else 0.0,
+                # Componentes da BC IBS/CBS
+                'vfrete': float(vfrete_elem.text) if vfrete_elem is not None else 0.0,
+                'vseg': float(vseg_elem.text) if vseg_elem is not None else 0.0,
+                'voutro': float(voutro_elem.text) if voutro_elem is not None else 0.0,
+                'vdesc': float(vdesc_elem.text) if vdesc_elem is not None else 0.0,
                 'cst_icms': '',
                 'cst_pis': '',
                 'cst_cofins': '',

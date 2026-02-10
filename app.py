@@ -3532,12 +3532,20 @@ with tabs[4]:
                             calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
                             calc_pcbs = cbs  # Já é 0.90 = 0,9%
                             
-                            # BASE LÍQUIDA 2026: Excluir ICMS, PIS e COFINS da base de cálculo
+                            # BASE LÍQUIDA 2026: vProd + vFrete + vSeg + vOutro - vDesc - ICMS - PIS - COFINS
                             # Conforme legislação de transição, IBS/CBS não integram base de ICMS/PIS/COFINS e vice-versa
+                            # IMPORTANTE: Frete, seguro e outros COMPÕEM a base de cálculo do IBS/CBS
+                            vprod = valor_total  # vProd do item
+                            vfrete = item.get('vfrete', 0.0) if 'vfrete' in item else 0.0
+                            vseg = item.get('vseg', 0.0) if 'vseg' in item else 0.0
+                            voutro = item.get('voutro', 0.0) if 'voutro' in item else 0.0
+                            vdesc = item.get('vdesc', 0.0) if 'vdesc' in item else 0.0
                             vicms = item.get('vicms', 0.0)
                             vpis = item.get('vpis', 0.0)
                             vcofins = item.get('vcofins', 0.0)
-                            base_liquida = valor_total - vicms - vpis - vcofins
+                            
+                            # Fórmula completa da BC
+                            base_liquida = vprod + vfrete + vseg + voutro - vdesc - vicms - vpis - vcofins
                             
                             # CORREÇÃO: Dividir por 100 porque alíquotas estão em formato decimal
                             calc_vibs = base_liquida * (ibs_uf + ibs_mun) / 100
