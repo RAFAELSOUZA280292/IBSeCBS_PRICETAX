@@ -173,7 +173,8 @@ def render_menu_lateral():
             "ferramentas",
             ferramentas_opcoes,
             label_visibility="collapsed",
-            key="menu_ferramentas"
+            key="menu_ferramentas",
+            index=None  # Nenhum item selecionado por padrão
         )
         
         # LEGISLAÇÃO FACILITADA
@@ -190,7 +191,8 @@ def render_menu_lateral():
             "legislacao",
             legislacao_opcoes,
             label_visibility="collapsed",
-            key="menu_legislacao"
+            key="menu_legislacao",
+            index=None  # Nenhum item selecionado por padrão
         )
         
         # NEWS
