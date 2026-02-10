@@ -212,7 +212,15 @@ def render_menu_lateral():
                 return "Admin"
     
     # Retornar página selecionada
-    if ferramenta:
+    # Tratar link externo do Simulador Impactos RT
+    if ferramenta == "Simulador Impactos RT":
+        st.markdown(
+            '<a href="https://app.pricetax.com.br" target="_blank" style="display:none" id="external_link"></a>'
+            '<script>document.getElementById("external_link").click();</script>',
+            unsafe_allow_html=True
+        )
+        return None
+    elif ferramenta:
         return ferramenta
     elif legislacao:
         return legislacao

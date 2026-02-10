@@ -75,9 +75,34 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
-    /* Ocultar tabs nativas do Streamlit */
+    /* Tabs Premium - Integrado com Menu Lateral */
     .stTabs [data-baseweb="tab-list"] {{
-        display: none !important;
+        background: {COLOR_GRAY_DARKER};
+        border-bottom: 1px solid rgba(255, 221, 0, 0.2);
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: {COLOR_GRAY_LIGHT};
+        font-weight: 400;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.2s ease;
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover {{
+        background: rgba(255, 221, 0, 0.08);
+        color: {COLOR_WHITE};
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background: rgba(255, 221, 0, 0.15) !important;
+        color: {COLOR_GOLD} !important;
+        font-weight: 500 !important;
+        border-left: 3px solid {COLOR_GOLD} !important;
     }}
     
     /* Reset e Base */
