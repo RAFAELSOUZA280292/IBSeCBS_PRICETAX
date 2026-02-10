@@ -607,28 +607,30 @@ def render_aba_batch_xml():
             itens_divergentes_lista = []
             
             for resultado in resultados:
-                if resultado['status'] == 'sucesso':
-                    for item in resultado.get('itens_conformes', []):
-                        itens_conformes_lista.append({
-                            'NFe': os.path.basename(resultado['arquivo']),
-                            'Item': item['item'],
-                            'NCM': item['ncm'],
-                            'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
-                            'Valor (R$)': f"R$ {item['valor']:,.2f}",
-                            'IBS XML (R$)': f"R$ {item['ibs_xml']:.2f}",
-                            'CBS XML (R$)': f"R$ {item['cbs_xml']:.2f}"
-                        })
-                    
-                    for item in resultado.get('itens_divergentes', []):
-                        itens_divergentes_lista.append({
-                            'NFe': os.path.basename(resultado['arquivo']),
-                            'Item': item['item'],
-                            'NCM': item['ncm'],
-                            'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
-                            'Valor (R$)': f"R$ {item['valor']:,.2f}",
-                            'IBS Dif (R$)': f"R$ {item['diff_ibs']:.2f}",
-                            'CBS Dif (R$)': f"R$ {item['diff_cbs']:.2f}"
-                        })
+                # Processar apenas XMLs que foram validados (CONFORME ou DIVERGENTE)
+                if resultado['status'] in ['CONFORME', 'DIVERGENTE']:
+                    # Iterar sobre todas as validações
+                    for item in resultado.get('validacoes', []):
+                        if item['status'] == 'CONFORME':
+                            itens_conformes_lista.append({
+                                'NFe': os.path.basename(resultado['arquivo']),
+                                'Item': item['item'],
+                                'NCM': item['ncm'],
+                                'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                                'Valor (R$)': f"R$ {item['valor']:,.2f}",
+                                'IBS XML (R$)': f"R$ {item['ibs_xml']:.2f}",
+                                'CBS XML (R$)': f"R$ {item['cbs_xml']:.2f}"
+                            })
+                        elif item['status'] == 'DIVERGENTE':
+                            itens_divergentes_lista.append({
+                                'NFe': os.path.basename(resultado['arquivo']),
+                                'Item': item['item'],
+                                'NCM': item['ncm'],
+                                'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                                'Valor (R$)': f"R$ {item['valor']:,.2f}",
+                                'IBS Dif (R$)': f"R$ {item['diff_ibs']:.2f}",
+                                'CBS Dif (R$)': f"R$ {item['diff_cbs']:.2f}"
+                            })
             
             # Tabs para conformes e divergentes
             tab1, tab2 = st.tabs([f"✅ Itens Conformes ({len(itens_conformes_lista)})", f"⚠️ Itens Divergentes ({len(itens_divergentes_lista)})"])
