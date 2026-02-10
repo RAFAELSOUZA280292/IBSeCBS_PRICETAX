@@ -111,12 +111,16 @@ def calculate_expected_ibs_cbs(item: Dict[str, Any]) -> Dict[str, float]:
     """
     # Valores do item
     vprod = item.get('valor_total', 0.0)
+    vfrete = item.get('vfrete', 0.0)
+    vseg = item.get('vseg', 0.0)
+    voutro = item.get('voutro', 0.0)
+    vdesc = item.get('vdesc', 0.0)
     vicms = item.get('vicms', 0.0)
     vpis = item.get('vpis', 0.0)
     vcofins = item.get('vcofins', 0.0)
     
-    # Base líquida (2026)
-    base_liquida = vprod - vicms - vpis - vcofins
+    # Base líquida (2026): vProd + vFrete + vSeg + vOutro - vDesc - ICMS - PIS - COFINS
+    base_liquida = vprod + vfrete + vseg + voutro - vdesc - vicms - vpis - vcofins
     
     # Alíquotas padrão 2026
     aliq_ibs = 0.10  # 0,1%
