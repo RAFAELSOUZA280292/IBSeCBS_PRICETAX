@@ -1286,11 +1286,11 @@ st.markdown(
 # =============================================================================
 
 with st.sidebar:
-    # CSS para menu minimalista elegante
+    # CSS para menu minimalista elegante - APENAS NO SIDEBAR
     st.markdown("""
     <style>
-    /* Remover padding padrão dos botões do Streamlit */
-    .stButton > button {
+    /* Estilos específicos para botões do menu lateral */
+    section[data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -1302,20 +1302,22 @@ with st.sidebar:
         border-radius: 6px !important;
         transition: all 0.2s ease !important;
         margin: 0 !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
     }
     
-    .stButton > button:hover {
+    section[data-testid="stSidebar"] .stButton > button:hover {
         background: rgba(255, 221, 0, 0.08) !important;
         color: #FFDD00 !important;
-        transform: translateX(2px);
+        transform: translateX(2px) !important;
     }
     
-    .stButton > button:active {
+    section[data-testid="stSidebar"] .stButton > button:active {
         background: rgba(255, 221, 0, 0.12) !important;
     }
     
-    /* Botão ativo */
-    .stButton > button[kind="primary"] {
+    /* Botão ativo no menu lateral */
+    section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
         background: rgba(255, 221, 0, 0.1) !important;
         color: #FFDD00 !important;
         font-weight: 500 !important;
