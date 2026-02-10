@@ -1286,14 +1286,53 @@ st.markdown(
 # =============================================================================
 
 with st.sidebar:
-    st.markdown('<div style="margin-bottom: 2rem;"></div>', unsafe_allow_html=True)
+    # CSS para menu minimalista elegante
+    st.markdown("""
+    <style>
+    /* Remover padding padrão dos botões do Streamlit */
+    .stButton > button {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0.5rem 0.75rem !important;
+        text-align: left !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        color: #E5E5E5 !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+        margin: 0 !important;
+    }
+    
+    .stButton > button:hover {
+        background: rgba(255, 221, 0, 0.08) !important;
+        color: #FFDD00 !important;
+        transform: translateX(2px);
+    }
+    
+    .stButton > button:active {
+        background: rgba(255, 221, 0, 0.12) !important;
+    }
+    
+    /* Botão ativo */
+    .stButton > button[kind="primary"] {
+        background: rgba(255, 221, 0, 0.1) !important;
+        color: #FFDD00 !important;
+        font-weight: 500 !important;
+        border-left: 2px solid #FFDD00 !important;
+        padding-left: 0.65rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
     
     # Inicializar página ativa
     if 'pagina_ativa' not in st.session_state:
         st.session_state.pagina_ativa = "Consulta NCM"
     
     # FERRAMENTAS PRICETAX
-    st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">FERRAMENTAS PRICETAX</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 0.65rem; font-weight: 700; color: #FFDD00; margin-bottom: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">Ferramentas</div>', unsafe_allow_html=True)
     
     ferramentas = [
         "Consulta NCM",
@@ -1307,28 +1346,31 @@ with st.sidebar:
     ]
     
     for ferramenta in ferramentas:
-        if st.button(ferramenta, key=f"menu_{ferramenta}", use_container_width=True):
+        tipo = "primary" if st.session_state.pagina_ativa == ferramenta else "secondary"
+        if st.button(ferramenta, key=f"menu_{ferramenta}", use_container_width=True, type=tipo):
             st.session_state.pagina_ativa = ferramenta
             st.rerun()
     
-    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin: 1.25rem 0; border-top: 1px solid rgba(255,255,255,0.06);"></div>', unsafe_allow_html=True)
     
     # LEGISLAÇÃO FACILITADA
-    st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">LEGISLAÇÃO FACILITADA</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 0.65rem; font-weight: 700; color: #FFDD00; margin-bottom: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">Legislação</div>', unsafe_allow_html=True)
     
-    if st.button("LC 214/2025", key="menu_lc214", use_container_width=True):
+    tipo_lc = "primary" if st.session_state.pagina_ativa == "LC 214/2025" else "secondary"
+    if st.button("LC 214/2025", key="menu_lc214", use_container_width=True, type=tipo_lc):
         st.session_state.pagina_ativa = "LC 214/2025"
         st.rerun()
     
-    st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin: 1.25rem 0; border-top: 1px solid rgba(255,255,255,0.06);"></div>', unsafe_allow_html=True)
     
     # ADMIN (apenas para PriceADM)
     if st.session_state.get("authenticated_user") == "PriceADM":
-        st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #FFDD00; margin-bottom: 0.5rem; letter-spacing: 1px;">ADMINISTRAÇÃO</div>', unsafe_allow_html=True)
-        if st.button("⚙️ Admin", key="menu_admin", use_container_width=True, type="primary"):
+        st.markdown('<div style="font-size: 0.65rem; font-weight: 700; color: #FFDD00; margin-bottom: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">Admin</div>', unsafe_allow_html=True)
+        tipo_admin = "primary" if st.session_state.pagina_ativa == "Admin" else "secondary"
+        if st.button("Painel Administrativo", key="menu_admin", use_container_width=True, type=tipo_admin):
             st.session_state.pagina_ativa = "Admin"
             st.rerun()
-        st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="margin: 1.25rem 0;"></div>', unsafe_allow_html=True)
 
 # Botão de logout no sidebar
 show_logout_button()
