@@ -2082,7 +2082,7 @@ elif pagina == "Consulta NCM":
         """
         <div class="pricetax-card">
             <div class="pricetax-card-header">Consulta Inteligente de Tributação IBS/CBS</div>
-            <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
+            <div style="font-size:0.95rem;color:#E5E7EB;line-height:1.6;">
                 Utilize este painel para consultar a tributação de produtos e operações:<br><br>
                 • <strong>NCM + CFOP:</strong> Consulta completa com NCM e opcionalmente CFOP<br>
                 • <strong>Somente CFOP:</strong> Tributação padrão da operação fiscal<br>
@@ -3232,7 +3232,7 @@ elif pagina == "Ranking de Saídas SPED":
         """
         <div class="pricetax-card">
             <div class="pricetax-card-header">Ranking de Vendas - SPED PIS/COFINS</div>
-            <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
+            <div style="font-size:0.95rem;color:#E5E7EB;line-height:1.6;">
                 Utilize este painel para identificar os itens mais relevantes na receita e preparar a base
                 para IBS/CBS 2026:<br><br>
                 • Importa arquivos SPED PIS/COFINS (<strong>.txt</strong> ou <strong>.zip</strong>)<br>
@@ -3439,7 +3439,7 @@ elif pagina == "cClassTrib":
             f"""
             <div class="pricetax-card">
                 <div class="pricetax-card-header">Classificação Tributária (cClassTrib)</div>
-                <div style="font-size:0.95rem;color:#E5E5E5;line-height:1.6;">
+                <div style="font-size:0.95rem;color:#E5E7EB;line-height:1.6;">
                     Navegue pelos códigos de Classificação Tributária utilizados na Reforma Tributária.<br>
                     Clique em cada categoria para expandir e visualizar os códigos detalhados.
                 </div>
@@ -4118,7 +4118,8 @@ elif pagina == "Processamento em Lote":
 elif pagina == "Consulta CNPJ":
     st.markdown("## Consulta de CNPJ")
     st.markdown(
-        "Utilize este painel para consultar dados cadastrais de empresas brasileiras (Receita Federal)."
+        '<p style="color:#E5E7EB;font-size:1rem;line-height:1.6;">Utilize este painel para consultar dados cadastrais de empresas brasileiras (Receita Federal).</p>',
+        unsafe_allow_html=True
     )
     
     # Importar módulo de consulta CNPJ
@@ -4142,8 +4143,9 @@ elif pagina == "Consulta CNPJ":
         st.stop()
     
     # Campo de entrada
+    st.markdown('<p style="color:#E5E7EB;font-size:0.95rem;margin-bottom:0.5rem;">Digite o CNPJ (apenas números, ou com pontos, barras e traços):</p>', unsafe_allow_html=True)
     cnpj_input = st.text_input(
-        "Digite o CNPJ (apenas números, ou com pontos, barras e traços):",
+        "",
         placeholder="Ex: 00.000.000/0000-00 ou 00000000000000",
         help="Serão aceitos CNPJs com ou sem formatação. Ex: 21746980000146 ou 21.746.980/0001-46",
         key="cnpj_input_field"
