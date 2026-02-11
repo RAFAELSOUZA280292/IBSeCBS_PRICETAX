@@ -102,6 +102,20 @@ st.markdown(
         border-left: 3px solid {COLOR_GOLD} !important;
     }}
     
+    /* Ocultar elementos técnicos indesejados (keyboard_double, etc) */
+    [id*="keyboard"],
+    [class*="keyboard"],
+    [id^="_art"],
+    [class^="_art"],
+    [id*="_right"],
+    [class*="_right"] {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }}
+    
     /* Reset e Base */
     .stApp {{
         background: {COLOR_BLACK};
