@@ -1395,7 +1395,7 @@ with st.sidebar:
         "Download CFOP x cClassTrib",
         "Análise XML NF-e",
         "Análise XML NFSe",
-        "Processamento em Lote",
+        "Processamento XML (NF-e) em Lote",
         "Consulta CNPJ"
     ]
     
@@ -4097,7 +4097,7 @@ elif pagina == "Análise XML NFSe":
 # =============================================================================
 # ABA: PROCESSAMENTO EM LOTE DE XMLs
 # =============================================================================
-elif pagina == "Processamento em Lote":
+elif pagina == "Processamento XML (NF-e) em Lote":
     from aba_batch_xml import render_aba_batch_xml
     render_aba_batch_xml()
     
