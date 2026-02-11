@@ -19,17 +19,17 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
     # 1. Carregar planilha original
     print("\n1. Carregando planilha original...")
     df_original = pd.read_excel("PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")
-    print(f"   ✓ {len(df_original)} NCMs carregados")
+    print(f"    {len(df_original)} NCMs carregados")
     
     # 2. Carregar descrições enriquecidas
     print("\n2. Carregando descrições enriquecidas...")
     if not Path(arquivo_enriquecido).exists():
-        print(f"   ✗ ERRO: Arquivo '{arquivo_enriquecido}' não encontrado!")
+        print(f"    ERRO: Arquivo '{arquivo_enriquecido}' não encontrado!")
         print(f"   → Certifique-se de que o ChatGPT retornou o arquivo e você o salvou neste diretório.")
         return False
     
     df_enriquecido = pd.read_csv(arquivo_enriquecido)
-    print(f"   ✓ {len(df_enriquecido)} descrições enriquecidas carregadas")
+    print(f"    {len(df_enriquecido)} descrições enriquecidas carregadas")
     
     # 3. Validar estrutura
     print("\n3. Validando estrutura do arquivo...")
@@ -37,18 +37,18 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
     colunas_presentes = df_enriquecido.columns.tolist()
     
     if not all(col in colunas_presentes for col in colunas_esperadas):
-        print(f"   ✗ ERRO: Estrutura inválida!")
+        print(f"    ERRO: Estrutura inválida!")
         print(f"   Esperado: {colunas_esperadas}")
         print(f"   Encontrado: {colunas_presentes}")
         return False
     
-    print(f"   ✓ Estrutura válida")
+    print(f"    Estrutura válida")
     
     # 4. Criar backup
     print("\n4. Criando backup da planilha original...")
     backup_path = "PLANILHA_PRICETAX_REGRAS_REFINADAS_BACKUP_PRE_ENRIQUECIMENTO.xlsx"
     df_original.to_excel(backup_path, index=False)
-    print(f"   ✓ Backup salvo: {backup_path}")
+    print(f"    Backup salvo: {backup_path}")
     
     # 5. Mesclar descrições enriquecidas
     print("\n5. Mesclando descrições enriquecidas...")
@@ -76,13 +76,13 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
                 df_original.at[idx, "NCM_DESCRICAO"] = desc_nova
                 alteracoes += 1
     
-    print(f"   ✓ {alteracoes} descrições atualizadas")
-    print(f"   ✓ {len(df_original) - alteracoes} descrições mantidas")
+    print(f"    {alteracoes} descrições atualizadas")
+    print(f"    {len(df_original) - alteracoes} descrições mantidas")
     
     # 6. Salvar planilha atualizada
     print("\n6. Salvando planilha atualizada...")
     df_original.to_excel("PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx", index=False)
-    print(f"   ✓ Planilha salva: PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")
+    print(f"    Planilha salva: PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")
     
     # 7. Relatório de alterações
     print("\n" + "=" * 80)
@@ -94,7 +94,7 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
     print(f"Taxa de alteração: {alteracoes / len(df_original) * 100:.1f}%")
     
     # Mostrar exemplos de alterações
-    print("\n📝 EXEMPLOS DE ALTERAÇÕES:")
+    print("\n EXEMPLOS DE ALTERAÇÕES:")
     exemplos = df_enriquecido[
         df_enriquecido["NCM_DESCRICAO_ORIGINAL"] != df_enriquecido["NCM_DESCRICAO_ENRIQUECIDA"]
     ].head(10)
@@ -105,11 +105,11 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
         print(f"  DEPOIS: {row['NCM_DESCRICAO_ENRIQUECIDA']}")
     
     print("\n" + "=" * 80)
-    print("✅ IMPORTAÇÃO CONCLUÍDA COM SUCESSO!")
+    print("[OK] IMPORTAÇÃO CONCLUÍDA COM SUCESSO!")
     print("=" * 80)
-    print(f"\n📁 Backup disponível em: {backup_path}")
-    print(f"📁 Planilha atualizada: PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")
-    print(f"\n💡 Próximo passo: Fazer commit e push para o GitHub")
+    print(f"\n Backup disponível em: {backup_path}")
+    print(f" Planilha atualizada: PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")
+    print(f"\n Próximo passo: Fazer commit e push para o GitHub")
     
     return True
 

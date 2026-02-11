@@ -36,7 +36,7 @@ try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
     BENEFICIOS_DISPONIVEL = True
 except ImportError as e:
-    print(f"⚠️ Módulo de benefícios fiscais não disponível: {e}")
+    print(f"[ATENÇÃO] Módulo de benefícios fiscais não disponível: {e}")
     BENEFICIOS_DISPONIVEL = False
 
 # Importar função centralizada de cálculo
@@ -44,7 +44,7 @@ try:
     from calcular_tributacao import calcular_tributacao_completa
     CALC_TRIBUTACAO_DISPONIVEL = True
 except ImportError as e:
-    print(f"⚠️ Módulo de cálculo de tributação não disponível: {e}")
+    print(f"[ATENÇÃO] Módulo de cálculo de tributação não disponível: {e}")
     CALC_TRIBUTACAO_DISPONIVEL = False
 
 # =============================================================================
@@ -802,12 +802,12 @@ if BENEFICIOS_DISPONIVEL:
         
         if planilha_encontrada:
             BENEFICIOS_ENGINE = init_engine(planilha_encontrada)
-            print(f"✅ Motor de benefícios fiscais inicializado: {planilha_encontrada}")
+            print(f"[OK] Motor de benefícios fiscais inicializado: {planilha_encontrada}")
         else:
-            print("⚠️ Planilha de benefícios não encontrada. Funcionalidade desabilitada.")
+            print("[ATENÇÃO] Planilha de benefícios não encontrada. Funcionalidade desabilitada.")
             BENEFICIOS_ENGINE = None
     except Exception as e:
-        print(f"❌ Erro ao inicializar motor de benefícios: {e}")
+        print(f"[ERRO] Erro ao inicializar motor de benefícios: {e}")
         import traceback
         traceback.print_exc()
         BENEFICIOS_ENGINE = None
@@ -996,13 +996,13 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     """
     Sugere um código de Classificação Tributária (cClassTrib) para NFe conforme LC 214/2025.
     
-    🔹 REGRAS FUNDAMENTAIS (LC 214/2025):
+    • REGRAS FUNDAMENTAIS (LC 214/2025):
     - cClassTrib NÃO depende do valor da alíquota, e sim da NATUREZA JURÍDICA da operação
     - Série 000xxx → tributação cheia (sem benefício)
     - Série 200xxx → operação onerosa com REDUÇÃO LEGAL
     - Série 410xxx → imunidade, isenção ou não incidência
     
-    🍞 ALIMENTOS - Classificação Correta:
+    • ALIMENTOS - Classificação Correta:
     1. Cesta Básica Nacional (Anexo I) → 200003 (redução 100%, alíquota zero)
     2. Cesta Básica Estendida (Anexo VII) → 200034 (redução 60%)
     3. Alimentos sem benefício → 000001 (tributação padrão)
@@ -1050,7 +1050,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         # Se for operação não onerosa (410999), explicar claramente
         if code == "410999":
             msg = (
-                f"⚠️ Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
+                f"[ATENÇÃO] Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
                 "Não gera débito de IBS/CBS. "
                 "Exemplos: brindes, doações, remessas temporárias, amostras grátis."
             )
@@ -1069,11 +1069,11 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     
     # 2.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
     if "ALIQ_ZERO_CESTA_BASICA_NACIONAL" in regime_iva_upper:
-        # ❌ ERRO CRÍTICO: usar 000001 para cesta básica
-        # ✅ CORRETO: usar 200003 (operação onerosa com redução legal)
+        # [ERRO] ERRO CRÍTICO: usar 000001 para cesta básica
+        # [OK] CORRETO: usar 200003 (operação onerosa com redução legal)
         code = "200003"
         msg = (
-            f"✅ Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
+            f"[OK] Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
             "Operação onerosa com redução de 100% (alíquota zero). "
             "Fundamento: LC 214/2025, Anexo I."
         )
@@ -1105,16 +1105,16 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
             )
             
             if code:
-                return code, f"✅ {msg} → cClassTrib {code}. Fundamento: LC 214/2025."
+                return code, f"[OK] {msg} → cClassTrib {code}. Fundamento: LC 214/2025."
         
         # Fallback: regime antigo sem anexo específico
         if reducao == 100:
             code = "200003"
-            msg = "✅ Cesta Básica Nacional (Anexo I) → cClassTrib 200003. Fundamento: LC 214/2025, Anexo I."
+            msg = "[OK] Cesta Básica Nacional (Anexo I) → cClassTrib 200003. Fundamento: LC 214/2025, Anexo I."
             return code, msg
         elif reducao == 60:
             code = "200034"
-            msg = "⚠️ Redução 60% (anexo não identificado) → cClassTrib 200034 (genérico). Revise o anexo específico."
+            msg = "[ATENÇÃO] Redução 60% (anexo não identificado) → cClassTrib 200034 (genérico). Revise o anexo específico."
             return code, msg
     
     # 2.3) Outras reduções específicas (se houver)
@@ -1646,7 +1646,7 @@ if pagina == "LC 214/2025":
                         border-radius: 4px;
                         margin-top: 1rem;
                     ">
-                        <strong style="color: {COLOR_GOLD};">■ Correlação</strong><br>
+                        <strong style="color: {COLOR_GOLD};"> Correlação</strong><br>
                         <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">Vinculado à EC 132/2023 e Art. 156-A da CF/88</span>
                     </div>
                     """,
@@ -1663,7 +1663,7 @@ if pagina == "LC 214/2025":
                         border-radius: 8px;
                         margin-top: 1rem;
                     ">
-                        <strong style="color: #F59E0B;">▲ Artigo não encontrado</strong><br>
+                        <strong style="color: #F59E0B;"> Artigo não encontrado</strong><br>
                         <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">
                             Tente os artigos principais: <strong>1, 2, 4, 11, 31, 47, 143, 342, 409, 544</strong>
                         </span>
@@ -1863,86 +1863,86 @@ if pagina == "LC 214/2025":
             unsafe_allow_html=True
         )
         
-        qa_filter = st.text_input("▸ Filtrar por palavra-chave", placeholder="Ex: crédito, transição, cashback", key="qa_filter_input")
+        qa_filter = st.text_input(" Filtrar por palavra-chave", placeholder="Ex: crédito, transição, cashback", key="qa_filter_input")
         
         # Organizar Q&A por categorias
         qa_categories = {
-            "■ Conceitos Fundamentais": [
+            " Conceitos Fundamentais": [
                 {"q": "O que é o IVA Dual?", "a": "É o sistema composto pelo IBS (Estados/Municípios) e pela CBS (União), com base de cálculo e regras harmonizadas."},
                 {"q": "O IBS substitui quais impostos?", "a": "O ICMS (Estadual) e o ISS (Municipal)."},
                 {"q": "A CBS substitui quais impostos?", "a": "O PIS e a COFINS (Federais)."},
                 {"q": "O que acontece com o IPI?", "a": "O IPI será extinto, exceto para produtos que tenham industrialização na Zona Franca de Manaus."},
                 {"q": "O que é a harmonização de bases?", "a": "IBS e CBS terão sempre a mesma base de cálculo e as mesmas hipóteses de incidência."},
             ],
-            "💰 Tributação e Alíquotas": [
+            " Tributação e Alíquotas": [
                 {"q": "Quando começa a transição?", "a": "Em 2026, com alíquotas de 0,1% (IBS) e 0,9% (CBS)."},
                 {"q": "Haverá alíquota uniforme?", "a": "Sim, cada ente federativo fixará sua alíquota, que será a mesma para todos os bens e serviços."},
                 {"q": "O que é the alíquota de referência?", "a": "Valor fixado pelo Senado para garantir que a carga tributária total não aumente."},
                 {"q": "O que é a trava da carga tributária?", "a": "Mecanismo que reduz as alíquotas se a arrecadação superar a média histórica."},
                 {"q": "O que é o imposto por fora?", "a": "O IBS e a CBS não integram sua própria base de cálculo nem a base um do outro."},
             ],
-            "💳 Pagamento e Arrecadação": [
+            " Pagamento e Arrecadação": [
                 {"q": "O que é o Split Payment?", "a": "É o recolhimento automático do imposto no ato do pagamento eletrônico, segregando o tributo do valor líquido."},
                 {"q": "Como será a cobrança no destino?", "a": "O imposto pertencerá ao ente federativo onde o bem ou serviço for consumido."},
                 {"q": "O que é o Comitê Gestor do IBS?", "a": "Entidade nacional responsável por centralizar a arrecadação e distribuição do IBS entre Estados e Municípios."},
                 {"q": "Qual o papel do CGIBS?", "a": "Harmonizar as normas e julgar processos administrativos do IBS."},
                 {"q": "O que é o IBS/CBS na importação?", "a": "Cobrado no desembaraço aduaneiro, com as mesmas alíquotas do mercado interno."},
             ],
-            "💸 Créditos e Compensação": [
+            " Créditos e Compensação": [
                 {"q": "Haverá crédito sobre bens de uso e consumo?", "a": "Sim, a regra é o crédito financeiro amplo, desde que haja o pagamento do imposto na etapa anterior."},
                 {"q": "O que é o crédito financeiro?", "a": "Diferente do crédito físico, permite abater o imposto pago em qualquer aquisição necessária à atividade."},
                 {"q": "Como funciona a não cumulatividade plena?", "a": "Permite o crédito de qualquer imposto pago na aquisição de bens e serviços para a atividade econômica."},
                 {"q": "Como será a devolução de créditos acumulados?", "a": "A lei prevê prazos rápidos para a devolução de créditos que não puderem ser compensados."},
                 {"q": "Como funciona o crédito presumido?", "a": "Concedido em situações específicas, como na aquisição de produtos de produtores rurais não contribuintes."},
             ],
-            "🍽 Regimes Especiais": [
+            " Regimes Especiais": [
                 {"q": "O que é a cesta básica nacional?", "a": "Lista de produtos essenciais que terão alíquota zero de IBS e CBS."},
                 {"q": "O que são regimes diferenciados?", "a": "Setores com redução de alíquota (ex: 60% para saúde e educação)."},
                 {"q": "O que são regimes específicos?", "a": "Setores com regras próprias de base de cálculo e alíquota (ex: combustíveis e serviços financeiros)."},
                 {"q": "O que é a CBS monofásica?", "a": "Regime aplicado a combustíveis, onde o imposto é cobrado uma única vez na cadeia."},
                 {"q": "Como fica a Zona Franca de Manaus?", "a": "Terá tratamento diferenciado para manter sua competitividade e diferencial comparativo."},
             ],
-            "🏛 Impostos Seletivos e Extrafiscais": [
+            " Impostos Seletivos e Extrafiscais": [
                 {"q": "O que é o Imposto Seletivo?", "a": "Um tributo extrafiscal sobre produtos nocivos à saúde ou ao meio ambiente (Sin Tax)."},
                 {"q": "O que é o Sin Tax?", "a": "Apelido do Imposto Seletivo, focado em desestimular o consumo de itens prejudiciais."},
                 {"q": "O que é o princípio da neutralidade?", "a": "Garante que o imposto não influencie as decisões de produção e consumo."},
             ],
-            "🏠 Cashback e Benefícios Sociais": [
+            " Cashback e Benefícios Sociais": [
                 {"q": "Como funciona o Cashback?", "a": "Devolução de parte do imposto pago para famílias de baixa renda cadastradas no CadÚnico."},
                 {"q": "O que é o cashback de energia elétrica?", "a": "Devolução de imposto sobre a conta de luz para famílias de baixa renda."},
             ],
-            "🌎 Exportações e Turismo": [
+            " Exportações e Turismo": [
                 {"q": "As exportações são tributadas?", "a": "Não, as exportações são imunes para garantir a competitividade do produto brasileiro."},
                 {"q": "Como funciona a devolução ao turista estrangeiro?", "a": "Turistas podem solicitar o estorno do IBS/CBS pago em compras no Brasil ao sair do país."},
             ],
-            "📱 Economia Digital": [
+            " Economia Digital": [
                 {"q": "Haverá imposto sobre serviços digitais?", "a": "Sim, a lei prevê a tributação de plataformas e serviços de streaming."},
                 {"q": "Como funciona a responsabilidade do marketplace?", "a": "Plataformas digitais podem ser responsáveis pelo recolhimento do imposto de seus vendedores."},
             ],
-            "🏢 Simples Nacional e Empresas": [
+            " Simples Nacional e Empresas": [
                 {"q": "Como fica o Simples Nacional?", "a": "As empresas podem optar por recolher o IBS/CBS por fora do Simples para garantir créditos aos seus clientes."},
                 {"q": "Como será a tributação de imóveis?", "a": "Terá regime específico com redutores de base de cálculo."},
                 {"q": "O que é o regime de caixa?", "a": "Possibilidade de recolher o imposto apenas no recebimento, prevista para alguns setores específicos."},
             ],
-            "📝 Fiscalização e Conformidade": [
+            " Fiscalização e Conformidade": [
                 {"q": "Como será a fiscalização?", "a": "Será integrada entre a Receita Federal e o Comitê Gestor do IBS."},
                 {"q": "Como será a nota fiscal eletrônica?", "a": "Haverá um modelo nacional unificado para IBS e CBS."},
                 {"q": "Como funciona a consulta formal?", "a": "O contribuinte poderá consultar o CGIBS sobre a interpretação da lei com efeito vinculante."},
                 {"q": "O que é o contencioso administrativo?", "a": "Julgamento de disputas tributárias de forma unificada para o IBS."},
                 {"q": "O que é o padrão de conformidade?", "a": "Programas de estímulo à autorregularização e conformidade fiscal."},
             ],
-            "🔄 Transição e Mudanças": [
+            " Transição e Mudanças": [
                 {"q": "O que é o período de teste?", "a": "O ano de 2026, onde as alíquotas serão mínimas para testar a operacionalização do sistema."},
                 {"q": "Como ficam os benefícios fiscais atuais?", "a": "Serão extintos gradualmente durante o período de transição."},
                 {"q": "Como será a transição da arrecadação?", "a": "Ocorrerá ao longo de 50 anos para não prejudicar o caixa de Estados e Municípios."},
                 {"q": "O que é o fundo de desenvolvimento regional?", "a": "Fundo para compensar o fim dos incentivos fiscais e promover o desenvolvimento."},
             ],
-            "📊 Outros Impostos": [
+            "[ESTATÍSTICAS] Outros Impostos": [
                 {"q": "Haverá incidência sobre heranças?", "a": "Não, o IBS/CBS incide apenas sobre o consumo. O ITCMD continua regendo heranças."},
                 {"q": "Como fica o IPVA?", "a": "Passará a incidir também sobre veículos aquáticos e aéreos de luxo."},
                 {"q": "Como fica o ITCMD?", "a": "Terá alíquotas progressivas obrigatórias em todo o país."},
             ],
-            "👥 Impacto no Consumidor": [
+            "[USUÁRIOS] Impacto no Consumidor": [
                 {"q": "Qual o impacto final para o consumidor?", "a": "Maior transparência, com o valor real do imposto destacado na nota fiscal."},
             ],
         }
@@ -2449,7 +2449,7 @@ elif pagina == "Consulta NCM":
                             st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                         # Alertar se for não oneroso
                         if cclastrib_cfop_code == "410999":
-                            st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>[ATENÇÃO] Operação não onerosa</span>", unsafe_allow_html=True)
 
                     st.markdown("**Tipo de Alíquota (cClassTrib)**")
                     tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
@@ -2593,7 +2593,7 @@ elif pagina == "Consulta NCM":
                         unsafe_allow_html=True,
                     )
                     
-                    st.info("📌 Esta é a tributação padrão do CFOP. Para produtos específicos com reduções ou regimes especiais, utilize a busca por NCM.")
+                    st.info(" Esta é a tributação padrão do CFOP. Para produtos específicos com reduções ou regimes especiais, utilize a busca por NCM.")
     
     # =============================================================================
     # MODO 3: DESCRIÇÃO DO PRODUTO
@@ -2851,7 +2851,7 @@ elif pagina == "Consulta NCM":
                     unsafe_allow_html=True,
                 )
             else:
-                st.success(f"🔍 {len(resultados)} produto(s) encontrado(s). Selecione o produto desejado:")
+                st.success(f"[FILTROS] {len(resultados)} produto(s) encontrado(s). Selecione o produto desejado:")
                 
                 # Criar lista de opções
                 opcoes = []
@@ -3173,7 +3173,7 @@ elif pagina == "Consulta NCM":
                                     st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                                 # Alertar se for não oneroso
                                 if cclastrib_cfop_code == "410999":
-                                    st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>⚠️ Operação não onerosa</span>", unsafe_allow_html=True)
+                                    st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>[ATENÇÃO] Operação não onerosa</span>", unsafe_allow_html=True)
                             st.markdown("**Tipo de Alíquota (cClassTrib)**")
                             tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
                             tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)
@@ -3733,7 +3733,7 @@ elif pagina == "Análise XML NF-e":
                             margin-bottom: 1.5rem;
                         ">
                             <h3 style="color: {COLOR_GOLD}; margin: 0; font-size: 1.2rem; font-weight: 600;">
-                                ■ Item {idx}: {desc[:80]}
+                                 Item {idx}: {desc[:80]}
                             </h3>
                         </div>
                         """,
@@ -3916,11 +3916,11 @@ elif pagina == "Análise XML NF-e":
                             # Cor e ícone
                             if tudo_ok:
                                 status_cor = "#10B981"  # Verde
-                                status_icone = "✓"
+                                status_icone = ""
                                 status_texto = "CONFORME"
                             else:
                                 status_cor = "#F59E0B"  # Amarelo
-                                status_icone = "⚠"
+                                status_icone = ""
                                 status_texto = "DIVERGÊNCIA"
                             
                             # Exibir validação
@@ -3949,7 +3949,7 @@ elif pagina == "Análise XML NF-e":
                             st.markdown("#### Comparação Detalhada")
                             
                             def status_icon(ok):
-                                return "✓" if ok else "✗"
+                                return "" if ok else ""
                             
                             def status_color(ok):
                                 return "#10B981" if ok else "#EF4444"

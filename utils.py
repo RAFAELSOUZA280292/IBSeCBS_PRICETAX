@@ -137,19 +137,19 @@ def format_flag(value: str) -> str:
         value: Valor da flag ("SIM", "NAO", "NÃO", etc)
     
     Returns:
-        String formatada com emoji (✅ ou ➖)
+        String formatada com emoji ([OK] ou )
     
     Exemplos:
         >>> format_flag("SIM")
-        '✅ Sim'
+        '[OK] Sim'
         >>> format_flag("NAO")
-        '➖ Não'
+        ' Não'
     """
     v_upper = str(value).upper().strip()
     if v_upper == "SIM":
-        return "✅ Sim"
+        return "[OK] Sim"
     elif v_upper in ("NAO", "NÃO"):
-        return "➖ Não"
+        return " Não"
     return str(value)
 
 

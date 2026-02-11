@@ -103,7 +103,7 @@ def render_blocos_navigation():
             margin-bottom: 1.5rem;
         ">
             <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
-                📚 Navegação por Blocos Temáticos
+                 Navegação por Blocos Temáticos
             </h3>
             <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.95rem;">
                 32 blocos comentados pela PriceTax com análise estruturada da LC 214/2025
@@ -250,7 +250,7 @@ def render_blocos_navigation():
         st.markdown(
             f"""
             <h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 1rem 0; font-size: 1.2rem;">
-                📋 Estrutura do Bloco
+                [REGISTROS] Estrutura do Bloco
             </h3>
             """,
             unsafe_allow_html=True
@@ -309,7 +309,7 @@ def render_blocos_navigation():
     st.markdown(
         f"""
         <h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 1rem 0; font-size: 1.2rem;">
-            📄 Conteúdo Completo
+             Conteúdo Completo
         </h3>
         """,
         unsafe_allow_html=True

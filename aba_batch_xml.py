@@ -292,7 +292,7 @@ def render_aba_batch_xml():
                     margin-bottom: 1.5rem;
                 ">
                     <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
-                        📈 Dashboards de Governança Fiscal IBS/CBS
+                        [ANÁLISE] Dashboards de Governança Fiscal IBS/CBS
                     </h3>
                     <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                         Análise visual de conformidade e distribuição de itens
@@ -504,7 +504,7 @@ def render_aba_batch_xml():
                         margin-bottom: 1.5rem;
                     ">
                         <h3 style="color: {COLOR_ERROR}; margin: 0 0 0.5rem 0;">
-                            ⚠️ Fornecedores/Emitentes com Divergências
+                            [ATENÇÃO] Fornecedores/Emitentes com Divergências
                         </h3>
                         <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                             Ranking por valor total das notas fiscais com itens divergentes
@@ -617,7 +617,7 @@ def render_aba_batch_xml():
                             })
             
             # Tabs para conformes e divergentes
-            tab1, tab2 = st.tabs([f"✅ Itens Conformes ({len(itens_conformes_lista)})", f"⚠️ Itens Divergentes ({len(itens_divergentes_lista)})"])
+            tab1, tab2 = st.tabs([f"[OK] Itens Conformes ({len(itens_conformes_lista)})", f"[ATENÇÃO] Itens Divergentes ({len(itens_divergentes_lista)})"])
             
             with tab1:
                 if itens_conformes_lista:
@@ -654,7 +654,7 @@ def render_aba_batch_xml():
             filename = f"relatorio_lote_pricetax_{timestamp}.xlsx"
             
             st.download_button(
-                label="📥 Download Relatório Excel",
+                label=" Download Relatório Excel",
                 data=excel_file,
                 file_name=filename,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -671,7 +671,7 @@ def render_aba_batch_xml():
                     border-radius: 4px;
                     margin-top: 1rem;
                 ">
-                    <strong style="color: {COLOR_GOLD};">📊 Conteúdo do Relatório Excel</strong><br><br>
+                    <strong style="color: {COLOR_GOLD};">[ESTATÍSTICAS] Conteúdo do Relatório Excel</strong><br><br>
                     <ul style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem; margin: 0;">
                         <li><strong>Aba "Resumo":</strong> Estatísticas gerais do processamento</li>
                         <li><strong>Aba "Validação":</strong> Lista completa de todos os XMLs processados</li>
@@ -708,7 +708,7 @@ def render_aba_batch_xml():
             color: {COLOR_TEXT_MUTED};
             font-size: 0.85rem;
         ">
-            <strong style="color: {COLOR_GOLD};">💡 Dica:</strong> 
+            <strong style="color: {COLOR_GOLD};"> Dica:</strong> 
             Para grandes volumes, comprima seus XMLs em um arquivo ZIP antes do upload.
             O processamento é mais rápido e eficiente!
         </div>

@@ -312,7 +312,7 @@ class TestProcessarSpedXML:
         
         if resultado["total_ambiguos"] > 0:
             assert len(resultado["ncms_ambiguos"]) > 0
-            assert "⚠️" in resultado["mensagem_ui"]
+            assert "[ATENÇÃO]" in resultado["mensagem_ui"]
 
 
 # =============================================================================
