@@ -3949,7 +3949,7 @@ elif pagina == "Análise XML NF-e":
                             st.markdown("#### Comparação Detalhada")
                             
                             def status_icon(ok):
-                                return "" if ok else ""
+                                return "✓" if ok else "✗"
                             
                             def status_color(ok):
                                 return "#10B981" if ok else "#EF4444"
