@@ -291,10 +291,10 @@ class BeneficiosFiscaisEngine:
                 
                 self.patterns.append((pattern, dados))
             
-            print(f"[OK] Carregados {len(self.patterns)} patterns válidos de {len(self.df)} linhas")
+            print(f"Carregados {len(self.patterns)} patterns válidos de {len(self.df)} linhas")
             
         except Exception as e:
-            print(f"[ERRO] Erro ao carregar planilha: {e}")
+            print(f"ERRO: Erro ao carregar planilha: {e}")
             raise
     
     def get_matches(self, ncm: str) -> List[Enquadramento]:
@@ -428,11 +428,11 @@ def processar_sped_xml(engine: BeneficiosFiscaisEngine, ncms: List[str]) -> Dict
     if resultado["total_ambiguos"] > 0:
         anexos_str = ", ".join(resultado["anexos_encontrados"])
         resultado["mensagem_ui"] = (
-            f"[ATENÇÃO] Você possui produtos que se aplicam a múltiplos anexos: {anexos_str}. "
+            f"ATENÇÃO: Você possui produtos que se aplicam a múltiplos anexos: {anexos_str}. "
             "Escolha um anexo PRINCIPAL para esta análise."
         )
     else:
-        resultado["mensagem_ui"] = "[OK] Todos os produtos têm enquadramento único."
+        resultado["mensagem_ui"] = "Todos os produtos têm enquadramento único."
     
     return resultado
 

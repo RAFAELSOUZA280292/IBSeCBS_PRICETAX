@@ -419,7 +419,7 @@ def parse_multiple_nfse(xml_paths: List[str]) -> List[Dict[str, Any]]:
     
     # Se houver erros, adicionar ao resultado
     if erros:
-        print(f"[ATENÇÃO] {len(erros)} arquivo(s) com erro:")
+        print(f"ATENÇÃO: {len(erros)} arquivo(s) com erro:")
         for erro in erros:
             print(f"  - {erro['arquivo']}: {erro['erro']}")
     

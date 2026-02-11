@@ -250,7 +250,7 @@ def render_blocos_navigation():
         st.markdown(
             f"""
             <h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 1rem 0; font-size: 1.2rem;">
-                [REGISTROS] Estrutura do Bloco
+                Estrutura do Bloco
             </h3>
             """,
             unsafe_allow_html=True

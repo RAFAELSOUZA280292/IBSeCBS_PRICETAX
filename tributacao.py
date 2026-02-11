@@ -210,11 +210,11 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     
     # 1.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
     if "ALIQ_ZERO_CESTA_BASICA_NACIONAL" in regime_iva_upper:
-        # [ERRO] ERRO CRÍTICO: usar 000001 para cesta básica
-        # [OK] CORRETO: usar 200003 (operação onerosa com redução legal)
+        # ERRO: ERRO CRÍTICO: usar 000001 para cesta básica
+        # CORRETO: usar 200003 (operação onerosa com redução legal)
         code = "200003"
         msg = (
-            f"[OK] Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
+            f"Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
             "Operação onerosa com redução de 100% (alíquota zero). "
             "Fundamento: LC 214/2025, Anexo I."
         )
@@ -222,8 +222,8 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     
     # 1.2) Redução 60% (Cesta Estendida - Anexo VII ou Essencialidade)
     if "RED_60" in regime_iva_upper:
-        # [ERRO] ERRO CRÍTICO: usar 000001 para produtos com redução 60%
-        # [OK] CORRETO: usar 200034 (operação onerosa com redução de 60%)
+        # ERRO: ERRO CRÍTICO: usar 000001 para produtos com redução 60%
+        # CORRETO: usar 200034 (operação onerosa com redução de 60%)
         code = "200034"
         
         # Identificar se é alimento (Anexo VII) ou essencialidade (arts. 137-145)
@@ -233,7 +233,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
             fundamento = "arts. 137 a 145 (essencialidade)"
         
         msg = (
-            f"[OK] Redução 60% ({fundamento}) → cClassTrib {code}. "
+            f"Redução 60% ({fundamento}) → cClassTrib {code}. "
             "Operação onerosa com redução de 60%. "
             f"Fundamento: LC 214/2025, {fundamento}."
         )
@@ -252,7 +252,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         # Se for operação não onerosa (410999), explicar claramente
         if code == "410999":
             msg = (
-                f"[ATENÇÃO] Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
+                f"ATENÇÃO: Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
                 "Não gera débito de IBS/CBS. "
                 "Exemplos: brindes, doações, amostras grátis."
             )

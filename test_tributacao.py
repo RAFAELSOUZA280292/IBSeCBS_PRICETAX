@@ -30,10 +30,10 @@ def test_cesta_basica_nacional():
     
     # Validar
     expected_code = "200003"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
-    assert "Cesta Básica Nacional" in msg, f"[ERRO] FALHOU: Mensagem incorreta: {msg}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
+    assert "Cesta Básica Nacional" in msg, f"ERRO: FALHOU: Mensagem incorreta: {msg}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -53,11 +53,11 @@ def test_reducao_60_alimentos():
     
     # Validar
     expected_code = "200034"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
-    assert "Redução 60%" in msg, f"[ERRO] FALHOU: Mensagem incorreta: {msg}"
-    assert "Anexo VII" in msg, f"[ERRO] FALHOU: Deve mencionar Anexo VII: {msg}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
+    assert "Redução 60%" in msg, f"ERRO: FALHOU: Mensagem incorreta: {msg}"
+    assert "Anexo VII" in msg, f"ERRO: FALHOU: Deve mencionar Anexo VII: {msg}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -77,11 +77,11 @@ def test_reducao_60_essencialidade():
     
     # Validar
     expected_code = "200034"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
-    assert "Redução 60%" in msg, f"[ERRO] FALHOU: Mensagem incorreta: {msg}"
-    assert "essencialidade" in msg, f"[ERRO] FALHOU: Deve mencionar essencialidade: {msg}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
+    assert "Redução 60%" in msg, f"ERRO: FALHOU: Mensagem incorreta: {msg}"
+    assert "essencialidade" in msg, f"ERRO: FALHOU: Deve mencionar essencialidade: {msg}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -101,9 +101,9 @@ def test_tributacao_padrao():
     
     # Validar
     expected_code = "000001"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -123,10 +123,10 @@ def test_operacao_nao_onerosa():
     
     # Validar
     expected_code = "410999"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
-    assert "não onerosa" in msg, f"[ERRO] FALHOU: Mensagem incorreta: {msg}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
+    assert "não onerosa" in msg, f"ERRO: FALHOU: Mensagem incorreta: {msg}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -147,9 +147,9 @@ def test_prioridade_regime_sobre_cfop():
     
     # Validar
     expected_code = "200003"
-    assert code == expected_code, f"[ERRO] FALHOU: Regime IVA deve ter prioridade! Esperado {expected_code}, obtido {code}"
+    assert code == expected_code, f"ERRO: FALHOU: Regime IVA deve ter prioridade! Esperado {expected_code}, obtido {code}"
     
-    print(f"[OK] PASSOU: Regime IVA teve prioridade sobre CFOP")
+    print(f"PASSOU: Regime IVA teve prioridade sobre CFOP")
     print(f"   cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
@@ -169,10 +169,10 @@ def test_cfop_invalido():
     code, msg = guess_cclasstrib(cst, cfop, regime_iva)
     
     # Validar
-    assert code == "", f"[ERRO] FALHOU: Código deveria ser vazio, obtido {code}"
-    assert "Informe o CFOP" in msg, f"[ERRO] FALHOU: Mensagem incorreta: {msg}"
+    assert code == "", f"ERRO: FALHOU: Código deveria ser vazio, obtido {code}"
+    assert "Informe o CFOP" in msg, f"ERRO: FALHOU: Mensagem incorreta: {msg}"
     
-    print(f"[OK] PASSOU: Retornou erro adequado")
+    print(f"PASSOU: Retornou erro adequado")
     print(f"   Mensagem: {msg}")
 
 
@@ -192,9 +192,9 @@ def test_cfop_interestadual():
     
     # Validar
     expected_code = "000001"
-    assert code == expected_code, f"[ERRO] FALHOU: Esperado {expected_code}, obtido {code}"
+    assert code == expected_code, f"ERRO: FALHOU: Esperado {expected_code}, obtido {code}"
     
-    print(f"[OK] PASSOU: cClassTrib = {code}")
+    print(f"PASSOU: cClassTrib = {code}")
     print(f"   Mensagem: {msg}")
 
 
@@ -223,23 +223,23 @@ def run_all_tests():
             test()
             passed += 1
         except AssertionError as e:
-            print(f"\n[ERRO] FALHOU: {e}")
+            print(f"\nERRO: FALHOU: {e}")
             failed += 1
         except Exception as e:
-            print(f"\n[ERRO] ERRO: {e}")
+            print(f"\nERRO: ERRO: {e}")
             failed += 1
     
     # Resumo
     print("\n" + "="*70)
-    print("[ESTATÍSTICAS] RESUMO DOS TESTES")
+    print("RESUMO DOS TESTES")
     print("="*70)
-    print(f"[OK] Passou: {passed}/{len(tests)}")
-    print(f"[ERRO] Falhou: {failed}/{len(tests)}")
+    print(f"Passou: {passed}/{len(tests)}")
+    print(f"ERRO: Falhou: {failed}/{len(tests)}")
     
     if failed == 0:
         print("\n TODOS OS TESTES PASSARAM!")
     else:
-        print(f"\n[ATENÇÃO] {failed} TESTE(S) FALHARAM - REVISAR!")
+        print(f"\nATENÇÃO: {failed} TESTE(S) FALHARAM - REVISAR!")
     
     print("="*70)
 

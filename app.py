@@ -36,7 +36,7 @@ try:
     from beneficios_fiscais import init_engine, get_engine, consulta_ncm, processar_sped_xml
     BENEFICIOS_DISPONIVEL = True
 except ImportError as e:
-    print(f"[ATENÇÃO] Módulo de benefícios fiscais não disponível: {e}")
+    print(f"ATENÇÃO: Módulo de benefícios fiscais não disponível: {e}")
     BENEFICIOS_DISPONIVEL = False
 
 # Importar função centralizada de cálculo
@@ -44,7 +44,7 @@ try:
     from calcular_tributacao import calcular_tributacao_completa
     CALC_TRIBUTACAO_DISPONIVEL = True
 except ImportError as e:
-    print(f"[ATENÇÃO] Módulo de cálculo de tributação não disponível: {e}")
+    print(f"ATENÇÃO: Módulo de cálculo de tributação não disponível: {e}")
     CALC_TRIBUTACAO_DISPONIVEL = False
 
 # =============================================================================
@@ -802,12 +802,12 @@ if BENEFICIOS_DISPONIVEL:
         
         if planilha_encontrada:
             BENEFICIOS_ENGINE = init_engine(planilha_encontrada)
-            print(f"[OK] Motor de benefícios fiscais inicializado: {planilha_encontrada}")
+            print(f"Motor de benefícios fiscais inicializado: {planilha_encontrada}")
         else:
-            print("[ATENÇÃO] Planilha de benefícios não encontrada. Funcionalidade desabilitada.")
+            print("ATENÇÃO: Planilha de benefícios não encontrada. Funcionalidade desabilitada.")
             BENEFICIOS_ENGINE = None
     except Exception as e:
-        print(f"[ERRO] Erro ao inicializar motor de benefícios: {e}")
+        print(f"ERRO: Erro ao inicializar motor de benefícios: {e}")
         import traceback
         traceback.print_exc()
         BENEFICIOS_ENGINE = None
@@ -1050,7 +1050,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
         # Se for operação não onerosa (410999), explicar claramente
         if code == "410999":
             msg = (
-                f"[ATENÇÃO] Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
+                f"ATENÇÃO: Operação não onerosa (CFOP {cfop_clean}) → cClassTrib {code}. "
                 "Não gera débito de IBS/CBS. "
                 "Exemplos: brindes, doações, remessas temporárias, amostras grátis."
             )
@@ -1069,11 +1069,11 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     
     # 2.1) Cesta Básica Nacional (Anexo I) - Redução 100% (alíquota zero)
     if "ALIQ_ZERO_CESTA_BASICA_NACIONAL" in regime_iva_upper:
-        # [ERRO] ERRO CRÍTICO: usar 000001 para cesta básica
-        # [OK] CORRETO: usar 200003 (operação onerosa com redução legal)
+        # ERRO: ERRO CRÍTICO: usar 000001 para cesta básica
+        # CORRETO: usar 200003 (operação onerosa com redução legal)
         code = "200003"
         msg = (
-            f"[OK] Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
+            f"Cesta Básica Nacional (Anexo I LC 214/25) → cClassTrib {code}. "
             "Operação onerosa com redução de 100% (alíquota zero). "
             "Fundamento: LC 214/2025, Anexo I."
         )
@@ -1105,16 +1105,16 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
             )
             
             if code:
-                return code, f"[OK] {msg} → cClassTrib {code}. Fundamento: LC 214/2025."
+                return code, f"{msg} → cClassTrib {code}. Fundamento: LC 214/2025."
         
         # Fallback: regime antigo sem anexo específico
         if reducao == 100:
             code = "200003"
-            msg = "[OK] Cesta Básica Nacional (Anexo I) → cClassTrib 200003. Fundamento: LC 214/2025, Anexo I."
+            msg = "Cesta Básica Nacional (Anexo I) → cClassTrib 200003. Fundamento: LC 214/2025, Anexo I."
             return code, msg
         elif reducao == 60:
             code = "200034"
-            msg = "[ATENÇÃO] Redução 60% (anexo não identificado) → cClassTrib 200034 (genérico). Revise o anexo específico."
+            msg = "ATENÇÃO: Redução 60% (anexo não identificado) → cClassTrib 200034 (genérico). Revise o anexo específico."
             return code, msg
     
     # 2.3) Outras reduções específicas (se houver)
@@ -1937,12 +1937,12 @@ if pagina == "LC 214/2025":
                 {"q": "Como será a transição da arrecadação?", "a": "Ocorrerá ao longo de 50 anos para não prejudicar o caixa de Estados e Municípios."},
                 {"q": "O que é o fundo de desenvolvimento regional?", "a": "Fundo para compensar o fim dos incentivos fiscais e promover o desenvolvimento."},
             ],
-            "[ESTATÍSTICAS] Outros Impostos": [
+            "Outros Impostos": [
                 {"q": "Haverá incidência sobre heranças?", "a": "Não, o IBS/CBS incide apenas sobre o consumo. O ITCMD continua regendo heranças."},
                 {"q": "Como fica o IPVA?", "a": "Passará a incidir também sobre veículos aquáticos e aéreos de luxo."},
                 {"q": "Como fica o ITCMD?", "a": "Terá alíquotas progressivas obrigatórias em todo o país."},
             ],
-            "[USUÁRIOS] Impacto no Consumidor": [
+            "Impacto no Consumidor": [
                 {"q": "Qual o impacto final para o consumidor?", "a": "Maior transparência, com o valor real do imposto destacado na nota fiscal."},
             ],
         }
@@ -2449,7 +2449,7 @@ elif pagina == "Consulta NCM":
                             st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                         # Alertar se for não oneroso
                         if cclastrib_cfop_code == "410999":
-                            st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>[ATENÇÃO] Operação não onerosa</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>ATENÇÃO: Operação não onerosa</span>", unsafe_allow_html=True)
 
                     st.markdown("**Tipo de Alíquota (cClassTrib)**")
                     tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
@@ -2851,7 +2851,7 @@ elif pagina == "Consulta NCM":
                     unsafe_allow_html=True,
                 )
             else:
-                st.success(f"[FILTROS] {len(resultados)} produto(s) encontrado(s). Selecione o produto desejado:")
+                st.success(f"{len(resultados)} produto(s) encontrado(s). Selecione o produto desejado:")
                 
                 # Criar lista de opções
                 opcoes = []
@@ -3173,7 +3173,7 @@ elif pagina == "Consulta NCM":
                                     st.markdown(f"<span style='font-size:0.85rem;'>{desc_class_cfop}</span>", unsafe_allow_html=True)
                                 # Alertar se for não oneroso
                                 if cclastrib_cfop_code == "410999":
-                                    st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>[ATENÇÃO] Operação não onerosa</span>", unsafe_allow_html=True)
+                                    st.markdown(f"<span style='font-size:0.8rem;color:#FFA500;'>ATENÇÃO: Operação não onerosa</span>", unsafe_allow_html=True)
                             st.markdown("**Tipo de Alíquota (cClassTrib)**")
                             tipo_aliq_code = class_info["TIPO_ALIQUOTA"] if class_info else ""
                             tipo_aliq_desc = map_tipo_aliquota(tipo_aliq_code)

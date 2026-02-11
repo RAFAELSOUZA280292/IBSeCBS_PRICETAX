@@ -93,12 +93,12 @@ def calcular_tributacao_completa(
                     regime = f"RED_{int(reducao_pct)}"
                     fonte = f"LC 214/25, {anexo}"
                 
-                print(f"[OK] Benefício aplicado: {anexo} ({reducao_pct}% redução)")
+                print(f"Benefício aplicado: {anexo} ({reducao_pct}% redução)")
             else:
-                print(f"[INFO] Nenhum benefício encontrado - Tributação padrão 1,00%")
+                print(f"Nenhum benefício encontrado - Tributação padrão 1,00%")
                 
         except Exception as e:
-            print(f"[ATENÇÃO] Erro ao consultar benefícios: {e}")
+            print(f"ATENÇÃO: Erro ao consultar benefícios: {e}")
     
     # =============================================================================
     # PASSO 2: CALCULAR TOTAL IVA

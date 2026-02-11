@@ -105,7 +105,7 @@ def importar_descricoes_enriquecidas(arquivo_enriquecido: str = "ncm_enriquecido
         print(f"  DEPOIS: {row['NCM_DESCRICAO_ENRIQUECIDA']}")
     
     print("\n" + "=" * 80)
-    print("[OK] IMPORTAÇÃO CONCLUÍDA COM SUCESSO!")
+    print("IMPORTAÇÃO CONCLUÍDA COM SUCESSO!")
     print("=" * 80)
     print(f"\n Backup disponível em: {backup_path}")
     print(f" Planilha atualizada: PLANILHA_PRICETAX_REGRAS_REFINADAS.xlsx")

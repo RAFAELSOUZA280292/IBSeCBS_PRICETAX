@@ -145,7 +145,7 @@ def render_auth_logs_section():
     st.markdown("---")
     
     # Filtros
-    st.markdown("#### [FILTROS] Filtros")
+    st.markdown("#### Filtros")
     col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
     
     with col_filtro1:
@@ -197,7 +197,7 @@ def render_auth_logs_section():
         col_graf1, col_graf2 = st.columns(2)
         
         with col_graf1:
-            st.markdown("#### [ESTATÍSTICAS] Logins por Status")
+            st.markdown("#### Logins por Status")
             status_counts = df_filtrado["status"].value_counts()
             
             fig_status = go.Figure(data=[go.Pie(
@@ -216,7 +216,7 @@ def render_auth_logs_section():
             st.plotly_chart(fig_status, use_container_width=True)
         
         with col_graf2:
-            st.markdown("#### [USUÁRIOS] Logins por Usuário")
+            st.markdown("#### Logins por Usuário")
             usuario_counts = df_filtrado["usuario"].value_counts().head(10)
             
             fig_usuarios = go.Figure(data=[go.Bar(
@@ -236,7 +236,7 @@ def render_auth_logs_section():
             st.plotly_chart(fig_usuarios, use_container_width=True)
         
         # Gráfico de linha temporal
-        st.markdown("#### [ANÁLISE] Linha do Tempo de Autenticações")
+        st.markdown("#### Linha do Tempo de Autenticações")
         
         df_timeline = df_filtrado.copy()
         df_timeline["data"] = df_timeline["timestamp"].dt.date
@@ -264,7 +264,7 @@ def render_auth_logs_section():
     st.markdown("---")
     
     # Tabela de logs
-    st.markdown("#### [REGISTROS] Registros Detalhados")
+    st.markdown("#### Registros Detalhados")
     
     # Preparar DataFrame para exibição
     df_display = df_filtrado.copy()
@@ -300,7 +300,7 @@ def render_auth_logs_section():
     
     # Informações adicionais
     st.markdown("---")
-    st.markdown("##### [INFO] Informações")
+    st.markdown("##### Informações")
     st.info(f"""
     **Arquivo de log:** `{log_file}`  
     **Total de registros:** {len(df_filtrado)} (filtrados) / {len(df_logs)} (total)  
