@@ -3547,59 +3547,42 @@ elif pagina == "Análise XML NF-e":
                     ncm_clean = re.sub(r"\D+", "", ncm)
                     resultado_tipi = df_tipi[df_tipi["NCM_DIG"] == ncm_clean]
                     
-                    # Espaçamento generoso entre itens
-                    st.markdown('<div style="margin: 3rem 0;"></div>', unsafe_allow_html=True)
+                    # Espaçamento entre itens
+                    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
                     
-                    # Card de título do item
+                    # Título do item - AMARELO VIBRANTE
                     st.markdown(
                         f"""
                         <div style="
-                            background: {COLOR_CARD_BG};
-                            padding: 1rem;
-                            border-radius: 8px;
-                            border-left: 4px solid {COLOR_GOLD};
-                            margin-bottom: 1rem;
+                            padding: 1rem 0;
+                            border-bottom: 2px solid {COLOR_GOLD};
+                            margin-bottom: 1.5rem;
                         ">
-                            <h4 style="color: {COLOR_GOLD}; margin: 0; font-size: 1.1rem;">
-                                Item {idx}: {desc[:80]}
-                            </h4>
+                            <h3 style="color: {COLOR_GOLD}; margin: 0; font-size: 1.2rem; font-weight: 600;">
+                                ■ Item {idx}: {desc[:80]}
+                            </h3>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
                     
-                    # Conteúdo do item com cor de texto forçada
-                    st.markdown(
-                        f"""
-                        <div style="
-                            background: {COLOR_CARD_BG};
-                            padding: 1.5rem;
-                            border-radius: 8px;
-                            margin-bottom: 1rem;
-                            color: #111827 !important;
-                        ">
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
+                    # Conteúdo do item - TEMA ESCURO NATIVO
                     col1, col2, col3 = st.columns([2, 1, 1])
                     
                     with col1:
-                        st.markdown(f'<div style="color: #111827;"><strong>Descrição:</strong> {desc}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>NCM:</strong> {ncm}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>CFOP:</strong> {cfop}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #FFFFFF; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">Descrição:</strong> {desc}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #FFFFFF; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">NCM:</strong> {ncm}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #FFFFFF; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">CFOP:</strong> {cfop}</p>', unsafe_allow_html=True)
                     
                     with col2:
-                        st.markdown(f'<div style="color: #111827;"><strong>Quantidade:</strong> {qtd:.2f}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>Valor Unitário:</strong> R$ {valor_unit:.2f}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>Valor Total:</strong> R$ {valor_total:.2f}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">Quantidade:</strong> {qtd:.2f}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">Valor Unitário:</strong> R$ {valor_unit:.2f}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">Valor Total:</strong> R$ {valor_total:.2f}</p>', unsafe_allow_html=True)
                     
                     with col3:
-                        st.markdown(f'<div style="color: #111827;"><strong>CST ICMS:</strong> {item["cst_icms"]}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>CST PIS:</strong> {item["cst_pis"]}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #111827;"><strong>CST COFINS:</strong> {item["cst_cofins"]}</div>', unsafe_allow_html=True)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">CST ICMS:</strong> {item["cst_icms"]}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">CST PIS:</strong> {item["cst_pis"]}</p>', unsafe_allow_html=True)
+                        st.markdown(f'<p style="color: #E5E7EB; margin: 0.5rem 0;"><strong style="color: {COLOR_GOLD};">CST COFINS:</strong> {item["cst_cofins"]}</p>', unsafe_allow_html=True)
                     
                     # Buscar tributação IBS/CBS
                     if len(resultado_tipi) > 0:
