@@ -257,26 +257,55 @@ def render_blocos_navigation():
         )
         
         for secao in bloco['secoes']:
-            with st.expander(f"**{secao['numero']}.** {secao['titulo']}", expanded=False):
-                conteudo_limpo = limpar_formatacao(secao['conteudo'])
-                st.markdown(
-                    f"""
-                    <div style="
-                        background: {COLOR_CARD_BG};
-                        padding: 1rem;
-                        border-radius: 4px;
-                        border-left: 3px solid {COLOR_BLUE};
-                        color: {COLOR_TEXT_MAIN};
-                        white-space: pre-wrap;
-                        word-wrap: break-word;
-                        overflow-wrap: break-word;
-                        line-height: 1.6;
-                    ">
-                        {conteudo_limpo}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            # Espaçamento entre seções
+            st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+            
+            # Título da seção com destaque
+            st.markdown(
+                f"""
+                <div style="
+                    background: {COLOR_CARD_BG};
+                    padding: 1rem;
+                    border-radius: 8px;
+                    border-left: 4px solid {COLOR_GOLD};
+                    margin-bottom: 1rem;
+                ">
+                    <h4 style="color: {COLOR_GOLD}; margin: 0; font-size: 1.1rem;">
+                        {secao['numero']}. {secao['titulo']}
+                    </h4>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Conteúdo da seção
+            conteudo_limpo = limpar_formatacao(secao['conteudo'])
+            st.markdown(
+                f"""
+                <div style="
+                    background: {COLOR_CARD_BG};
+                    padding: 1.5rem;
+                    border-radius: 8px;
+                    border-left: 3px solid {COLOR_BLUE};
+                    color: {COLOR_TEXT_MAIN};
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    line-height: 1.8;
+                    margin-bottom: 2rem;
+                    font-size: 0.95rem;
+                ">
+                    {conteudo_limpo}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Separador visual
+            st.markdown(
+                f'<hr style="border: none; border-top: 1px solid {COLOR_BORDER}; margin: 2rem 0;">',
+                unsafe_allow_html=True
+            )
     
     # Conteúdo completo
     st.markdown(
@@ -288,20 +317,23 @@ def render_blocos_navigation():
         unsafe_allow_html=True
     )
     
-    with st.expander("Ver análise completa do bloco", expanded=False):
-        conteudo_completo_limpo = limpar_formatacao(bloco['conteudo_completo'])
+    # Conteúdo completo em container scrollável
+    st.markdown('<div style="margin: 3rem 0;"></div>', unsafe_allow_html=True)
+    
+    conteudo_completo_limpo = limpar_formatacao(bloco['conteudo_completo'])
+    
+    with st.container(height=600, border=True):
         st.markdown(
             f"""
             <div style="
                 background: {COLOR_CARD_BG};
-                padding: 1.5rem;
-                border-radius: 4px;
-                border: 1px solid {COLOR_BORDER};
+                padding: 2rem;
                 color: {COLOR_TEXT_MAIN};
-                line-height: 1.6;
+                line-height: 1.8;
                 white-space: pre-wrap;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
+                font-size: 0.95rem;
             ">
                 {conteudo_completo_limpo}
             </div>
