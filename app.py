@@ -3568,23 +3568,38 @@ elif pagina == "Análise XML NF-e":
                         unsafe_allow_html=True
                     )
                     
-                    # Conteúdo do item
+                    # Conteúdo do item com cor de texto forçada
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background: {COLOR_CARD_BG};
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            margin-bottom: 1rem;
+                            color: #111827 !important;
+                        ">
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
                     col1, col2, col3 = st.columns([2, 1, 1])
                     
                     with col1:
-                        st.markdown(f"**Descrição:** {desc}")
-                        st.markdown(f"**NCM:** {ncm}")
-                        st.markdown(f"**CFOP:** {cfop}")
+                        st.markdown(f'<div style="color: #111827;"><strong>Descrição:</strong> {desc}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>NCM:</strong> {ncm}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>CFOP:</strong> {cfop}</div>', unsafe_allow_html=True)
                     
                     with col2:
-                        st.markdown(f"**Quantidade:** {qtd:.2f}")
-                        st.markdown(f"**Valor Unitário:** R$ {valor_unit:.2f}")
-                        st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
+                        st.markdown(f'<div style="color: #111827;"><strong>Quantidade:</strong> {qtd:.2f}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>Valor Unitário:</strong> R$ {valor_unit:.2f}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>Valor Total:</strong> R$ {valor_total:.2f}</div>', unsafe_allow_html=True)
                     
                     with col3:
-                        st.markdown(f"**CST ICMS:** {item['cst_icms']}")
-                        st.markdown(f"**CST PIS:** {item['cst_pis']}")
-                        st.markdown(f"**CST COFINS:** {item['cst_cofins']}")
+                        st.markdown(f'<div style="color: #111827;"><strong>CST ICMS:</strong> {item["cst_icms"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>CST PIS:</strong> {item["cst_pis"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="color: #111827;"><strong>CST COFINS:</strong> {item["cst_cofins"]}</div>', unsafe_allow_html=True)
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Buscar tributação IBS/CBS
                     if len(resultado_tipi) > 0:
