@@ -486,8 +486,12 @@ def render_aba_batch_xml():
                         }
                     
                     fornecedores_div[cnpj]['qtd_nfes'] += 1
-                    fornecedores_div[cnpj]['qtd_itens_div'] += resultado['itens_divergentes']
-                    fornecedores_div[cnpj]['valor_total'] += resultado['valor_total_nfe']
+                    fornecedores_div[cnpj]['qtd_itens_div'] += resultado.get('itens_divergentes', 0)
+                    # Validar valor_total_nfe (prevenir None/NaN)
+                    valor_nfe = resultado.get('valor_total_nfe', 0.0)
+                    if valor_nfe is None or (isinstance(valor_nfe, float) and valor_nfe != valor_nfe):  # NaN check
+                        valor_nfe = 0.0
+                    fornecedores_div[cnpj]['valor_total'] += float(valor_nfe)
             
             if fornecedores_div:
                 st.markdown(
@@ -540,40 +544,44 @@ def render_aba_batch_xml():
                 
                 # Gráfico de barras - Top 5 fornecedores por valor
                 if len(top_fornecedores) >= 5:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    import plotly.graph_objects as go
-                    
-                    top5 = top_fornecedores[:5]
-                    
-                    fig_fornecedores = go.Figure(data=[
-                        go.Bar(
-                            x=[f['razao'][:30] + '...' if len(f['razao']) > 30 else f['razao'] for f in top5],
-                            y=[f['valor_total'] for f in top5],
-                            marker=dict(
-                                color=[COLOR_ERROR, COLOR_WARNING, COLOR_GOLD, COLOR_BLUE, '#6B7280'],
-                                line=dict(color='#000000', width=1)
-                            ),
-                            text=[f"R$ {f['valor_total']:,.2f}" for f in top5],
-                            textposition='outside',
-                            textfont=dict(size=12, color=COLOR_TEXT_MAIN),
-                            hovertemplate='<b>%{x}</b><br>Valor: R$ %{y:,.2f}<br>NFes: %{customdata[0]}<br>Itens Div: %{customdata[1]}<extra></extra>',
-                            customdata=[[f['qtd_nfes'], f['qtd_itens_div']] for f in top5]
+                    try:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        
+                        import plotly.graph_objects as go
+                        
+                        top5 = top_fornecedores[:5]
+                        
+                        # Validar dados antes de criar gráfico
+                        valores_validos = [float(f.get('valor_total', 0.0) or 0.0) for f in top5]
+                        
+                        fig_fornecedores = go.Figure(data=[
+                            go.Bar(
+                                x=[str(f.get('razao', 'N/A'))[:30] + '...' if len(str(f.get('razao', 'N/A'))) > 30 else str(f.get('razao', 'N/A')) for f in top5],
+                                y=valores_validos,
+                                marker={'color': [COLOR_ERROR, COLOR_WARNING, COLOR_GOLD, COLOR_BLUE, '#6B7280'], 'line': {'color': '#000000', 'width': 1}},
+                                text=[f"R$ {v:,.2f}" for v in valores_validos],
+                                textposition='outside',
+                                textfont={'size': 12, 'color': COLOR_TEXT_MAIN},
+                                hovertemplate='<b>%{x}</b><br>Valor: R$ %{y:,.2f}<br>NFes: %{customdata[0]}<br>Itens Div: %{customdata[1]}<extra></extra>',
+                                customdata=[[int(f.get('qtd_nfes', 0)), int(f.get('qtd_itens_div', 0))] for f in top5]
+                            )
+                        ])
+                        
+                        # Configurar layout do gráfico (sintaxe compatível Python 3.13)
+                        fig_fornecedores.update_layout(
+                            title={'text': 'Top 5 Fornecedores com Divergências (por Valor Total)', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
+                            xaxis={'title': 'Fornecedor', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
+                            yaxis={'title': 'Valor Total (R$)', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
+                            paper_bgcolor=COLOR_CARD_BG,
+                            plot_bgcolor=COLOR_CARD_BG,
+                            font={'color': COLOR_TEXT_MAIN},
+                            height=500
                         )
-                    ])
-                    
-                    # Configurar layout do gráfico (sintaxe compatível Python 3.13)
-                    fig_fornecedores.update_layout(
-                        title={'text': 'Top 5 Fornecedores com Divergências (por Valor Total)', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
-                        xaxis={'title': 'Fornecedor', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
-                        yaxis={'title': 'Valor Total (R$)', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
-                        paper_bgcolor=COLOR_CARD_BG,
-                        plot_bgcolor=COLOR_CARD_BG,
-                        font={'color': COLOR_TEXT_MAIN},
-                        height=500
-                    )
-                    
-                    st.plotly_chart(fig_fornecedores, use_container_width=True)
+                        
+                        st.plotly_chart(fig_fornecedores, use_container_width=True)
+                    except Exception as e:
+                        st.warning(f"Não foi possível gerar o gráfico de fornecedores. Erro: {str(e)[:100]}")
+                        # Continuar execução sem crashar
             
             # Tabelas de itens conformes e divergentes
             st.markdown("<br>", unsafe_allow_html=True)
