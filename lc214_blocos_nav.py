@@ -236,6 +236,10 @@ def render_blocos_navigation():
                         border-radius: 4px;
                         border-left: 3px solid {COLOR_BLUE};
                         color: {COLOR_TEXT_MAIN};
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        line-height: 1.6;
                     ">
                         {conteudo_limpo}
                     </div>
@@ -264,6 +268,9 @@ def render_blocos_navigation():
                 border: 1px solid {COLOR_BORDER};
                 color: {COLOR_TEXT_MAIN};
                 line-height: 1.6;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             ">
                 {conteudo_completo_limpo}
             </div>
