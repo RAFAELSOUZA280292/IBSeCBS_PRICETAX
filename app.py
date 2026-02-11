@@ -3547,308 +3547,333 @@ elif pagina == "Análise XML NF-e":
                     ncm_clean = re.sub(r"\D+", "", ncm)
                     resultado_tipi = df_tipi[df_tipi["NCM_DIG"] == ncm_clean]
                     
-                    with st.expander(f"**Item {idx}:** {desc[:60]}...", expanded=False):
-                        col1, col2, col3 = st.columns([2, 1, 1])
+                    # Espaçamento generoso entre itens
+                    st.markdown('<div style="margin: 3rem 0;"></div>', unsafe_allow_html=True)
+                    
+                    # Card de título do item
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background: {COLOR_CARD_BG};
+                            padding: 1rem;
+                            border-radius: 8px;
+                            border-left: 4px solid {COLOR_GOLD};
+                            margin-bottom: 1rem;
+                        ">
+                            <h4 style="color: {COLOR_GOLD}; margin: 0; font-size: 1.1rem;">
+                                Item {idx}: {desc[:80]}
+                            </h4>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
+                    # Conteúdo do item
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    
+                    with col1:
+                        st.markdown(f"**Descrição:** {desc}")
+                        st.markdown(f"**NCM:** {ncm}")
+                        st.markdown(f"**CFOP:** {cfop}")
+                    
+                    with col2:
+                        st.markdown(f"**Quantidade:** {qtd:.2f}")
+                        st.markdown(f"**Valor Unitário:** R$ {valor_unit:.2f}")
+                        st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
+                    
+                    with col3:
+                        st.markdown(f"**CST ICMS:** {item['cst_icms']}")
+                        st.markdown(f"**CST PIS:** {item['cst_pis']}")
+                        st.markdown(f"**CST COFINS:** {item['cst_cofins']}")
+                    
+                    # Buscar tributação IBS/CBS
+                    if len(resultado_tipi) > 0:
+                        row = resultado_tipi.iloc[0]
+                        cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
                         
-                        with col1:
-                            st.markdown(f"**Descrição:** {desc}")
-                            st.markdown(f"**NCM:** {ncm}")
-                            st.markdown(f"**CFOP:** {cfop}")
-                        
-                        with col2:
-                            st.markdown(f"**Quantidade:** {qtd:.2f}")
-                            st.markdown(f"**Valor Unitário:** R$ {valor_unit:.2f}")
-                            st.markdown(f"**Valor Total:** R$ {valor_total:.2f}")
-                        
-                        with col3:
-                            st.markdown(f"**CST ICMS:** {item['cst_icms']}")
-                            st.markdown(f"**CST PIS:** {item['cst_pis']}")
-                            st.markdown(f"**CST COFINS:** {item['cst_cofins']}")
-                        
-                        # Buscar tributação IBS/CBS
-                        if len(resultado_tipi) > 0:
-                            row = resultado_tipi.iloc[0]
-                            cst_ibscbs = row.get("CST_IBSCBS", "") or "000"  # Fallback para CST padrão
-                            
-                            # CALCULAR TRIBUTAÇÃO COMPLETA (FUNÇÃO CENTRALIZADA)
-                            if CALC_TRIBUTACAO_DISPONIVEL:
-                                resultado_trib = calcular_tributacao_completa(
-                                    ncm=ncm_clean,
-                                    cfop=cfop,
-                                    beneficios_engine=BENEFICIOS_ENGINE,
-                                    consulta_ncm_func=consulta_ncm if BENEFICIOS_DISPONIVEL else None,
-                                    guess_cclasstrib_func=guess_cclasstrib,
-                                    get_class_info_func=get_class_info_by_code,
-                                )
-                                
-                                regime = resultado_trib['regime']
-                                ibs_uf = resultado_trib['ibs_uf']
-                                ibs_mun = resultado_trib['ibs_mun']
-                                cbs = resultado_trib['cbs']
-                                total_iva = resultado_trib['total_iva']
-                                cst_ibscbs = resultado_trib['cst']
-                                cclastrib_code = resultado_trib['cclasstrib_code']
-                                cclastrib_msg = resultado_trib['cclasstrib_msg']
-                                class_info = resultado_trib['class_info']
-                                beneficios_info = resultado_trib['beneficios']
-                            else:
-                                # Fallback
-                                regime = "TRIBUTACAO_PADRAO"
-                                ibs_uf = 0.10
-                                ibs_mun = 0.0
-                                cbs = 0.90
-                                total_iva = 1.00
-                                cclastrib_code = "000001"
-                                cclastrib_msg = "Operação tributada integralmente"
-                                class_info = None
-                                beneficios_info = None
-                            
-                            st.markdown("---")
-                            
-                            # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
-                            if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
-                                st.markdown("**Benefícios Fiscais Identificados**")
-                                
-                                for enq in beneficios_info['enquadramentos']:
-                                    anexo = enq['anexo']
-                                    reducao_pct = enq['reducao_aliquota']
-                                    descricao = enq['descricao_anexo']
-                                    
-                                    if reducao_pct == 100:
-                                        cor_badge = COLOR_SUCCESS
-                                        texto_reducao = "ALÍQUOTA ZERO (100%)"
-                                    elif reducao_pct == 60:
-                                        cor_badge = "#3B82F6"
-                                        texto_reducao = "REDUÇÃO DE 60%"
-                                    else:
-                                        cor_badge = COLOR_GOLD
-                                        texto_reducao = f"REDUÇÃO DE {reducao_pct}%"
-                                    
-                                    st.markdown(
-                                        f"""
-                                        <div style="
-                                            background: {COLOR_CARD_BG};
-                                            border-left: 4px solid {cor_badge};
-                                            padding: 0.8rem;
-                                            margin: 0.5rem 0;
-                                            border-radius: 4px;
-                                        ">
-                                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                <div style="font-weight: 600; color: {COLOR_GOLD}; font-size: 0.9rem;">{anexo}</div>
-                                                <div style="background: {cor_badge}; color: white; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">
-                                                    {texto_reducao}
-                                                </div>
-                                            </div>
-                                            <div style="font-size: 0.8rem; margin-top: 0.3rem; color: #111827;">{descricao[:80]}...</div>
-                                        </div>
-                                        """,
-                                        unsafe_allow_html=True,
-                                    )
-                            
-                            st.markdown("### Tributação IBS/CBS (Reforma Tributária)")
-                            
-                            # Alíquotas
-                            st.markdown(
-                                f"""
-                                <div class="metric-container" style="margin-top: 1rem;">
-                                    <div class="metric-box">
-                                        <div class="metric-label">IBS (UF + Município)</div>
-                                        <div class="metric-value">{pct_str(ibs_uf + ibs_mun)}</div>
-                                    </div>
-                                    <div class="metric-box">
-                                        <div class="metric-label">CBS (Federal)</div>
-                                        <div class="metric-value">{pct_str(cbs)}</div>
-                                    </div>
-                                    <div class="metric-box">
-                                        <div class="metric-label">Carga Total IVA</div>
-                                        <div class="metric-value" style="color: {COLOR_GOLD};">{pct_str(total_iva)}</div>
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
+                        # CALCULAR TRIBUTAÇÃO COMPLETA (FUNÇÃO CENTRALIZADA)
+                        if CALC_TRIBUTACAO_DISPONIVEL:
+                            resultado_trib = calcular_tributacao_completa(
+                                ncm=ncm_clean,
+                                cfop=cfop,
+                                beneficios_engine=BENEFICIOS_ENGINE,
+                                consulta_ncm_func=consulta_ncm if BENEFICIOS_DISPONIVEL else None,
+                                guess_cclasstrib_func=guess_cclasstrib,
+                                get_class_info_func=get_class_info_by_code,
                             )
                             
-                            # VALIDAÇÃO: Comparar XML com Calculado
-                            xml_cclasstrib = item.get('cclasstrib', '')
-                            xml_vibs = item.get('vibs', 0.0)
-                            xml_vcbs = item.get('vcbs', 0.0)
-                            xml_pibs = item.get('pibs', 0.0)
-                            xml_pcbs = item.get('pcbs', 0.0)
+                            regime = resultado_trib['regime']
+                            ibs_uf = resultado_trib['ibs_uf']
+                            ibs_mun = resultado_trib['ibs_mun']
+                            cbs = resultado_trib['cbs']
+                            total_iva = resultado_trib['total_iva']
+                            cst_ibscbs = resultado_trib['cst']
+                            cclastrib_code = resultado_trib['cclasstrib_code']
+                            cclastrib_msg = resultado_trib['cclasstrib_msg']
+                            class_info = resultado_trib['class_info']
+                            beneficios_info = resultado_trib['beneficios']
+                        else:
+                            # Fallback
+                            regime = "TRIBUTACAO_PADRAO"
+                            ibs_uf = 0.10
+                            ibs_mun = 0.0
+                            cbs = 0.90
+                            total_iva = 1.00
+                            cclastrib_code = "000001"
+                            cclastrib_msg = "Operação tributada integralmente"
+                            class_info = None
+                            beneficios_info = None
+                        
+                        st.markdown("---")
+                        
+                        # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
+                        if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
+                            st.markdown("**Benefícios Fiscais Identificados**")
                             
-                            # Calcular valores esperados (já em formato decimal %)
-                            calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
-                            calc_pcbs = cbs  # Já é 0.90 = 0,9%
-                            
-                            # BASE LÍQUIDA 2026: vProd + vFrete + vSeg + vOutro - vDesc - ICMS - PIS - COFINS
-                            # Conforme legislação de transição, IBS/CBS não integram base de ICMS/PIS/COFINS e vice-versa
-                            # IMPORTANTE: Frete, seguro e outros COMPÕEM a base de cálculo do IBS/CBS
-                            vprod = valor_total  # vProd do item
-                            vfrete = item.get('vfrete', 0.0) if 'vfrete' in item else 0.0
-                            vseg = item.get('vseg', 0.0) if 'vseg' in item else 0.0
-                            voutro = item.get('voutro', 0.0) if 'voutro' in item else 0.0
-                            vdesc = item.get('vdesc', 0.0) if 'vdesc' in item else 0.0
-                            vicms = item.get('vicms', 0.0)
-                            vpis = item.get('vpis', 0.0)
-                            vcofins = item.get('vcofins', 0.0)
-                            
-                            # Fórmula completa da BC
-                            base_liquida = vprod + vfrete + vseg + voutro - vdesc - vicms - vpis - vcofins
-                            
-                            # CORREÇÃO: Dividir por 100 porque alíquotas estão em formato decimal
-                            calc_vibs = base_liquida * (ibs_uf + ibs_mun) / 100
-                            calc_vcbs = base_liquida * cbs / 100
-                            
-                            # Tolerâncias
-                            tol_valor = 0.02  # R$ 0,02
-                            tol_aliq = 0.0001  # 0,0001%
-                            
-                            # Verificar se XML tem dados
-                            tem_xml = xml_cclasstrib or xml_vibs > 0 or xml_vcbs > 0
-                            
-                            if tem_xml:
-                                # Comparar cClassTrib
-                                cclasstrib_ok = (xml_cclasstrib == cclastrib_code)
+                            for enq in beneficios_info['enquadramentos']:
+                                anexo = enq['anexo']
+                                reducao_pct = enq['reducao_aliquota']
+                                descricao = enq['descricao_anexo']
                                 
-                                # Comparar alíquotas
-                                pibs_ok = abs(xml_pibs - calc_pibs) <= tol_aliq
-                                pcbs_ok = abs(xml_pcbs - calc_pcbs) <= tol_aliq
-                                
-                                # Comparar valores
-                                vibs_ok = abs(xml_vibs - calc_vibs) <= tol_valor
-                                vcbs_ok = abs(xml_vcbs - calc_vcbs) <= tol_valor
-                                
-                                # Status geral
-                                tudo_ok = cclasstrib_ok and pibs_ok and pcbs_ok and vibs_ok and vcbs_ok
-                                
-                                # Cor e ícone
-                                if tudo_ok:
-                                    status_cor = "#10B981"  # Verde
-                                    status_icone = "✓"
-                                    status_texto = "CONFORME"
+                                if reducao_pct == 100:
+                                    cor_badge = COLOR_SUCCESS
+                                    texto_reducao = "ALÍQUOTA ZERO (100%)"
+                                elif reducao_pct == 60:
+                                    cor_badge = "#3B82F6"
+                                    texto_reducao = "REDUÇÃO DE 60%"
                                 else:
-                                    status_cor = "#F59E0B"  # Amarelo
-                                    status_icone = "⚠"
-                                    status_texto = "DIVERGÊNCIA"
+                                    cor_badge = COLOR_GOLD
+                                    texto_reducao = f"REDUÇÃO DE {reducao_pct}%"
                                 
-                                # Exibir validação
                                 st.markdown(
                                     f"""
                                     <div style="
                                         background: {COLOR_CARD_BG};
-                                        border-left: 4px solid {status_cor};
-                                        padding: 1rem;
-                                        margin: 1rem 0;
+                                        border-left: 4px solid {cor_badge};
+                                        padding: 0.8rem;
+                                        margin: 0.5rem 0;
                                         border-radius: 4px;
                                     ">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
-                                            <span style="font-size: 1.5rem; color: {status_cor};">{status_icone}</span>
-                                            <span style="font-weight: 700; color: {status_cor}; font-size: 1.1rem;">{status_texto}</span>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="font-weight: 600; color: {COLOR_GOLD}; font-size: 0.9rem;">{anexo}</div>
+                                            <div style="background: {cor_badge}; color: white; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">
+                                                {texto_reducao}
+                                            </div>
                                         </div>
-                                        <div style="font-size: 0.85rem; color: #111827;">
-                                            Comparação entre valores destacados no XML e valores calculados pelo sistema
-                                        </div>
+                                        <div style="font-size: 0.8rem; margin-top: 0.3rem; color: #111827;">{descricao[:80]}...</div>
                                     </div>
                                     """,
                                     unsafe_allow_html=True,
                                 )
-                                
-                                # Tabela comparativa
-                                st.markdown("#### Comparação Detalhada")
-                                
-                                def status_icon(ok):
-                                    return "✓" if ok else "✗"
-                                
-                                def status_color(ok):
-                                    return "#10B981" if ok else "#EF4444"
-                                
-                                st.markdown(
-                                    f"""
-                                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-                                        <thead>
-                                            <tr style="background: {COLOR_DARK_BG}; border-bottom: 2px solid {COLOR_GOLD};">
-                                                <th style="padding: 0.8rem; text-align: left; color: {COLOR_GOLD}; font-weight: 600;">Campo</th>
-                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">XML</th>
-                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Calculado</th>
-                                                <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: #111827;">cClassTrib</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{xml_cclasstrib or '—'}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{cclastrib_code or '—'}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(cclasstrib_ok)}; font-size: 1.2rem;">{status_icon(cclasstrib_ok)}</td>
-                                            </tr>
-                                            <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: #111827;">Alíquota IBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pibs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pibs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(pibs_ok)}; font-size: 1.2rem;">{status_icon(pibs_ok)}</td>
-                                            </tr>
-                                            <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: #111827;">Alíquota CBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pcbs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pcbs:.4f}%</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(pcbs_ok)}; font-size: 1.2rem;">{status_icon(pcbs_ok)}</td>
-                                            </tr>
-                                            <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
-                                                <td style="padding: 0.6rem; color: #111827;">Valor IBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vibs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vibs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(vibs_ok)}; font-size: 1.2rem;">{status_icon(vibs_ok)}</td>
-                                            </tr>
-                                            <tr style="background: #F3F4F6;">
-                                                <td style="padding: 0.6rem; color: #111827;">Valor CBS</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vcbs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vcbs:.2f}</td>
-                                                <td style="padding: 0.6rem; text-align: center; color: {status_color(vcbs_ok)}; font-size: 1.2rem;">{status_icon(vcbs_ok)}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    """,
-                                    unsafe_allow_html=True,
-                                )
+                        
+                        st.markdown("### Tributação IBS/CBS (Reforma Tributária)")
+                        
+                        # Alíquotas
+                        st.markdown(
+                            f"""
+                            <div class="metric-container" style="margin-top: 1rem;">
+                                <div class="metric-box">
+                                    <div class="metric-label">IBS (UF + Município)</div>
+                                    <div class="metric-value">{pct_str(ibs_uf + ibs_mun)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">CBS (Federal)</div>
+                                    <div class="metric-value">{pct_str(cbs)}</div>
+                                </div>
+                                <div class="metric-box">
+                                    <div class="metric-label">Carga Total IVA</div>
+                                    <div class="metric-value" style="color: {COLOR_GOLD};">{pct_str(total_iva)}</div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        
+                        # VALIDAÇÃO: Comparar XML com Calculado
+                        xml_cclasstrib = item.get('cclasstrib', '')
+                        xml_vibs = item.get('vibs', 0.0)
+                        xml_vcbs = item.get('vcbs', 0.0)
+                        xml_pibs = item.get('pibs', 0.0)
+                        xml_pcbs = item.get('pcbs', 0.0)
+                        
+                        # Calcular valores esperados (já em formato decimal %)
+                        calc_pibs = (ibs_uf + ibs_mun)  # Já é 0.10 = 0,1%
+                        calc_pcbs = cbs  # Já é 0.90 = 0,9%
+                        
+                        # BASE LÍQUIDA 2026: vProd + vFrete + vSeg + vOutro - vDesc - ICMS - PIS - COFINS
+                        # Conforme legislação de transição, IBS/CBS não integram base de ICMS/PIS/COFINS e vice-versa
+                        # IMPORTANTE: Frete, seguro e outros COMPÕEM a base de cálculo do IBS/CBS
+                        vprod = valor_total  # vProd do item
+                        vfrete = item.get('vfrete', 0.0) if 'vfrete' in item else 0.0
+                        vseg = item.get('vseg', 0.0) if 'vseg' in item else 0.0
+                        voutro = item.get('voutro', 0.0) if 'voutro' in item else 0.0
+                        vdesc = item.get('vdesc', 0.0) if 'vdesc' in item else 0.0
+                        vicms = item.get('vicms', 0.0)
+                        vpis = item.get('vpis', 0.0)
+                        vcofins = item.get('vcofins', 0.0)
+                        
+                        # Fórmula completa da BC
+                        base_liquida = vprod + vfrete + vseg + voutro - vdesc - vicms - vpis - vcofins
+                        
+                        # CORREÇÃO: Dividir por 100 porque alíquotas estão em formato decimal
+                        calc_vibs = base_liquida * (ibs_uf + ibs_mun) / 100
+                        calc_vcbs = base_liquida * cbs / 100
+                        
+                        # Tolerâncias
+                        tol_valor = 0.02  # R$ 0,02
+                        tol_aliq = 0.0001  # 0,0001%
+                        
+                        # Verificar se XML tem dados
+                        tem_xml = xml_cclasstrib or xml_vibs > 0 or xml_vcbs > 0
+                        
+                        if tem_xml:
+                            # Comparar cClassTrib
+                            cclasstrib_ok = (xml_cclasstrib == cclastrib_code)
                             
-                            # Destaque do cClassTrib
+                            # Comparar alíquotas
+                            pibs_ok = abs(xml_pibs - calc_pibs) <= tol_aliq
+                            pcbs_ok = abs(xml_pcbs - calc_pcbs) <= tol_aliq
+                            
+                            # Comparar valores
+                            vibs_ok = abs(xml_vibs - calc_vibs) <= tol_valor
+                            vcbs_ok = abs(xml_vcbs - calc_vcbs) <= tol_valor
+                            
+                            # Status geral
+                            tudo_ok = cclasstrib_ok and pibs_ok and pcbs_ok and vibs_ok and vcbs_ok
+                            
+                            # Cor e ícone
+                            if tudo_ok:
+                                status_cor = "#10B981"  # Verde
+                                status_icone = "✓"
+                                status_texto = "CONFORME"
+                            else:
+                                status_cor = "#F59E0B"  # Amarelo
+                                status_icone = "⚠"
+                                status_texto = "DIVERGÊNCIA"
+                            
+                            # Exibir validação
                             st.markdown(
                                 f"""
                                 <div style="
-                                    background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
-                                    border: 2px solid {COLOR_GOLD};
-                                    border-radius: 8px;
-                                    padding: 1.5rem;
-                                    margin: 1.5rem 0;
-                                    text-align: center;
+                                    background: {COLOR_CARD_BG};
+                                    border-left: 4px solid {status_cor};
+                                    padding: 1rem;
+                                    margin: 1rem 0;
+                                    border-radius: 4px;
                                 ">
-                                    <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
-                                        cClassTrib Sugerido (NF-e)
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
+                                        <span style="font-size: 1.5rem; color: {status_cor};">{status_icone}</span>
+                                        <span style="font-weight: 700; color: {status_cor}; font-size: 1.1rem;">{status_texto}</span>
                                     </div>
-                                    <div style="color: {COLOR_GOLD}; font-size: 2rem; font-weight: 700; letter-spacing: 0.1em;">
-                                        {cclastrib_code or '—'}
-                                    </div>
-                                    <div style="font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
-                                        {cclastrib_msg[:120]}...
+                                    <div style="font-size: 0.85rem; color: #111827;">
+                                        Comparação entre valores destacados no XML e valores calculados pelo sistema
                                     </div>
                                 </div>
                                 """,
                                 unsafe_allow_html=True,
                             )
                             
-                            # Informações complementares
-                            col_a, col_b = st.columns(2)
-                            with col_a:
-                                st.markdown(f"**Regime IVA:** {regime_label(regime)}")
-                                st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
-                            with col_b:
-                                class_info = get_class_info_by_code(cclastrib_code)
-                                if class_info:
-                                    st.markdown(f"**Tipo de Alíquota:** {map_tipo_aliquota(class_info.get('TIPO_ALIQUOTA', ''))}")
-                                    st.markdown(f"**Descrição:** {class_info.get('DESC_CLASS', '—')[:60]}...")
-                                else:
-                                    st.markdown(f"**Tipo de Alíquota:** —")
-                                    st.markdown(f"**Descrição:** —")
-                        else:
-                            st.warning(f"NCM {ncm} não encontrado na base TIPI.")
+                            # Tabela comparativa
+                            st.markdown("#### Comparação Detalhada")
+                            
+                            def status_icon(ok):
+                                return "✓" if ok else "✗"
+                            
+                            def status_color(ok):
+                                return "#10B981" if ok else "#EF4444"
+                            
+                            st.markdown(
+                                f"""
+                                <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                                    <thead>
+                                        <tr style="background: {COLOR_DARK_BG}; border-bottom: 2px solid {COLOR_GOLD};">
+                                            <th style="padding: 0.8rem; text-align: left; color: {COLOR_GOLD}; font-weight: 600;">Campo</th>
+                                            <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">XML</th>
+                                            <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Calculado</th>
+                                            <th style="padding: 0.8rem; text-align: center; color: {COLOR_GOLD}; font-weight: 600;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                            <td style="padding: 0.6rem; color: #111827;">cClassTrib</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{xml_cclasstrib or '—'}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827; font-weight: 600;">{cclastrib_code or '—'}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: {status_color(cclasstrib_ok)}; font-size: 1.2rem;">{status_icon(cclasstrib_ok)}</td>
+                                        </tr>
+                                        <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                            <td style="padding: 0.6rem; color: #111827;">Alíquota IBS</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pibs:.4f}%</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pibs:.4f}%</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: {status_color(pibs_ok)}; font-size: 1.2rem;">{status_icon(pibs_ok)}</td>
+                                        </tr>
+                                        <tr style="background: #F3F4F6; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                            <td style="padding: 0.6rem; color: #111827;">Alíquota CBS</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">{xml_pcbs:.4f}%</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">{calc_pcbs:.4f}%</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: {status_color(pcbs_ok)}; font-size: 1.2rem;">{status_icon(pcbs_ok)}</td>
+                                        </tr>
+                                        <tr style="background: #FFFFFF; border-bottom: 1px solid {COLOR_CARD_BG};">
+                                            <td style="padding: 0.6rem; color: #111827;">Valor IBS</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vibs:.2f}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vibs:.2f}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: {status_color(vibs_ok)}; font-size: 1.2rem;">{status_icon(vibs_ok)}</td>
+                                        </tr>
+                                        <tr style="background: #F3F4F6;">
+                                            <td style="padding: 0.6rem; color: #111827;">Valor CBS</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {xml_vcbs:.2f}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: #111827;">R$ {calc_vcbs:.2f}</td>
+                                            <td style="padding: 0.6rem; text-align: center; color: {status_color(vcbs_ok)}; font-size: 1.2rem;">{status_icon(vcbs_ok)}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                        
+                        # Destaque do cClassTrib
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background: linear-gradient(135deg, {COLOR_CARD_BG} 0%, {COLOR_DARK_BG} 100%);
+                                border: 2px solid {COLOR_GOLD};
+                                border-radius: 8px;
+                                padding: 1.5rem;
+                                margin: 1.5rem 0;
+                                text-align: center;
+                            ">
+                                <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                    cClassTrib Sugerido (NF-e)
+                                </div>
+                                <div style="color: {COLOR_GOLD}; font-size: 2rem; font-weight: 700; letter-spacing: 0.1em;">
+                                    {cclastrib_code or '—'}
+                                </div>
+                                <div style="font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
+                                    {cclastrib_msg[:120]}...
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        
+                        # Informações complementares
+                        col_a, col_b = st.columns(2)
+                        with col_a:
+                            st.markdown(f"**Regime IVA:** {regime_label(regime)}")
+                            st.markdown(f"**CST IBS/CBS:** {cst_ibscbs or '—'}")
+                        with col_b:
+                            class_info = get_class_info_by_code(cclastrib_code)
+                            if class_info:
+                                st.markdown(f"**Tipo de Alíquota:** {map_tipo_aliquota(class_info.get('TIPO_ALIQUOTA', ''))}")
+                                st.markdown(f"**Descrição:** {class_info.get('DESC_CLASS', '—')[:60]}...")
+                            else:
+                                st.markdown(f"**Tipo de Alíquota:** —")
+                                st.markdown(f"**Descrição:** —")
+                    else:
+                        st.warning(f"NCM {ncm} não encontrado na base TIPI.")
+                    
+                    # Separador visual forte entre itens
+                    st.divider()
+                    st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
                 
                 # Armazenamento automático e silencioso no Google Sheets
                 try:
