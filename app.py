@@ -1688,7 +1688,7 @@ if pagina == "LC 214/2025":
                 margin-bottom: 1.5rem;
             ">
                 <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Sistemático</h3>
-                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                <p style="color: #FFFFFF; margin: 0; font-size: 0.9rem;">
                     Estrutura hierárquica da LC 214/2025 organizada por blocos temáticos e títulos.
                 </p>
             </div>
@@ -1716,7 +1716,7 @@ if pagina == "LC 214/2025":
                         <h4 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
                             Bloco {bloco['numero']:02d}: {bloco['titulo']}
                         </h4>
-                        <p style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem; margin: 0 0 0.5rem 0;">
+                        <p style="color: #FFFFFF; font-size: 0.85rem; margin: 0 0 0.5rem 0;">
                             Artigos: {bloco['artigos']}
                         </p>
                     </div>
@@ -1727,7 +1727,7 @@ if pagina == "LC 214/2025":
                 # Listar seções do bloco
                 for secao in bloco['secoes']:
                     st.markdown(
-                        f'<p style="color: {COLOR_TEXT_MAIN}; margin: 0.3rem 0 0.3rem 2rem; font-size: 0.9rem;">▸ {secao["numero"]}. {secao["titulo"]}</p>',
+                        f'<p style="color: #FFFFFF; margin: 0.3rem 0 0.3rem 2rem; font-size: 0.9rem;">▸ {secao["numero"]}. {secao["titulo"]}</p>',
                         unsafe_allow_html=True
                     )
         else:
@@ -1745,7 +1745,7 @@ if pagina == "LC 214/2025":
                 margin-bottom: 1.5rem;
             ">
                 <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Remissivo</h3>
-                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                <p style="color: #FFFFFF; margin: 0; font-size: 0.9rem;">
                     Índice alfabético de termos-chave com remissões aos artigos da LC 214/2025.
                 </p>
             </div>
@@ -1818,10 +1818,10 @@ if pagina == "LC 214/2025":
                         padding: 0.5rem 0;
                         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                     ">
-                        <p style="color: {COLOR_TEXT_MAIN}; margin: 0; font-size: 0.95rem;">
+                        <p style="color: #FFFFFF; margin: 0; font-size: 0.95rem;">
                             <strong>{item['termo']}</strong>
                         </p>
-                        <p style="color: {COLOR_TEXT_MUTED}; margin: 0.2rem 0 0 1rem; font-size: 0.85rem;">
+                        <p style="color: #FFFFFF; margin: 0.2rem 0 0 1rem; font-size: 0.85rem;">
                             {item['artigos']}
                         </p>
                     </div>
