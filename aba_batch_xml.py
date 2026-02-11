@@ -422,20 +422,14 @@ def render_aba_batch_xml():
                     hovertemplate='<b>%{label}</b><br>%{value:,} itens<br>%{percent}<extra></extra>'
                 )])
                 
+                # Configurar layout (sintaxe compatível Python 3.13)
                 fig_itens.update_layout(
-                    title=dict(
-                        text='Conformidade de Itens',
-                        font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
-                    ),
+                    title={'text': 'Conformidade de Itens', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
                     paper_bgcolor=COLOR_CARD_BG,
                     plot_bgcolor=COLOR_CARD_BG,
-                    font=dict(color=COLOR_TEXT_MAIN),
+                    font={'color': COLOR_TEXT_MAIN},
                     showlegend=True,
-                    legend=dict(
-                        bgcolor=COLOR_CARD_BG,
-                        bordercolor=COLOR_BORDER,
-                        borderwidth=1
-                    ),
+                    legend={'bgcolor': COLOR_CARD_BG, 'bordercolor': COLOR_BORDER, 'borderwidth': 1},
                     height=400
                 )
                 
@@ -456,20 +450,14 @@ def render_aba_batch_xml():
                     hovertemplate='<b>%{label}</b><br>%{value:,} NFes<br>%{percent}<extra></extra>'
                 )])
                 
+                # Configurar layout (sintaxe compatível Python 3.13)
                 fig_nfes.update_layout(
-                    title=dict(
-                        text='Conformidade de NFes',
-                        font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
-                    ),
+                    title={'text': 'Conformidade de NFes', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
                     paper_bgcolor=COLOR_CARD_BG,
                     plot_bgcolor=COLOR_CARD_BG,
-                    font=dict(color=COLOR_TEXT_MAIN),
+                    font={'color': COLOR_TEXT_MAIN},
                     showlegend=True,
-                    legend=dict(
-                        bgcolor=COLOR_CARD_BG,
-                        bordercolor=COLOR_BORDER,
-                        borderwidth=1
-                    ),
+                    legend={'bgcolor': COLOR_CARD_BG, 'bordercolor': COLOR_BORDER, 'borderwidth': 1},
                     height=400
                 )
                 
@@ -574,26 +562,14 @@ def render_aba_batch_xml():
                         )
                     ])
                     
+                    # Configurar layout do gráfico (sintaxe compatível Python 3.13)
                     fig_fornecedores.update_layout(
-                        title=dict(
-                            text='Top 5 Fornecedores com Divergências (por Valor Total)',
-                            font=dict(size=18, color=COLOR_GOLD, family='Arial Black')
-                        ),
-                        xaxis=dict(
-                            title='Fornecedor',
-                            titlefont=dict(color=COLOR_TEXT_MAIN),
-                            tickfont=dict(color=COLOR_TEXT_MAIN),
-                            gridcolor=COLOR_BORDER
-                        ),
-                        yaxis=dict(
-                            title='Valor Total (R$)',
-                            titlefont=dict(color=COLOR_TEXT_MAIN),
-                            tickfont=dict(color=COLOR_TEXT_MAIN),
-                            gridcolor=COLOR_BORDER
-                        ),
+                        title={'text': 'Top 5 Fornecedores com Divergências (por Valor Total)', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
+                        xaxis={'title': 'Fornecedor', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
+                        yaxis={'title': 'Valor Total (R$)', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
                         paper_bgcolor=COLOR_CARD_BG,
                         plot_bgcolor=COLOR_CARD_BG,
-                        font=dict(color=COLOR_TEXT_MAIN),
+                        font={'color': COLOR_TEXT_MAIN},
                         height=500
                     )
                     
