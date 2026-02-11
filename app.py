@@ -1688,7 +1688,7 @@ if pagina == "LC 214/2025":
                 margin-bottom: 1.5rem;
             ">
                 <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Sistemático</h3>
-                <p style="color: #FFFFFF; margin: 0; font-size: 0.9rem;">
+                <p style="color: #1F2937; margin: 0; font-size: 0.9rem;">
                     Estrutura hierárquica da LC 214/2025 organizada por blocos temáticos e títulos.
                 </p>
             </div>
@@ -1745,7 +1745,7 @@ if pagina == "LC 214/2025":
                 margin-bottom: 1.5rem;
             ">
                 <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Remissivo</h3>
-                <p style="color: #FFFFFF; margin: 0; font-size: 0.9rem;">
+                <p style="color: #1F2937; margin: 0; font-size: 0.9rem;">
                     Índice alfabético de termos-chave com remissões aos artigos da LC 214/2025.
                 </p>
             </div>
