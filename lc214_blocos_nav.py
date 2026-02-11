@@ -257,8 +257,8 @@ def render_blocos_navigation():
         )
         
         for secao in bloco['secoes']:
-            # Espaçamento entre seções
-            st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+            # Espaçamento generoso entre seções
+            st.markdown('<div style="margin: 3rem 0;"></div>', unsafe_allow_html=True)
             
             # Título da seção com destaque
             st.markdown(
@@ -301,11 +301,9 @@ def render_blocos_navigation():
                 unsafe_allow_html=True
             )
             
-            # Separador visual
-            st.markdown(
-                f'<hr style="border: none; border-top: 1px solid {COLOR_BORDER}; margin: 2rem 0;">',
-                unsafe_allow_html=True
-            )
+            # Separador visual forte
+            st.divider()
+            st.markdown('<div style="margin: 2rem 0;"></div>', unsafe_allow_html=True)
     
     # Conteúdo completo
     st.markdown(
