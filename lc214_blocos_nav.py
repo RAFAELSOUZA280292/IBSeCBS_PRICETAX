@@ -45,6 +45,37 @@ def render_blocos_navigation():
     Design profissional PRICETAX
     """
     
+    # CSS para ocultar elementos técnicos sobrepostos
+    st.markdown("""
+    <style>
+    /* Ocultar elementos que começam com underscore (IDs técnicos) */
+    [id^="_art"],
+    [class^="_art"],
+    [id*="keyboard"],
+    [class*="keyboard"],
+    [id*="right"],
+    [class*="_right"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+    
+    /* Garantir que expanders não tenham conteúdo duplicado */
+    .streamlit-expanderHeader::before,
+    .streamlit-expanderHeader::after {
+        content: none !important;
+    }
+    
+    /* Prevenir pseudo-elementos indesejados */
+    div[data-testid="stExpander"] *::before,
+    div[data-testid="stExpander"] *::after {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Carregar blocos
     blocos_path = os.path.join(os.path.dirname(__file__), 'data', 'lc214_blocos_completos.json')
     
