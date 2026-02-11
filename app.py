@@ -1465,7 +1465,7 @@ if pagina == "LC 214/2025":
         f"""
         <div class="pricetax-card">
             <div class="pricetax-card-header">
-                <span style="font-size: 1.5rem;">⚖️</span> LC 214/2025 — Inteligência e Consulta Integral
+                <span style="font-size: 1.5rem;">§</span> LC 214/2025 — Inteligência e Consulta Integral
             </div>
             <p style="color: {COLOR_TEXT_MUTED}; margin-bottom: 1rem;">
                 Plataforma profissional de consulta à Reforma Tributária. 544 artigos + 36 blocos comentados + 50 Q&A.
@@ -1476,7 +1476,14 @@ if pagina == "LC 214/2025":
     )
 
     # Navegação por Abas Internas (UX de Alto Nível)
-    lc_tabs = st.tabs(["🔍 Consulta por Artigo/Palavra", "📚 Blocos Temáticos (32)", "📖 Texto Integral da Lei", "❓ Central de Q&A (50 Questões)"])
+    lc_tabs = st.tabs([
+        "▸ Consulta por Artigo/Palavra",
+        "■ Blocos Temáticos (32)",
+        "▪ Texto Integral da Lei",
+        "▦ Índice Sistemático",
+        "▦ Índice Remissivo",
+        "? Central de Q&A (50 Questões)"
+    ])
 
     # Banco de Dados de Artigos (Mapeamento Integral - 544 Artigos)
     # Carregamento dinâmico do banco de dados jurídico PriceTax
@@ -1518,7 +1525,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">🔍 Consulta Inteligente</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▸ Consulta Inteligente</h3>
                 <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                     Pesquise por número de artigo ou palavra-chave. Base com 544 artigos.
                 </p>
@@ -1608,7 +1615,7 @@ if pagina == "LC 214/2025":
                             border-radius: 4px;
                             margin-top: 1rem;
                         ">
-                            <strong style="color: {COLOR_BLUE};">💡 Nota PriceTax</strong><br>
+                            <strong style="color: {COLOR_BLUE};">• Nota PriceTax</strong><br>
                             <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">{data["nota"]}</span>
                         </div>
                         """,
@@ -1625,7 +1632,7 @@ if pagina == "LC 214/2025":
                         border-radius: 4px;
                         margin-top: 1rem;
                     ">
-                        <strong style="color: {COLOR_GOLD};">📚 Correlação</strong><br>
+                        <strong style="color: {COLOR_GOLD};">■ Correlação</strong><br>
                         <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">Vinculado à EC 132/2023 e Art. 156-A da CF/88</span>
                     </div>
                     """,
@@ -1642,7 +1649,7 @@ if pagina == "LC 214/2025":
                         border-radius: 8px;
                         margin-top: 1rem;
                     ">
-                        <strong style="color: #F59E0B;">⚠ Artigo não encontrado</strong><br>
+                        <strong style="color: #F59E0B;">▲ Artigo não encontrado</strong><br>
                         <span style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem;">
                             Tente os artigos principais: <strong>1, 2, 4, 11, 31, 47, 143, 342, 409, 544</strong>
                         </span>
@@ -1670,6 +1677,159 @@ if pagina == "LC 214/2025":
         st.caption("Base de dados atualizada conforme legislação oficial da Reforma Tributária.")
 
     with lc_tabs[3]:
+        # Índice Sistemático
+        st.markdown(
+            f"""
+            <div style="
+                background: {COLOR_CARD_BG};
+                border-left: 4px solid {COLOR_GOLD};
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+            ">
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Sistemático</h3>
+                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                    Estrutura hierárquica da LC 214/2025 organizada por blocos temáticos e títulos.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Carregar blocos para índice sistemático
+        blocos_path = os.path.join(os.path.dirname(__file__), 'data', 'lc214_blocos_completos.json')
+        if os.path.exists(blocos_path):
+            with open(blocos_path, 'r', encoding='utf-8') as f:
+                blocos_data = json.load(f)
+            
+            blocos_list = blocos_data['blocos'] if isinstance(blocos_data, dict) and 'blocos' in blocos_data else blocos_data
+            
+            for bloco in blocos_list:
+                st.markdown(
+                    f"""
+                    <div style="
+                        padding: 1rem;
+                        border-left: 3px solid {COLOR_BLUE};
+                        margin: 1rem 0;
+                        background: rgba(59, 130, 246, 0.05);
+                    ">
+                        <h4 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">
+                            Bloco {bloco['numero']:02d}: {bloco['titulo']}
+                        </h4>
+                        <p style="color: {COLOR_TEXT_MUTED}; font-size: 0.85rem; margin: 0 0 0.5rem 0;">
+                            Artigos: {bloco['artigos']}
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Listar seções do bloco
+                for secao in bloco['secoes']:
+                    st.markdown(
+                        f'<p style="color: {COLOR_TEXT_MAIN}; margin: 0.3rem 0 0.3rem 2rem; font-size: 0.9rem;">▸ {secao["numero"]}. {secao["titulo"]}</p>',
+                        unsafe_allow_html=True
+                    )
+        else:
+            st.warning("Índice sistemático não disponível. Arquivo de blocos não encontrado.")
+
+    with lc_tabs[4]:
+        # Índice Remissivo
+        st.markdown(
+            f"""
+            <div style="
+                background: {COLOR_CARD_BG};
+                border-left: 4px solid {COLOR_GOLD};
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+            ">
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Remissivo</h3>
+                <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
+                    Índice alfabético de termos-chave com remissões aos artigos da LC 214/2025.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Índice remissivo estruturado
+        indice_remissivo = {
+            "A": [
+                {"termo": "Alíquota padrão", "artigos": "Art. 16, 17, 18"},
+                {"termo": "Alíquota reduzida", "artigos": "Art. 143-150 (Anexo I)"},
+                {"termo": "Anexos (benefícios fiscais)", "artigos": "Art. 143-409"},
+                {"termo": "Ano Teste", "artigos": "Art. 342-355"},
+            ],
+            "B": [
+                {"termo": "Base de cálculo", "artigos": "Art. 19-30"},
+                {"termo": "Benefícios fiscais", "artigos": "Art. 143-409"},
+            ],
+            "C": [
+                {"termo": "Cashback", "artigos": "Art. 127-142"},
+                {"termo": "CBS (Contribuição Social sobre Bens e Serviços)", "artigos": "Art. 1, 2, 4"},
+                {"termo": "Cesta Básica Nacional", "artigos": "Art. 143-150 (Anexo I)"},
+                {"termo": "CFOP (Código Fiscal de Operações)", "artigos": "Art. 31-46"},
+                {"termo": "cClassTrib (Classificação Tributária)", "artigos": "Art. 31-46"},
+                {"termo": "Crédito financeiro", "artigos": "Art. 47-60"},
+                {"termo": "Crédito presumido", "artigos": "Art. 61-75"},
+            ],
+            "D": [
+                {"termo": "Destino (princípio)", "artigos": "Art. 11-15"},
+            ],
+            "E": [
+                {"termo": "Exportação", "artigos": "Art. 76-90"},
+            ],
+            "I": [
+                {"termo": "IBS (Imposto sobre Bens e Serviços)", "artigos": "Art. 1, 2, 4"},
+                {"termo": "Imunidade", "artigos": "Art. 91-105"},
+                {"termo": "Isenção", "artigos": "Art. 106-126"},
+                {"termo": "IVA Dual", "artigos": "Art. 1-4"},
+            ],
+            "N": [
+                {"termo": "Não cumulatividade", "artigos": "Art. 47-60"},
+                {"termo": "NCM (Nomenclatura Comum do Mercosul)", "artigos": "Art. 143-409"},
+            ],
+            "R": [
+                {"termo": "Redução de alíquota", "artigos": "Art. 143-409"},
+                {"termo": "Regime de transição", "artigos": "Art. 342-355"},
+            ],
+            "S": [
+                {"termo": "Sin Tax (tributação extrafiscal)", "artigos": "Art. 409-420"},
+                {"termo": "Split Payment", "artigos": "Art. 31-46"},
+            ],
+            "T": [
+                {"termo": "TIPI (Tabela de Incidência do IPI)", "artigos": "Art. 143-409"},
+                {"termo": "Transição (regime)", "artigos": "Art. 342-355"},
+            ],
+        }
+        
+        # Renderizar índice remissivo
+        for letra, termos in sorted(indice_remissivo.items()):
+            st.markdown(
+                f'<h3 style="color: {COLOR_GOLD}; margin: 1.5rem 0 0.5rem 0; font-size: 1.5rem; border-bottom: 2px solid {COLOR_GOLD}; padding-bottom: 0.3rem;">{letra}</h3>',
+                unsafe_allow_html=True
+            )
+            
+            for item in termos:
+                st.markdown(
+                    f"""
+                    <div style="
+                        padding: 0.5rem 0;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    ">
+                        <p style="color: {COLOR_TEXT_MAIN}; margin: 0; font-size: 0.95rem;">
+                            <strong>{item['termo']}</strong>
+                        </p>
+                        <p style="color: {COLOR_TEXT_MUTED}; margin: 0.2rem 0 0 1rem; font-size: 0.85rem;">
+                            {item['artigos']}
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+    with lc_tabs[5]:
         # Cabeçalho Q&A
         st.markdown(
             f"""
@@ -1680,7 +1840,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">❓ Central de Q&A</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">? Central de Q&A</h3>
                 <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                     50 perguntas frequentes organizadas por categoria. Use o filtro para buscar temas específicos.
                 </p>
@@ -1689,11 +1849,11 @@ if pagina == "LC 214/2025":
             unsafe_allow_html=True
         )
         
-        qa_filter = st.text_input("🔍 Filtrar por palavra-chave", placeholder="Ex: crédito, transição, cashback", key="qa_filter_input")
+        qa_filter = st.text_input("▸ Filtrar por palavra-chave", placeholder="Ex: crédito, transição, cashback", key="qa_filter_input")
         
         # Organizar Q&A por categorias
         qa_categories = {
-            "📚 Conceitos Fundamentais": [
+            "■ Conceitos Fundamentais": [
                 {"q": "O que é o IVA Dual?", "a": "É o sistema composto pelo IBS (Estados/Municípios) e pela CBS (União), com base de cálculo e regras harmonizadas."},
                 {"q": "O IBS substitui quais impostos?", "a": "O ICMS (Estadual) e o ISS (Municipal)."},
                 {"q": "A CBS substitui quais impostos?", "a": "O PIS e a COFINS (Federais)."},
