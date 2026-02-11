@@ -1477,12 +1477,12 @@ if pagina == "LC 214/2025":
 
     # Navegação por Abas Internas (UX de Alto Nível)
     lc_tabs = st.tabs([
-        "▸ Consulta por Artigo/Palavra",
-        "■ Blocos Temáticos (32)",
-        "▪ Texto Integral da Lei",
-        "▦ Índice Sistemático",
-        "▦ Índice Remissivo",
-        "? Central de Q&A (50 Questões)"
+        "Consulta por Artigo/Palavra",
+        "Blocos Temáticos (32)",
+        "Texto Integral da Lei",
+        "Índice Sistemático",
+        "Índice Remissivo",
+        "Central de Q&A (50 Questões)"
     ])
 
     # Banco de Dados de Artigos (Mapeamento Integral - 544 Artigos)
@@ -1525,7 +1525,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▸ Consulta Inteligente</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">Consulta Inteligente</h3>
                 <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                     Pesquise por número de artigo ou palavra-chave. Base com 544 artigos.
                 </p>
@@ -1687,7 +1687,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Sistemático</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">Índice Sistemático</h3>
                 <p style="color: #1F2937; margin: 0; font-size: 0.9rem;">
                     Estrutura hierárquica da LC 214/2025 organizada por blocos temáticos e títulos.
                 </p>
@@ -1727,7 +1727,7 @@ if pagina == "LC 214/2025":
                 # Listar seções do bloco
                 for secao in bloco['secoes']:
                     st.markdown(
-                        f'<p style="color: #FFFFFF; margin: 0.3rem 0 0.3rem 2rem; font-size: 0.9rem;">▸ {secao["numero"]}. {secao["titulo"]}</p>',
+                        f'<p style="color: #FFFFFF; margin: 0.3rem 0 0.3rem 2rem; font-size: 0.9rem;">{secao["numero"]}. {secao["titulo"]}</p>',
                         unsafe_allow_html=True
                     )
         else:
@@ -1744,7 +1744,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">▦ Índice Remissivo</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">Índice Remissivo</h3>
                 <p style="color: #1F2937; margin: 0; font-size: 0.9rem;">
                     Índice alfabético de termos-chave com remissões aos artigos da LC 214/2025.
                 </p>
@@ -1840,7 +1840,7 @@ if pagina == "LC 214/2025":
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
             ">
-                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">? Central de Q&A</h3>
+                <h3 style="color: {COLOR_GOLD}; margin: 0 0 0.5rem 0;">Central de Q&A</h3>
                 <p style="color: {COLOR_TEXT_MUTED}; margin: 0; font-size: 0.9rem;">
                     50 perguntas frequentes organizadas por categoria. Use o filtro para buscar temas específicos.
                 </p>
