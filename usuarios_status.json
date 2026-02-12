@@ -74,10 +74,10 @@
   "sergio@expertiserct.com.br": {
     "status": "ativo",
     "tipo": "cliente",
-    "plano": "PARTNER",
+    "plano": "TGH CLUB",
     "data_cadastro": "2026-01-10",
-    "data_vencimento": null,
-    "observacoes": "Expertise RCT - Plano PARTNER (sem vencimento)"
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Expertise RCT - Plano TGH CLUB (vencimento 15/02/2027)"
   },
   "fiscal@idvl.com.br": {
     "status": "ativo",
@@ -206,5 +206,45 @@
     "data_cadastro": "2026-02-12",
     "data_vencimento": "2026-03-14",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "willian@barrocoadv.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "TGH CLUB",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Barroco Advocacia - Plano TGH CLUB (vencimento 15/02/2027)"
+  },
+  "mcristina@athusconsultoria.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "TGH CLUB",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Athus Consultoria - Plano TGH CLUB (vencimento 15/02/2027)"
+  },
+  "suely.pala@palaadvogados.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "TGH CLUB",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Pala Advogados - Plano TGH CLUB (vencimento 15/02/2027)"
+  },
+  "dr.guilhermeminuzzo@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "TGH CLUB",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Dr. Guilherme Minuzzo - Plano TGH CLUB (vencimento 15/02/2027)"
+  },
+  "alessandra@consultoriaestrategicatributaria.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "TGH CLUB",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2027-02-15",
+    "observacoes": "Consultoria Estratégica Tributária - Plano TGH CLUB (vencimento 15/02/2027)"
   }
 }
