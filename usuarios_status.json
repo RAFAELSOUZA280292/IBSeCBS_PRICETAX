@@ -2,92 +2,209 @@
   "PriceADM": {
     "status": "ativo",
     "tipo": "administrador",
+    "plano": "PARTNER",
     "data_cadastro": "2024-01-01",
     "data_vencimento": null,
-    "observacoes": "Usuário administrador do sistema"
+    "observacoes": "Usuário administrador do sistema - Plano PARTNER (sem vencimento)"
   },
   "JPContabilClientes": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2024-06-15",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Cliente JP Contabilidade"
+    "data_vencimento": null,
+    "observacoes": "Cliente JP Contabilidade - Plano PARTNER (sem vencimento)"
   },
   "amandapereira@pricetax.com.br": {
     "status": "ativo",
     "tipo": "equipe",
+    "plano": "PARTNER",
     "data_cadastro": "2024-01-01",
     "data_vencimento": null,
-    "observacoes": "Equipe PriceTax"
+    "observacoes": "Equipe PriceTax - Plano PARTNER (sem vencimento)"
   },
   "ronaldodias@pricetax.com.br": {
     "status": "ativo",
     "tipo": "equipe",
+    "plano": "PARTNER",
     "data_cadastro": "2024-01-01",
     "data_vencimento": null,
-    "observacoes": "Equipe PriceTax"
+    "observacoes": "Equipe PriceTax - Plano PARTNER (sem vencimento)"
   },
   "felipedalsanto@pricetax.com.br": {
     "status": "ativo",
     "tipo": "equipe",
+    "plano": "PARTNER",
     "data_cadastro": "2024-01-01",
     "data_vencimento": null,
-    "observacoes": "Equipe PriceTax"
+    "observacoes": "Equipe PriceTax - Plano PARTNER (sem vencimento)"
   },
   "patricia.mdrews@gmail.com": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2025-11-20",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Cliente ativo"
+    "data_vencimento": null,
+    "observacoes": "Cliente ativo - Plano PARTNER (sem vencimento)"
   },
   "tributario@lavoratory.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2025-12-01",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Lavoratory - Tributário"
+    "data_vencimento": null,
+    "observacoes": "Lavoratory - Tributário - Plano PARTNER (sem vencimento)"
   },
   "contabil@lavoratory.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2025-12-01",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Lavoratory - Contábil"
+    "data_vencimento": null,
+    "observacoes": "Lavoratory - Contábil - Plano PARTNER (sem vencimento)"
   },
   "alex.montu@lavoratory.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2025-12-01",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Lavoratory - Alex Montu"
+    "data_vencimento": null,
+    "observacoes": "Lavoratory - Alex Montu - Plano PARTNER (sem vencimento)"
   },
   "sergio@expertiserct.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2026-01-10",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Expertise RCT"
+    "data_vencimento": null,
+    "observacoes": "Expertise RCT - Plano PARTNER (sem vencimento)"
   },
   "fiscal@idvl.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2026-02-10",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "IDVL - Fiscal"
+    "data_vencimento": null,
+    "observacoes": "IDVL - Fiscal - Plano PARTNER (sem vencimento)"
   },
   "jonas@bonattocontabilidade.com.br": {
     "status": "ativo",
     "tipo": "cliente",
+    "plano": "PARTNER",
     "data_cadastro": "2026-02-10",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Bonatto Contabilidade"
+    "data_vencimento": null,
+    "observacoes": "Bonatto Contabilidade - Plano PARTNER (sem vencimento)"
   },
-  "teste@empresa.com.br": {
+  "cassandralibel@hotmail.com": {
     "status": "ativo",
     "tipo": "cliente",
-    "data_cadastro": "2026-01-01",
-    "data_vencimento": "2026-03-15",
-    "observacoes": "Teste de reativação"
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "clebergomesoliveira@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "contdiniz@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "miriam.assis@micontconsultoria.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "amarildo@suporttcontabil.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "jrenan942@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "lourivaljr010@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "oliverio@chagascontabil.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "edivaniaecc@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "sidneyamarante.servicos@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "batista@batistacontabilidade.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "germana_benedetti@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "dinailton@dsantoscontabil.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
+  },
+  "luizvieiracont@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-03-14",
+    "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   }
 }
