@@ -8,6 +8,7 @@ import hashlib
 import streamlit as st
 from datetime import datetime, timezone, timedelta
 import os
+from user_manager import verificar_acesso_usuario
 
 
 def log_login(username: str, success: bool):
@@ -72,9 +73,21 @@ def check_password() -> bool:
         if username in st.secrets["passwords"]:
             password_hash = get_password_hash(password)
             if password_hash == st.secrets["passwords"][username]:
+                # Verificar status do usuário (mensalidade, bloqueio, etc)
+                pode_acessar, mensagem_erro = verificar_acesso_usuario(username)
+                
+                if not pode_acessar:
+                    # Usuário bloqueado ou inadimplente
+                    st.session_state["password_correct"] = False
+                    st.session_state["access_denied_message"] = mensagem_erro
+                    log_login(username, success=False)
+                    return
+                
+                # Credenciais válidas e usuário ativo
                 st.session_state["password_correct"] = True
                 st.session_state["authenticated_user"] = username
                 st.session_state["login_attempts"] = 0
+                st.session_state["access_denied_message"] = None
                 
                 # Registrar login no log
                 log_login(username, success=True)
@@ -87,6 +100,7 @@ def check_password() -> bool:
         
         # Registrar tentativa falha no log
         log_login(username if username else "[vazio]", success=False)
+        st.session_state["access_denied_message"] = None
     
     # Verificar se já está autenticado
     if st.session_state.get("password_correct", False):
@@ -441,10 +455,18 @@ def check_password() -> bool:
     if st.button("Entrar", type="primary", use_container_width=True):
         password_entered()
     
-    # Exibir erro se credenciais inválidas
+    # Exibir erro se credenciais inválidas ou acesso negado
     if st.session_state.get("password_correct") == False:
-        attempts = st.session_state.get("login_attempts", 0)
-        st.error(f"Usuário ou senha incorretos. Tentativa {attempts}.")
+        # Verificar se há mensagem específica de acesso negado
+        access_denied_msg = st.session_state.get("access_denied_message")
+        
+        if access_denied_msg:
+            # Mensagem de bloqueio/inadimplência
+            st.error(access_denied_msg)
+        else:
+            # Mensagem de credenciais inválidas
+            attempts = st.session_state.get("login_attempts", 0)
+            st.error(f"Usuário ou senha incorretos. Tentativa {attempts}.")
     
     # Botão WhatsApp para solicitar acesso
     st.markdown(

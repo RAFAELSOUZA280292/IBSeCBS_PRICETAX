@@ -7,10 +7,22 @@ Acesso restrito ao usuário PriceADM.
 import streamlit as st
 import pandas as pd
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import plotly.express as px
 import plotly.graph_objects as go
 from excel_exporter import exportar_dataframe_para_excel
+from user_manager import (
+    carregar_usuarios_status,
+    salvar_usuarios_status,
+    verificar_acesso_usuario,
+    obter_info_usuario,
+    atualizar_usuario,
+    adicionar_usuario,
+    remover_usuario,
+    listar_usuarios,
+    contar_usuarios_por_status,
+    verificar_vencimentos_proximos
+)
 
 
 def parse_log_file(log_file_path: str) -> pd.DataFrame:
@@ -89,10 +101,17 @@ def render_admin_tab():
     st.markdown("---")
     
     # Tabs para diferentes seções
-    tab_logs, tab_market = st.tabs([
+    tab_users, tab_logs, tab_market = st.tabs([
+        "Gestão de Usuários",
         "Logs de Autenticação",
         "Inteligência de Mercado"
     ])
+    
+    # =========================================================================
+    # TAB: GESTÃO DE USUÁRIOS
+    # =========================================================================
+    with tab_users:
+        render_user_management_section()
     
     # =========================================================================
     # TAB: LOGS DE AUTENTICAÇÃO
@@ -306,3 +325,306 @@ def render_auth_logs_section():
     **Total de registros:** {len(df_filtrado)} (filtrados) / {len(df_logs)} (total)  
     **Último acesso:** {df_logs['timestamp'].max().strftime('%d/%m/%Y %H:%M:%S') if not df_logs.empty else 'N/A'}
     """)
+
+
+
+def render_user_management_section():
+    """Renderiza seção de gestão de usuários."""
+    st.markdown("## Gestão de Usuários")
+    
+    # Carregar usuários
+    usuarios = listar_usuarios()
+    contagem = contar_usuarios_por_status()
+    vencimentos_proximos = verificar_vencimentos_proximos(dias=15)
+    
+    # Métricas gerais
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total de Usuários", len(usuarios))
+    
+    with col2:
+        st.metric("Usuários Ativos", contagem.get("ativo", 0), delta="Ativos")
+    
+    with col3:
+        st.metric("Inadimplentes", contagem.get("inadimplente", 0), delta="-Bloqueados", delta_color="inverse")
+    
+    with col4:
+        st.metric("Vencimentos Próximos", len(vencimentos_proximos), delta="15 dias")
+    
+    st.markdown("---")
+    
+    # Alertas de vencimentos próximos
+    if vencimentos_proximos:
+        with st.expander(f"⚠️ Alertas de Vencimento ({len(vencimentos_proximos)} usuários)", expanded=True):
+            for user in vencimentos_proximos:
+                dias = user["dias_restantes"]
+                cor = "🔴" if dias <= 3 else "🟡" if dias <= 7 else "🟢"
+                st.warning(f"{cor} **{user['username']}** - Vence em {dias} dia(s) ({user['data_vencimento']})")
+    
+    st.markdown("---")
+    
+    # Tabs de ações
+    tab_lista, tab_editar, tab_adicionar = st.tabs([
+        "Lista de Usuários",
+        "Editar Usuário",
+        "Adicionar Usuário"
+    ])
+    
+    # =========================================================================
+    # TAB: LISTA DE USUÁRIOS
+    # =========================================================================
+    with tab_lista:
+        st.markdown("### Lista Completa de Usuários")
+        
+        # Filtros
+        col_filtro1, col_filtro2 = st.columns(2)
+        
+        with col_filtro1:
+            filtro_status = st.multiselect(
+                "Filtrar por Status",
+                options=["ativo", "bloqueado", "inadimplente"],
+                default=["ativo", "bloqueado", "inadimplente"]
+            )
+        
+        with col_filtro2:
+            filtro_tipo = st.multiselect(
+                "Filtrar por Tipo",
+                options=["administrador", "equipe", "cliente"],
+                default=["administrador", "equipe", "cliente"]
+            )
+        
+        # Aplicar filtros
+        usuarios_filtrados = [
+            u for u in usuarios
+            if u.get("status", "ativo") in filtro_status
+            and u.get("tipo", "cliente") in filtro_tipo
+        ]
+        
+        if not usuarios_filtrados:
+            st.info("Nenhum usuário encontrado com os filtros selecionados.")
+        else:
+            # Preparar DataFrame
+            df_usuarios = pd.DataFrame(usuarios_filtrados)
+            
+            # Calcular dias restantes
+            def calcular_dias_restantes(data_vencimento_str):
+                if not data_vencimento_str:
+                    return "N/A"
+                try:
+                    data_vencimento = datetime.strptime(data_vencimento_str, "%Y-%m-%d").date()
+                    dias = (data_vencimento - date.today()).days
+                    if dias < 0:
+                        return f"Vencido há {abs(dias)} dias"
+                    return f"{dias} dias"
+                except:
+                    return "N/A"
+            
+            df_usuarios["dias_restantes"] = df_usuarios["data_vencimento"].apply(calcular_dias_restantes)
+            
+            # Formatar datas
+            df_usuarios["data_cadastro"] = pd.to_datetime(df_usuarios["data_cadastro"], errors="coerce").dt.strftime("%d/%m/%Y")
+            df_usuarios["data_vencimento"] = df_usuarios["data_vencimento"].fillna("N/A")
+            
+            # Mapear status para ícones
+            status_icons = {
+                "ativo": "✅",
+                "bloqueado": "🚫",
+                "inadimplente": "⚠️"
+            }
+            df_usuarios["status_icon"] = df_usuarios["status"].map(status_icons)
+            
+            # Selecionar e renomear colunas
+            df_display = df_usuarios[[
+                "username",
+                "status_icon",
+                "status",
+                "tipo",
+                "data_cadastro",
+                "data_vencimento",
+                "dias_restantes",
+                "observacoes"
+            ]].copy()
+            
+            df_display.columns = [
+                "Usuário",
+                "",
+                "Status",
+                "Tipo",
+                "Data Cadastro",
+                "Vencimento",
+                "Dias Restantes",
+                "Observações"
+            ]
+            
+            # Exibir tabela
+            st.dataframe(
+                df_display,
+                use_container_width=True,
+                height=500,
+                hide_index=True
+            )
+            
+            # Botão de exportação
+            excel_bytes = exportar_dataframe_para_excel(
+                df_display,
+                nome_aba="Usuários"
+            )
+            st.download_button(
+                label="📥 Exportar para Excel",
+                data=excel_bytes,
+                file_name=f"usuarios_pricetax_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=False
+            )
+    
+    # =========================================================================
+    # TAB: EDITAR USUÁRIO
+    # =========================================================================
+    with tab_editar:
+        st.markdown("### Editar Usuário Existente")
+        
+        if not usuarios:
+            st.info("Nenhum usuário cadastrado.")
+        else:
+            # Selecionar usuário
+            usernames = [u["username"] for u in usuarios]
+            selected_user = st.selectbox(
+                "Selecione o usuário",
+                options=usernames,
+                key="edit_user_select"
+            )
+            
+            if selected_user:
+                user_data = obter_info_usuario(selected_user)
+                
+                if user_data:
+                    st.markdown(f"#### Editando: **{selected_user}**")
+                    
+                    col_edit1, col_edit2 = st.columns(2)
+                    
+                    with col_edit1:
+                        novo_status = st.selectbox(
+                            "Status",
+                            options=["ativo", "bloqueado", "inadimplente"],
+                            index=["ativo", "bloqueado", "inadimplente"].index(user_data.get("status", "ativo")),
+                            key="edit_status"
+                        )
+                        
+                        novo_tipo = st.selectbox(
+                            "Tipo",
+                            options=["administrador", "equipe", "cliente"],
+                            index=["administrador", "equipe", "cliente"].index(user_data.get("tipo", "cliente")),
+                            key="edit_tipo"
+                        )
+                    
+                    with col_edit2:
+                        # Data de vencimento
+                        data_vencimento_atual = user_data.get("data_vencimento")
+                        if data_vencimento_atual:
+                            try:
+                                data_vencimento_date = datetime.strptime(data_vencimento_atual, "%Y-%m-%d").date()
+                            except:
+                                data_vencimento_date = None
+                        else:
+                            data_vencimento_date = None
+                        
+                        nova_data_vencimento = st.date_input(
+                            "Data de Vencimento",
+                            value=data_vencimento_date,
+                            key="edit_vencimento"
+                        )
+                        
+                        # Checkbox para remover vencimento
+                        sem_vencimento = st.checkbox(
+                            "Sem vencimento (usuário permanente)",
+                            value=(data_vencimento_atual is None),
+                            key="edit_sem_vencimento"
+                        )
+                    
+                    novas_observacoes = st.text_area(
+                        "Observações",
+                        value=user_data.get("observacoes", ""),
+                        key="edit_observacoes"
+                    )
+                    
+                    col_btn1, col_btn2 = st.columns([1, 4])
+                    
+                    with col_btn1:
+                        if st.button("💾 Salvar Alterações", type="primary", use_container_width=True):
+                            dados_atualizados = {
+                                "status": novo_status,
+                                "tipo": novo_tipo,
+                                "data_vencimento": None if sem_vencimento else nova_data_vencimento.strftime("%Y-%m-%d"),
+                                "observacoes": novas_observacoes
+                            }
+                            
+                            if atualizar_usuario(selected_user, dados_atualizados):
+                                st.success(f"✅ Usuário **{selected_user}** atualizado com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error("❌ Erro ao atualizar usuário.")
+    
+    # =========================================================================
+    # TAB: ADICIONAR USUÁRIO
+    # =========================================================================
+    with tab_adicionar:
+        st.markdown("### Adicionar Novo Usuário")
+        
+        st.info("⚠️ **Atenção:** Você precisará adicionar a senha do usuário manualmente no arquivo `secrets.toml` no Streamlit Cloud.")
+        
+        novo_username = st.text_input(
+            "E-mail do Usuário",
+            placeholder="usuario@empresa.com.br",
+            key="add_username"
+        )
+        
+        col_add1, col_add2 = st.columns(2)
+        
+        with col_add1:
+            novo_tipo_add = st.selectbox(
+                "Tipo",
+                options=["cliente", "equipe", "administrador"],
+                key="add_tipo"
+            )
+        
+        with col_add2:
+            nova_data_vencimento_add = st.date_input(
+                "Data de Vencimento",
+                value=date.today() + timedelta(days=30),
+                key="add_vencimento"
+            )
+            
+            sem_vencimento_add = st.checkbox(
+                "Sem vencimento (usuário permanente)",
+                value=False,
+                key="add_sem_vencimento"
+            )
+        
+        novas_observacoes_add = st.text_area(
+            "Observações",
+            placeholder="Ex: Cliente da empresa XYZ",
+            key="add_observacoes"
+        )
+        
+        if st.button("➕ Adicionar Usuário", type="primary", use_container_width=False):
+            if not novo_username:
+                st.error("❌ Por favor, informe o e-mail do usuário.")
+            else:
+                # Verificar se usuário já existe
+                if obter_info_usuario(novo_username):
+                    st.error(f"❌ Usuário **{novo_username}** já existe no sistema.")
+                else:
+                    data_venc = None if sem_vencimento_add else nova_data_vencimento_add.strftime("%Y-%m-%d")
+                    
+                    if adicionar_usuario(
+                        username=novo_username,
+                        tipo=novo_tipo_add,
+                        data_vencimento=data_venc,
+                        observacoes=novas_observacoes_add
+                    ):
+                        st.success(f"✅ Usuário **{novo_username}** adicionado com sucesso!")
+                        st.warning("⚠️ **Próximo passo:** Adicione a senha do usuário no arquivo `secrets.toml` no Streamlit Cloud.")
+                        st.rerun()
+                    else:
+                        st.error("❌ Erro ao adicionar usuário.")

@@ -1,0 +1,93 @@
+{
+  "PriceADM": {
+    "status": "ativo",
+    "tipo": "administrador",
+    "data_cadastro": "2024-01-01",
+    "data_vencimento": null,
+    "observacoes": "Usuário administrador do sistema"
+  },
+  "JPContabilClientes": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2024-06-15",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Cliente JP Contabilidade"
+  },
+  "amandapereira@pricetax.com.br": {
+    "status": "ativo",
+    "tipo": "equipe",
+    "data_cadastro": "2024-01-01",
+    "data_vencimento": null,
+    "observacoes": "Equipe PriceTax"
+  },
+  "ronaldodias@pricetax.com.br": {
+    "status": "ativo",
+    "tipo": "equipe",
+    "data_cadastro": "2024-01-01",
+    "data_vencimento": null,
+    "observacoes": "Equipe PriceTax"
+  },
+  "felipedalsanto@pricetax.com.br": {
+    "status": "ativo",
+    "tipo": "equipe",
+    "data_cadastro": "2024-01-01",
+    "data_vencimento": null,
+    "observacoes": "Equipe PriceTax"
+  },
+  "patricia.mdrews@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2025-11-20",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Cliente ativo"
+  },
+  "tributario@lavoratory.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2025-12-01",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Lavoratory - Tributário"
+  },
+  "contabil@lavoratory.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2025-12-01",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Lavoratory - Contábil"
+  },
+  "alex.montu@lavoratory.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2025-12-01",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Lavoratory - Alex Montu"
+  },
+  "sergio@expertiserct.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2026-01-10",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Expertise RCT"
+  },
+  "fiscal@idvl.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2026-02-10",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "IDVL - Fiscal"
+  },
+  "jonas@bonattocontabilidade.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2026-02-10",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Bonatto Contabilidade"
+  },
+  "teste@empresa.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "data_cadastro": "2026-01-01",
+    "data_vencimento": "2026-03-15",
+    "observacoes": "Teste de reativação"
+  }
+}
