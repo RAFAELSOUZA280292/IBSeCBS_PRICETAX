@@ -68,6 +68,22 @@ def aplicar_css_portal_x():
     st.markdown(
         f"""
         <style>
+        /* Ocultar elementos técnicos indesejados (keyboard, arrow_down, etc) */
+        [id*="keyboard"],
+        [class*="keyboard"],
+        [id^="_art"],
+        [class^="_art"],
+        [id*="_right"],
+        [class*="_right"],
+        [id*="arrow"],
+        [class*="arrow"] {{
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }}
+        
         /* Ocultar botões +/- dos number_input */
         .stNumberInput button {{
             display: none !important;
