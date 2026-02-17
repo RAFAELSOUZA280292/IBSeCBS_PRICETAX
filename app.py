@@ -25,6 +25,9 @@ import altair as alt
 # Importar módulo de autenticação
 from auth import check_password, show_logout_button
 
+# Importar Portal X (exclusivo PriceADM)
+import portal_x
+
 # Importar módulo de validações
 from validators import validar_ncm, validar_cfop, validar_cnpj
 
@@ -1424,6 +1427,12 @@ with st.sidebar:
         if st.button("Painel Administrativo", key="menu_admin", use_container_width=True, type=tipo_admin):
             st.session_state.pagina_ativa = "Admin"
             st.rerun()
+        
+        tipo_portal_x = "primary" if st.session_state.pagina_ativa == "Portal X" else "secondary"
+        if st.button("Portal X", key="menu_portal_x", use_container_width=True, type=tipo_portal_x):
+            st.session_state.pagina_ativa = "Portal X"
+            st.rerun()
+        
         st.markdown('<div style="margin: 1.25rem 0;"></div>', unsafe_allow_html=True)
 
 # Botão de logout no sidebar
@@ -4392,3 +4401,10 @@ elif pagina == "Consulta CNPJ":
 elif pagina == "Admin" and st.session_state.get("authenticated_user") == "PriceADM":
     from aba_admin import render_admin_tab
     render_admin_tab()
+
+
+# =============================================================================
+# ABA: PORTAL X (PORTAL DO FORNECEDOR) - RESTRITO A PriceADM
+# =============================================================================
+elif pagina == "Portal X" and st.session_state.get("authenticated_user") == "PriceADM":
+    portal_x.render_portal_x()
