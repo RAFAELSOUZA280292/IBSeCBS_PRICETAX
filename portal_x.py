@@ -20,10 +20,17 @@ import os
 
 PORTAL_X_DATA_FILE = "portal_x_cotacoes.json"
 
+# Design System PRICETAX (mesmas cores do app principal)
+COLOR_GOLD = "#FFDD00"
+COLOR_BLACK = "#000000"
+COLOR_GRAY_DARKER = "#1A1A1A"
+COLOR_GRAY_DARK = "#2A2A2A"
+COLOR_GRAY_MEDIUM = "#666666"
+COLOR_GRAY_LIGHT = "#999999"
+COLOR_WHITE = "#FFFFFF"
+
 class StatusCotacao(Enum):
-    """
-    Enum para status das cotações
-    """
+    """Enum para status das cotações"""
     EM_ANALISE = "em_analise"
     APROVADO = "aprovado"
     REPROVADO = "reprovado"
@@ -33,13 +40,13 @@ class StatusCotacao(Enum):
     NF_RECUSADA = "nf_recusada"
 
 STATUS_COLORS = {
-    StatusCotacao.EM_ANALISE: "#FFA500",  # Laranja
-    StatusCotacao.APROVADO: "#28A745",     # Verde
-    StatusCotacao.REPROVADO: "#DC3545",    # Vermelho
-    StatusCotacao.AGUARDANDO_NF: "#FF8C00", # Laranja escuro
-    StatusCotacao.NF_RECEBIDA: "#007BFF",  # Azul
-    StatusCotacao.NF_VALIDADA: "#6F42C1",  # Roxo
-    StatusCotacao.NF_RECUSADA: "#343A40"   # Preto
+    StatusCotacao.EM_ANALISE: "#FFA500",
+    StatusCotacao.APROVADO: "#28A745",
+    StatusCotacao.REPROVADO: "#DC3545",
+    StatusCotacao.AGUARDANDO_NF: "#FF8C00",
+    StatusCotacao.NF_RECEBIDA: "#007BFF",
+    StatusCotacao.NF_VALIDADA: "#6F42C1",
+    StatusCotacao.NF_RECUSADA: "#343A40"
 }
 
 STATUS_LABELS = {
@@ -53,16 +60,83 @@ STATUS_LABELS = {
 }
 
 # ============================================================================
+# CSS PROFISSIONAL PRICETAX
+# ============================================================================
+
+def aplicar_css_portal_x():
+    """Aplica CSS profissional no padrão PRICETAX"""
+    st.markdown(
+        f"""
+        <style>
+        /* Ocultar botões +/- dos number_input */
+        .stNumberInput button {{
+            display: none !important;
+        }}
+        
+        /* Labels com cor clara e legível */
+        .stTextInput label,
+        .stTextArea label,
+        .stNumberInput label,
+        .stDateInput label {{
+            color: {COLOR_WHITE} !important;
+            font-weight: 500 !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem !important;
+        }}
+        
+        /* Inputs com fundo escuro e borda clara */
+        .stTextInput input,
+        .stTextArea textarea,
+        .stNumberInput input,
+        .stDateInput input {{
+            background: {COLOR_GRAY_DARK} !important;
+            color: {COLOR_WHITE} !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 8px !important;
+            padding: 0.75rem 1rem !important;
+        }}
+        
+        /* Focus nos inputs */
+        .stTextInput input:focus,
+        .stTextArea textarea:focus,
+        .stNumberInput input:focus,
+        .stDateInput input:focus {{
+            border-color: {COLOR_GOLD} !important;
+            box-shadow: 0 0 0 3px rgba(255, 221, 0, 0.15) !important;
+        }}
+        
+        /* Expanders com fundo escuro */
+        .streamlit-expanderHeader {{
+            background: {COLOR_GRAY_DARKER} !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            color: {COLOR_WHITE} !important;
+            padding: 1rem !important;
+        }}
+        
+        .streamlit-expanderHeader:hover {{
+            background: {COLOR_GRAY_DARK} !important;
+            border-color: {COLOR_GOLD} !important;
+        }}
+        
+        .streamlit-expanderContent {{
+            background: {COLOR_GRAY_DARKER} !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-top: none !important;
+            border-radius: 0 0 8px 8px !important;
+            padding: 1.5rem !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ============================================================================
 # FUNÇÕES DE PERSISTÊNCIA
 # ============================================================================
 
 def carregar_cotacoes():
-    """
-    Carrega cotações do arquivo JSON
-    
-    Returns:
-        dict: Dicionário com todas as cotações
-    """
+    """Carrega cotações do arquivo JSON"""
     if os.path.exists(PORTAL_X_DATA_FILE):
         try:
             with open(PORTAL_X_DATA_FILE, "r", encoding="utf-8") as f:
@@ -73,12 +147,7 @@ def carregar_cotacoes():
     return {}
 
 def salvar_cotacoes(cotacoes):
-    """
-    Salva cotações no arquivo JSON
-    
-    Args:
-        cotacoes (dict): Dicionário com todas as cotações
-    """
+    """Salva cotações no arquivo JSON"""
     try:
         with open(PORTAL_X_DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(cotacoes, f, indent=2, ensure_ascii=False)
@@ -86,12 +155,7 @@ def salvar_cotacoes(cotacoes):
         st.error(f"Erro ao salvar cotações: {e}")
 
 def gerar_id_cotacao():
-    """
-    Gera ID único para cotação
-    
-    Returns:
-        str: ID único no formato COT-YYYYMMDD-HHMMSS
-    """
+    """Gera ID único para cotação"""
     return f"COT-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
 # ============================================================================
@@ -99,14 +163,12 @@ def gerar_id_cotacao():
 # ============================================================================
 
 def render_portal_x():
-    """
-    Renderiza a interface principal do Portal X
-    Exclusivo para usuário PriceADM
-    """
+    """Renderiza a interface principal do Portal X"""
+    aplicar_css_portal_x()
+    
     st.title("Portal X - Portal do Fornecedor")
     st.markdown("Sistema de gestão de cotações com validação fiscal automatizada")
     
-    # Tabs principais
     tab1, tab2, tab3, tab4 = st.tabs([
         "Nova Cotação",
         "Minhas Cotações",
@@ -131,18 +193,15 @@ def render_portal_x():
 # ============================================================================
 
 def render_nova_cotacao():
-    """
-    Renderiza formulário de nova cotação
-    """
+    """Renderiza formulário de nova cotação"""
     st.header("Cadastrar Nova Cotação")
     
-    # Informações do item
     st.subheader("Informações do Item")
     col1, col2 = st.columns(2)
     
     with col1:
         nome_item = st.text_input("Nome do Item", placeholder="Ex: iPhone 17 Pro")
-        quantidade = st.number_input("Quantidade", min_value=1, value=1)
+        quantidade = st.number_input("Quantidade", min_value=1, value=1, step=1)
     
     with col2:
         ncm = st.text_input("NCM (opcional)", placeholder="Ex: 85171231")
@@ -150,77 +209,36 @@ def render_nova_cotacao():
     
     st.divider()
     
-    # Número de cotações
     st.subheader("Cotações")
     num_cotacoes = st.number_input(
         "Quantas cotações deseja cadastrar?",
         min_value=2,
         max_value=10,
         value=3,
+        step=1,
         help="Cadastre múltiplas cotações para comparar fornecedores"
     )
     
-    # Lista para armazenar cotações
     cotacoes_temp = []
     
-    # Formulário para cada cotação
     for i in range(num_cotacoes):
         with st.expander(f"Cotação {i+1}", expanded=(i==0)):
             col1, col2 = st.columns(2)
             
             with col1:
-                fornecedor = st.text_input(
-                    "Nome do Fornecedor",
-                    key=f"fornecedor_{i}",
-                    placeholder="Ex: Tech Distribuidora"
-                )
-                cnpj = st.text_input(
-                    "CNPJ",
-                    key=f"cnpj_{i}",
-                    placeholder="00.000.000/0000-00"
-                )
-                vendedor = st.text_input(
-                    "Nome do Vendedor",
-                    key=f"vendedor_{i}",
-                    placeholder="Ex: João Silva"
-                )
-                email = st.text_input(
-                    "E-mail do Fornecedor",
-                    key=f"email_{i}",
-                    placeholder="contato@fornecedor.com.br"
-                )
+                fornecedor = st.text_input("Nome do Fornecedor", key=f"fornecedor_{i}", placeholder="Ex: Tech Distribuidora")
+                cnpj = st.text_input("CNPJ", key=f"cnpj_{i}", placeholder="00.000.000/0000-00")
+                vendedor = st.text_input("Nome do Vendedor", key=f"vendedor_{i}", placeholder="Ex: João Silva")
+                email = st.text_input("E-mail do Fornecedor", key=f"email_{i}", placeholder="contato@fornecedor.com.br")
             
             with col2:
-                numero_cotacao = st.text_input(
-                    "Número da Cotação",
-                    key=f"num_cot_{i}",
-                    placeholder="Ex: COT-2026-001"
-                )
-                data_cotacao = st.date_input(
-                    "Data da Cotação",
-                    key=f"data_{i}",
-                    value=datetime.now()
-                )
-                preco_unitario = st.number_input(
-                    "Preço Unitário (R$)",
-                    key=f"preco_{i}",
-                    min_value=0.01,
-                    format="%.2f"
-                )
-                prazo_entrega = st.number_input(
-                    "Prazo de Entrega (dias)",
-                    key=f"prazo_{i}",
-                    min_value=1,
-                    value=30
-                )
+                numero_cotacao = st.text_input("Número da Cotação", key=f"num_cot_{i}", placeholder="Ex: COT-2026-001")
+                data_cotacao = st.date_input("Data da Cotação", key=f"data_{i}", value=datetime.now())
+                preco_unitario = st.number_input("Preço Unitário (R$)", key=f"preco_{i}", min_value=0.01, value=0.01, step=0.01, format="%.2f")
+                prazo_entrega = st.number_input("Prazo de Entrega (dias)", key=f"prazo_{i}", min_value=1, value=30, step=1)
             
-            condicoes_pagamento = st.text_area(
-                "Condições de Pagamento",
-                key=f"pagamento_{i}",
-                placeholder="Ex: 30/60/90 dias"
-            )
+            condicoes_pagamento = st.text_area("Condições de Pagamento", key=f"pagamento_{i}", placeholder="Ex: 30/60/90 dias")
             
-            # Armazenar cotação temporária
             cotacoes_temp.append({
                 "fornecedor": fornecedor,
                 "cnpj": cnpj,
@@ -235,29 +253,22 @@ def render_nova_cotacao():
     
     st.divider()
     
-    # Botão de salvar
     col1, col2, col3 = st.columns([1, 1, 2])
     
     with col1:
         if st.button("Salvar Cotações", type="primary", use_container_width=True):
-            # Validar campos obrigatórios
             if not nome_item:
                 st.error("Nome do item é obrigatório")
                 return
             
-            # Validar se pelo menos 2 cotações têm fornecedor
             cotacoes_validas = [c for c in cotacoes_temp if c["fornecedor"]]
             if len(cotacoes_validas) < 2:
                 st.error("Cadastre pelo menos 2 cotações com fornecedor")
                 return
             
-            # Gerar ID único
             id_cotacao = gerar_id_cotacao()
-            
-            # Carregar cotações existentes
             todas_cotacoes = carregar_cotacoes()
             
-            # Criar nova entrada
             todas_cotacoes[id_cotacao] = {
                 "id": id_cotacao,
                 "nome_item": nome_item,
@@ -269,13 +280,8 @@ def render_nova_cotacao():
                 "status_geral": StatusCotacao.EM_ANALISE.value
             }
             
-            # Salvar
             salvar_cotacoes(todas_cotacoes)
-            
             st.success(f"Cotações salvas com sucesso! ID: {id_cotacao}")
-            st.balloons()
-            
-            # Limpar formulário (rerun)
             st.rerun()
     
     with col2:
@@ -287,59 +293,39 @@ def render_nova_cotacao():
 # ============================================================================
 
 def render_minhas_cotacoes():
-    """
-    Renderiza lista de cotações cadastradas
-    """
+    """Renderiza lista de cotações cadastradas"""
     st.header("Minhas Cotações")
     
-    # Carregar cotações
     todas_cotacoes = carregar_cotacoes()
     
     if not todas_cotacoes:
         st.info("Nenhuma cotação cadastrada ainda. Cadastre sua primeira cotação na aba 'Nova Cotação'.")
         return
     
-    # Filtros
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        filtro_status = st.selectbox(
-            "Filtrar por Status",
-            ["Todos"] + [STATUS_LABELS[s] for s in StatusCotacao]
-        )
+        filtro_status = st.selectbox("Filtrar por Status", ["Todos"] + [STATUS_LABELS[s] for s in StatusCotacao])
     
     with col2:
-        filtro_data = st.selectbox(
-            "Período",
-            ["Todos", "Últimos 7 dias", "Últimos 30 dias", "Últimos 90 dias"]
-        )
+        filtro_data = st.selectbox("Período", ["Todos", "Últimos 7 dias", "Últimos 30 dias", "Últimos 90 dias"])
     
     with col3:
         busca = st.text_input("Buscar", placeholder="Nome do item ou fornecedor")
     
     st.divider()
     
-    # Aplicar filtros
     cotacoes_filtradas = todas_cotacoes.copy()
     
-    # Filtro de status
     if filtro_status != "Todos":
         status_key = [k for k, v in STATUS_LABELS.items() if v == filtro_status][0]
-        cotacoes_filtradas = {
-            k: v for k, v in cotacoes_filtradas.items()
-            if v.get("status_geral") == status_key.value
-        }
+        cotacoes_filtradas = {k: v for k, v in cotacoes_filtradas.items() if v.get("status_geral") == status_key.value}
     
-    # Filtro de data
     if filtro_data != "Todos":
         dias = {"Últimos 7 dias": 7, "Últimos 30 dias": 30, "Últimos 90 dias": 90}[filtro_data]
         data_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
-        cotacoes_filtradas = {
-            k: v for k, v in cotacoes_filtradas.items()
-            if v.get("data_cadastro", "")[:10] >= data_limite
-        }
+        cotacoes_filtradas = {k: v for k, v in cotacoes_filtradas.items() if v.get("data_cadastro", "")[:10] >= data_limite}
     
-    # Filtro de busca
     if busca:
         cotacoes_filtradas = {
             k: v for k, v in cotacoes_filtradas.items()
@@ -347,21 +333,17 @@ def render_minhas_cotacoes():
                any(busca.lower() in c.get("fornecedor", "").lower() for c in v.get("cotacoes", []))
         }
     
-    # Exibir cotações
     if not cotacoes_filtradas:
         st.warning("Nenhuma cotação encontrada com os filtros aplicados")
         return
     
     st.write(f"**{len(cotacoes_filtradas)} cotação(ões) encontrada(s)**")
     
-    # Listar cotações
     for id_cot, dados in sorted(cotacoes_filtradas.items(), key=lambda x: x[1]["data_cadastro"], reverse=True):
         with st.expander(f"{dados['nome_item']} - {id_cot}"):
-            # Status
             status = StatusCotacao(dados.get("status_geral", StatusCotacao.EM_ANALISE.value))
             st.markdown(f"**Status:** <span style='color: {STATUS_COLORS[status]}'>{STATUS_LABELS[status]}</span>", unsafe_allow_html=True)
             
-            # Informações gerais
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.write(f"**Quantidade:** {dados['quantidade']}")
@@ -375,7 +357,6 @@ def render_minhas_cotacoes():
             
             st.divider()
             
-            # Cotações dos fornecedores
             st.write("**Cotações:**")
             for i, cot in enumerate(dados['cotacoes']):
                 st.write(f"**{i+1}. {cot['fornecedor']}**")
@@ -394,9 +375,7 @@ def render_minhas_cotacoes():
 # ============================================================================
 
 def render_comparativo():
-    """
-    Renderiza comparativo de fornecedores
-    """
+    """Renderiza comparativo de fornecedores"""
     st.header("Comparativo de Fornecedores")
     st.info("Funcionalidade em desenvolvimento. Em breve você poderá comparar cotações lado a lado.")
 
@@ -405,8 +384,6 @@ def render_comparativo():
 # ============================================================================
 
 def render_relatorios():
-    """
-    Renderiza relatórios e estatísticas
-    """
+    """Renderiza relatórios e estatísticas"""
     st.header("Relatórios e Estatísticas")
     st.info("Funcionalidade em desenvolvimento. Em breve você terá acesso a relatórios detalhados.")
