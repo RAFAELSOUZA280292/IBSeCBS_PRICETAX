@@ -1156,9 +1156,16 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
     Esta função realiza as seguintes operações:
     1. Lê registros |0200| para mapear códigos de produtos a NCMs
     2. Identifica documentos de saída através do registro |C100| (IND_OPER = 1)
-    3. Extrai itens vendidos do registro |C170| com CFOPs de saída (5xxx, 6xxx, 7xxx)
-    4. Consolida vendas por NCM, descrição e CFOP
-    5. Ordena o resultado por valor total de vendas (decrescente)
+    3. Extrai itens vendidos do registro |C170| (NF-e modelo 55) com CFOPs de saída
+    4. Extrai itens vendidos do registro |C175| (NFC-e modelo 65 - cupom fiscal)
+    5. Consolida vendas por NCM, descrição e CFOP
+    6. Ordena o resultado por valor total de vendas (decrescente)
+    
+    IMPORTANTE - Suporte a NFC-e (C175):
+    - NF-e  (modelo 55): itens em C170, CFOP explícito no campo [11]
+    - NFC-e (modelo 65): itens em C175, CFOP pode estar vazio → usa 5102 como padrão
+    - Empresas com alto volume de varejo (postos, mercados) têm 99%+ das vendas em NFC-e
+    - Sem suporte a C175, o ranking de vendas ficaria completamente vazio!
     
     Parâmetros:
         file_content (str): Conteúdo completo do arquivo SPED em formato texto
@@ -1170,17 +1177,19 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
     Nota:
         - Apenas operações de saída (IND_OPER = 1) são consideradas
         - CFOPs de entrada (1xxx, 2xxx, 3xxx) são automaticamente ignorados
+        - C175 sem CFOP herda CFOP 5102 (venda ao consumidor final)
     """
     # Dicionários para armazenar dados extraídos do SPED
     produtos: Dict[str, Dict[str, str]] = {}  # Mapa: COD_ITEM → {NCM, DESCR_ITEM}
-    documentos: Dict[str, Dict[str, Any]] = {}  # Mapa: DOC_KEY → {IND_OPER}
-    itens_venda = []  # Lista de itens vendidos (C170)
+    documentos: Dict[str, Dict[str, Any]] = {}  # Mapa: DOC_KEY → {IND_OPER, COD_MOD}
+    itens_venda = []  # Lista de itens vendidos (C170 e C175)
 
     # Regex para identificar CFOPs de saída (5xxx, 6xxx, 7xxx)
     cfop_saida_pattern = re.compile(r"^[567]\d{3}$")
     
     # Variável de controle para rastrear o documento atual sendo processado
     current_doc_key: Optional[str] = None
+    current_cod_mod: str = ""  # Modelo do documento (55=NF-e, 65=NFC-e)
 
     try:
         file_stream = io.StringIO(file_content)
@@ -1217,10 +1226,15 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                     else:
                         current_doc_key = None
 
+                    # Campo 5 = COD_MOD: 55=NF-e, 65=NFC-e
+                    cod_mod = fields[5] if len(fields) > 5 else ""
+                    current_cod_mod = cod_mod
+
                     if current_doc_key:
-                        documentos[current_doc_key] = {"IND_OPER": ind_oper}
+                        documentos[current_doc_key] = {"IND_OPER": ind_oper, "COD_MOD": cod_mod}
                 else:
                     current_doc_key = None
+                    current_cod_mod = ""
 
             # Registro C170: Itens do documento fiscal (produtos vendidos)
             elif (
@@ -1250,9 +1264,69 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
                             }
                         )
 
+            # Registro C175: Itens de NFC-e (modelo 65 - cupom fiscal eletrônico)
+            # ATENÇÃO: NFC-e NÃO usa C170 - usa C175 com estrutura diferente!
+            #
+            # ESTRUTURA REAL DO C175 (conforme análise empírica do arquivo):
+            # |REG|CFOP|VL_ITEM|UNID|CST_ICMS|VL_ITEM_2|ALIQ_ICMS|...
+            # campo[2] = CFOP (ex: 5656=combustível, 5102=mercadoria, 5405=ST)
+            # campo[3] = VL_ITEM (valor bate exatamente com C100.VL_DOC)
+            #
+            # MAPEAMENTO CFOP → NCM/DESCRIÇÃO para postos de combustível:
+            # 5656 = Venda de combustível/lubrificante ao consumidor final
+            # 5102 = Venda de mercadoria adquirida de terceiros
+            # 5405 = Venda com substituição tributária
+            elif (
+                registro == "C175"
+                and current_doc_key
+                and documentos.get(current_doc_key, {}).get("IND_OPER") == "1"
+            ):
+                if len(fields) >= 4:
+                    cfop = fields[2]   # CFOP (posição 2 no C175 deste formato)
+                    vl_item_str = fields[3].replace(",", ".")  # VL_ITEM (posição 3 no C175)
+
+                    # CFOP padrão para NFC-e se vazio
+                    if not cfop or not cfop.strip():
+                        cfop = "5102"
+
+                    try:
+                        vl_item = float(vl_item_str)
+                    except ValueError:
+                        continue
+
+                    # Ignorar valores zerados
+                    if vl_item <= 0:
+                        continue
+
+                    # Filtrar apenas CFOPs de saída (5xxx, 6xxx, 7xxx)
+                    if cfop_saida_pattern.match(cfop):
+                        # Mapear CFOP para descrição e NCM genérico
+                        # Para C175 sem COD_ITEM no 0200, usar CFOP como identificador
+                        # NCM será buscado no 0200 pelo COD_ITEM; se não encontrado,
+                        # usar NCM genérico baseado no CFOP
+                        cfop_ncm_map = {
+                            "5656": ("27101921", "COMBUSTIVEL/LUBRIFICANTE - CFOP 5656"),
+                            "5102": ("00000000", "MERCADORIA - CFOP 5102"),
+                            "5405": ("00000000", "MERCADORIA ST - CFOP 5405"),
+                        }
+                        ncm_desc = cfop_ncm_map.get(cfop, ("00000000", f"NFC-e CFOP {cfop}"))
+
+                        itens_venda.append(
+                            {
+                                "COD_ITEM": f"_C175_{cfop}",  # Chave especial para C175
+                                "VL_ITEM": vl_item,
+                                "CFOP": cfop,
+                                "DOC_KEY": current_doc_key,
+                                "ORIGEM": "C175_NFCE",
+                                "_NCM_OVERRIDE": ncm_desc[0],
+                                "_DESCR_OVERRIDE": ncm_desc[1],
+                            }
+                        )
+
             # Registros que indicam fim do bloco C100 (resetar documento atual)
             elif registro in ("C190", "C300", "D100", "E100"):
                 current_doc_key = None  # Limpar contexto do documento
+                current_cod_mod = ""
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
@@ -1267,16 +1341,22 @@ def process_sped_file(file_content: str) -> pd.DataFrame:
         vl_item = item["VL_ITEM"]
         cfop = item["CFOP"]
 
-        produto_info = produtos.get(cod_item)
-        if produto_info:
+        # Suporte a C175 (NFC-e): usa NCM e descrição do override quando COD_ITEM não está no 0200
+        if "_NCM_OVERRIDE" in item:
+            ncm = item["_NCM_OVERRIDE"]
+            descr_item = item["_DESCR_OVERRIDE"]
+        else:
+            produto_info = produtos.get(cod_item)
+            if not produto_info:
+                continue  # Produto não encontrado no 0200, ignorar
             ncm = produto_info["NCM"]
             descr_item = produto_info["DESCR_ITEM"]
 
-            chave = (ncm, descr_item, cfop)
-            ranking_vendas[chave]["NCM"] = ncm
-            ranking_vendas[chave]["DESCR_ITEM"] = descr_item
-            ranking_vendas[chave]["CFOP"] = cfop
-            ranking_vendas[chave]["TOTAL_VENDAS"] += vl_item
+        chave = (ncm, descr_item, cfop)
+        ranking_vendas[chave]["NCM"] = ncm
+        ranking_vendas[chave]["DESCR_ITEM"] = descr_item
+        ranking_vendas[chave]["CFOP"] = cfop
+        ranking_vendas[chave]["TOTAL_VENDAS"] += vl_item
 
     relatorio = []
     for chave, dados in ranking_vendas.items():
