@@ -236,9 +236,9 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
 .partners-bar {
     position: fixed;
     bottom: 0; left: 0;
-    /* Deixar 56px livres na direita para o botao Manage App do Streamlit */
-    width: calc(100vw - 56px);
-    background: transparent;
+    /* 100vw: a imagem tem padding extra na direita para cobrir o botao Manage App */
+    width: 100vw;
+    background: #40444D;
     display: block;
     padding: 0;
     z-index: 1001;
