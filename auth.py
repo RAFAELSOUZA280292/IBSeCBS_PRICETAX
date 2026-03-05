@@ -67,15 +67,30 @@ def check_password() -> bool:
     # ------------------------------------------------------------------
     # Logo em base64
     # ------------------------------------------------------------------
+    import base64 as _b64
+
     logo_html = '<span style="color:#FFDD00;font-size:1.6rem;font-weight:800;letter-spacing:3px;font-family:Poppins,sans-serif;">PRICETAX</span>'
     try:
-        import base64 as _b64
         with open("logo_x_questao.png", "rb") as _f:
             _logo_data = _b64.b64encode(_f.read()).decode()
         logo_html = (
             '<img src="data:image/png;base64,' + _logo_data + '" '
             'alt="PRICETAX" style="max-width:180px;height:auto;'
             'filter:drop-shadow(0 4px 16px rgba(255,221,0,0.4));">'
+        )
+    except FileNotFoundError:
+        pass
+
+    # Faixa de logos parceiros em base64
+    parceiros_html = ''
+    try:
+        with open("logos_parceiros.png", "rb") as _f:
+            _parceiros_data = _b64.b64encode(_f.read()).decode()
+        parceiros_html = (
+            '<div class="partners-bar">'
+            '<img src="data:image/png;base64,' + _parceiros_data + '" '
+            'alt="Parceiros PRICETAX" style="max-width:100%;height:auto;">'
+            '</div>'
         )
     except FileNotFoundError:
         pass
@@ -217,6 +232,27 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
     border-top: 1px solid rgba(255,255,255,0.07); font-family: 'Poppins', sans-serif;
 }
 
+/* Faixa de parceiros */
+.partners-bar {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100vw;
+    background: #3A3F4B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 1001;
+    line-height: 0;
+}
+.partners-bar img {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 80px;
+    object-fit: cover;
+}
+
 /* ===== WIDGETS STREAMLIT ACIMA DO OVERLAY =====
    O overlay tem z-index 999. Os widgets precisam de z-index > 999
    e position relative/absolute para ficarem visiveis. */
@@ -310,6 +346,9 @@ div[data-testid="column"]:first-child {
         '<div class="form-subtitle">Insira suas credenciais para continuar</div>'
         + error_html +
         '</div>'  # login-right
+
+        # Faixa de parceiros — rodapé fixo abaixo das duas colunas
+        + parceiros_html +
 
         '</div>'  # login-overlay
     )
