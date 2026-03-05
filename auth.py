@@ -605,7 +605,7 @@ def check_password() -> bool:
                             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="feature-text">Consulta NCM com cClassTrib e alíquotas IBS/CBS</span>
+                    <span class="feature-text">Milhares de NCMs com CST de IBS e CBS mapeados</span>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">
@@ -613,15 +613,15 @@ def check_password() -> bool:
                             <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="feature-text">Ranking de saídas SPED com análise de impacto</span>
+                    <span class="feature-text">Regimes especiais, monofásico e reduções de alíquota</span>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7 21h10M12 3v18M3 7l9-4 9 4" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="feature-text">Validação de XML e NFS-e com conformidade fiscal</span>
+                    <span class="feature-text">Operações internas, interestaduais e exportação</span>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">
@@ -629,7 +629,7 @@ def check_password() -> bool:
                             <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="feature-text">Base legal LC 214/2025 com navegação por blocos</span>
+                    <span class="feature-text">Base legal LC 214/2025 — Cesta Básica, isenções e benefícios</span>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">
@@ -637,7 +637,7 @@ def check_password() -> bool:
                             <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="feature-text">Exportação de relatórios em Excel e PDF</span>
+                    <span class="feature-text">Análise de EFD SPED com ranking de impacto tributário</span>
                 </div>
             </div>
             ''',
@@ -649,18 +649,18 @@ def check_password() -> bool:
             '''
             <div class="social-proof">
                 <div class="proof-item">
-                    <span class="proof-number">+40</span>
+                    <span class="proof-number">+5.000</span>
                     <span class="proof-label">Empresas atendidas</span>
                 </div>
                 <div class="proof-divider"></div>
                 <div class="proof-item">
-                    <span class="proof-number">LC 214</span>
-                    <span class="proof-label">Reforma 2026 mapeada</span>
+                    <span class="proof-number">+600</span>
+                    <span class="proof-label">CFOPs mapeados</span>
                 </div>
                 <div class="proof-divider"></div>
                 <div class="proof-item">
-                    <span class="proof-number">100%</span>
-                    <span class="proof-label">Base legal atualizada</span>
+                    <span class="proof-number">LC 214</span>
+                    <span class="proof-label">Reforma 2026</span>
                 </div>
             </div>
             ''',
