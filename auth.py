@@ -236,7 +236,8 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
 .partners-bar {
     position: fixed;
     bottom: 0; left: 0;
-    width: 100vw;
+    /* Deixar 56px livres na direita para o botao Manage App do Streamlit */
+    width: calc(100vw - 56px);
     background: #3A3F4B;
     display: flex;
     align-items: center;
@@ -244,13 +245,15 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
     padding: 0;
     z-index: 1001;
     line-height: 0;
+    overflow: hidden;
 }
 .partners-bar img {
     width: 100%;
     height: auto;
     display: block;
     max-height: 80px;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
 }
 
 /* ===== WIDGETS STREAMLIT ACIMA DO OVERLAY =====
