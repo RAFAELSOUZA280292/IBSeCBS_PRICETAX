@@ -216,6 +216,38 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
     margin-top: 1.25rem; padding-top: 1rem;
     border-top: 1px solid rgba(255,255,255,0.07); font-family: 'Poppins', sans-serif;
 }
+
+/* ===== WIDGETS STREAMLIT ACIMA DO OVERLAY =====
+   O overlay tem z-index 999. Os widgets precisam de z-index > 999
+   e position relative/absolute para ficarem visiveis. */
+
+/* Container geral do Streamlit - acima do overlay */
+div[data-testid="stVerticalBlock"],
+div[data-testid="column"],
+.element-container,
+.stTextInput,
+.stButton,
+.stMarkdown {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+/* Coluna da direita (col_form) precisa ter background para cobrir o overlay */
+div[data-testid="column"]:last-child {
+    background: #0D0D0D !important;
+    padding: 2rem 2.5rem !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+/* Coluna da esquerda (spacer) - transparente */
+div[data-testid="column"]:first-child {
+    background: transparent !important;
+    pointer-events: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
