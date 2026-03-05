@@ -106,10 +106,10 @@ def check_password() -> bool:
     if st.session_state.get("password_correct", False):
         return True
     
-    # CSS Premium PRICETAX 2.0 - Design System Inspirado em C6 Bank
+    # CSS Premium PRICETAX 3.0 - Layout Split Screen (Referências Or Capital + Impostograma)
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
     
     /* Ocultar elementos padrão do Streamlit */
     header {visibility: hidden;}
@@ -178,14 +178,11 @@ def check_password() -> bool:
         font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Container de login - Minimalista Premium (SEM CARD) */
-    .login-container {
-        max-width: 420px;
-        margin: 0 auto;
-        padding: 2rem 1rem;
-        background: transparent;
-        min-height: auto;
-    }
+    /* =========================================================
+       LAYOUT SPLIT SCREEN - PRICETAX 3.0
+       Lado esquerdo: Proposta de valor + Features + Social Proof
+       Lado direito: Formulário de login
+    ========================================================= */
     
     /* Forçar scroll para o topo */
     .stApp {
@@ -193,44 +190,194 @@ def check_password() -> bool:
     }
     
     .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    /* Coluna esquerda - Proposta de valor */
+    .login-left {
+        background: linear-gradient(145deg, #111111 0%, #0A0A0A 60%, #1A1200 100%);
+        min-height: 100vh;
+        padding: 3rem 3rem 3rem 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-right: 1px solid rgba(255, 221, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Efeito de brilho sutil no fundo esquerdo */
+    .login-left::before {
+        content: '';
+        position: absolute;
+        top: -200px;
+        right: -200px;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255, 221, 0, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .login-left::after {
+        content: '';
+        position: absolute;
+        bottom: -150px;
+        left: -150px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 221, 0, 0.04) 0%, transparent 70%);
+        pointer-events: none;
     }
     
     /* Logo container */
     .logo-container {
-        text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
     
     .logo-container img {
-        max-width: 280px;
+        max-width: 200px;
         height: auto;
-        margin-bottom: 1.5rem;
         filter: drop-shadow(0 4px 16px rgba(255, 221, 0, 0.4));
     }
     
-    /* Título PRICETAX 2.0 - Tipografia Premium */
-    .login-title {
-        text-align: center;
-        color: #FFDD00;
-        font-size: 3rem;
-        font-weight: 300;
-        letter-spacing: 4px;
-        margin-bottom: 0.5rem;
+    /* Headline principal */
+    .login-headline {
+        font-size: 2.4rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 1rem;
         font-family: 'Poppins', sans-serif;
-        text-transform: uppercase;
-        text-shadow: 0 4px 24px rgba(255, 221, 0, 0.5);
+        color: #FFFFFF;
     }
     
-    /* Subtítulo - Estilo C6 */
+    .login-headline span {
+        color: #FFDD00;
+    }
+    
+    /* Subtítulo */
     .login-subtitle {
-        text-align: center;
-        color: #999999;
-        font-size: 0.95rem;
+        color: #AAAAAA;
+        font-size: 1rem;
         font-weight: 400;
         margin-bottom: 2.5rem;
-        line-height: 1.6;
+        line-height: 1.7;
+        font-family: 'Poppins', sans-serif;
+        max-width: 420px;
+    }
+    
+    /* Lista de features */
+    .feature-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.875rem 1.25rem;
+        background: rgba(255, 221, 0, 0.04);
+        border: 1px solid rgba(255, 221, 0, 0.1);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-item:hover {
+        background: rgba(255, 221, 0, 0.08);
+        border-color: rgba(255, 221, 0, 0.25);
+        transform: translateX(4px);
+    }
+    
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        background: rgba(255, 221, 0, 0.12);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 221, 0, 0.2);
+    }
+    
+    .feature-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: #FFDD00;
+    }
+    
+    .feature-text {
+        color: #DDDDDD;
+        font-size: 0.9rem;
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif;
+        line-height: 1.4;
+    }
+    
+    /* Faixa de social proof */
+    .social-proof {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .proof-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .proof-number {
+        color: #FFDD00;
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-family: 'Poppins', sans-serif;
+        line-height: 1;
+    }
+    
+    .proof-label {
+        color: #777777;
+        font-size: 0.75rem;
+        font-weight: 400;
+        font-family: 'Poppins', sans-serif;
+        margin-top: 2px;
+    }
+    
+    .proof-divider {
+        width: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        align-self: stretch;
+    }
+    
+    /* Coluna direita - Formulário */
+    .login-right {
+        background: #0D0D0D;
+        min-height: 100vh;
+        padding: 3rem 3rem 3rem 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Título do formulário */
+    .login-title {
+        color: #FFFFFF;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .login-form-subtitle {
+        color: #777777;
+        font-size: 0.875rem;
+        font-weight: 400;
+        margin-bottom: 2rem;
         font-family: 'Poppins', sans-serif;
     }
     
@@ -412,82 +559,177 @@ def check_password() -> bool:
     </style>
     """, unsafe_allow_html=True)
     
-    # Container de login
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    # Layout Split Screen: duas colunas Streamlit
+    col_left, col_right = st.columns([1.1, 0.9])
     
-    # Logo "O X da Questão"
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    try:
-        import base64
-        with open("logo_x_questao.png", "rb") as img_file:
-            logo_data = base64.b64encode(img_file.read()).decode()
+    # ---- COLUNA ESQUERDA: Proposta de valor ----
+    with col_left:
+        st.markdown('<div class="login-left">', unsafe_allow_html=True)
+        
+        # Logo
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        try:
+            import base64
+            with open("logo_x_questao.png", "rb") as img_file:
+                logo_data = base64.b64encode(img_file.read()).decode()
+            st.markdown(
+                f'<img src="data:image/png;base64,{logo_data}" alt="PRICETAX">',
+                unsafe_allow_html=True
+            )
+        except FileNotFoundError:
+            st.markdown('<div class="login-title" style="font-size:2rem;text-align:left;">PRICETAX</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Headline
         st.markdown(
-            f'<img src="data:image/png;base64,{logo_data}" alt="O X da Questão">',
+            '''
+            <div class="login-headline">
+                Inteligência Tributária<br>
+                para a <span>Reforma</span>
+            </div>
+            <div class="login-subtitle">
+                Soluções para a transição inteligente na Reforma Tributária.
+                Parametrize, analise e decida com precisão.
+            </div>
+            ''',
             unsafe_allow_html=True
         )
-    except FileNotFoundError:
-        pass
-    
-    st.markdown('<div class="login-title">PRICETAX</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="login-subtitle">Soluções para transição inteligente na Reforma Tributária</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Formulário de login
-    st.text_input(
-        "Usuário",
-        key="username",
-        placeholder="Digite seu usuário",
-        label_visibility="visible"
-    )
-    
-    st.text_input(
-        "Senha",
-        type="password",
-        key="password",
-        placeholder="Digite sua senha",
-        label_visibility="visible"
-    )
-    
-    # Botão de login
-    if st.button("Entrar", type="primary", use_container_width=True):
-        password_entered()
-    
-    # Exibir erro se credenciais inválidas ou acesso negado
-    if st.session_state.get("password_correct") == False:
-        # Verificar se há mensagem específica de acesso negado
-        access_denied_msg = st.session_state.get("access_denied_message")
         
-        if access_denied_msg:
-            # Mensagem de bloqueio/inadimplência
-            st.error(access_denied_msg)
-        else:
-            # Mensagem de credenciais inválidas
-            attempts = st.session_state.get("login_attempts", 0)
-            st.error(f"Usuário ou senha incorretos. Tentativa {attempts}.")
+        # Features com ícones SVG circulares dourados
+        st.markdown(
+            '''
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="feature-text">Consulta NCM com cClassTrib e alíquotas IBS/CBS</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="feature-text">Ranking de saídas SPED com análise de impacto</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 21h10M12 3v18M3 7l9-4 9 4" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="feature-text">Validação de XML e NFS-e com conformidade fiscal</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="feature-text">Base legal LC 214/2025 com navegação por blocos</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="#FFDD00" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="feature-text">Exportação de relatórios em Excel e PDF</span>
+                </div>
+            </div>
+            ''',
+            unsafe_allow_html=True
+        )
+        
+        # Social proof
+        st.markdown(
+            '''
+            <div class="social-proof">
+                <div class="proof-item">
+                    <span class="proof-number">+40</span>
+                    <span class="proof-label">Empresas atendidas</span>
+                </div>
+                <div class="proof-divider"></div>
+                <div class="proof-item">
+                    <span class="proof-number">LC 214</span>
+                    <span class="proof-label">Reforma 2026 mapeada</span>
+                </div>
+                <div class="proof-divider"></div>
+                <div class="proof-item">
+                    <span class="proof-number">100%</span>
+                    <span class="proof-label">Base legal atualizada</span>
+                </div>
+            </div>
+            ''',
+            unsafe_allow_html=True
+        )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Botão WhatsApp para solicitar acesso
-    st.markdown(
-        '''
-        <a href="https://wa.me/5541998924080" target="_blank" class="whatsapp-button">
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-            </svg>
-            Solicitar Acesso
-        </a>
-        ''',
-        unsafe_allow_html=True
-    )
-    
-    # Rodapé
-    st.markdown(
-        '<div class="login-footer">Autenticação segura com criptografia de padrão internacional e conformidade com LGPD</div>',
-        unsafe_allow_html=True
-    )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # ---- COLUNA DIREITA: Formulário ----
+    with col_right:
+        st.markdown('<div class="login-right">', unsafe_allow_html=True)
+        
+        st.markdown(
+            '''
+            <div class="login-title">Acessar plataforma</div>
+            <div class="login-form-subtitle">Insira suas credenciais para continuar</div>
+            ''',
+            unsafe_allow_html=True
+        )
+        
+        # Formulário de login
+        st.text_input(
+            "Usuário",
+            key="username",
+            placeholder="Digite seu usuário",
+            label_visibility="visible"
+        )
+        
+        st.text_input(
+            "Senha",
+            type="password",
+            key="password",
+            placeholder="Digite sua senha",
+            label_visibility="visible"
+        )
+        
+        # Botão de login
+        if st.button("Entrar", type="primary", use_container_width=True):
+            password_entered()
+        
+        # Exibir erro se credenciais inválidas ou acesso negado
+        if st.session_state.get("password_correct") == False:
+            access_denied_msg = st.session_state.get("access_denied_message")
+            if access_denied_msg:
+                st.error(access_denied_msg)
+            else:
+                attempts = st.session_state.get("login_attempts", 0)
+                st.error(f"Usuário ou senha incorretos. Tentativa {attempts}.")
+        
+        # Botão WhatsApp para solicitar acesso
+        st.markdown(
+            '''
+            <a href="https://wa.me/5541998924080" target="_blank" class="whatsapp-button">
+                <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                Solicitar Acesso
+            </a>
+            ''',
+            unsafe_allow_html=True
+        )
+        
+        # Rodapé
+        st.markdown(
+            '<div class="login-footer">Autenticação segura com criptografia de padrão internacional e conformidade com LGPD</div>',
+            unsafe_allow_html=True
+        )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     return False
 
