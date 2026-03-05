@@ -111,12 +111,64 @@ def check_password() -> bool:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
     
-    /* Ocultar elementos padrão do Streamlit */
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    /* =========================================================
+       RESET COMPLETO - Eliminar todo espaço extra do Streamlit
+    ========================================================= */
     
-    /* CORRIGIR: Remover retângulo cinza acima do logo */
+    /* Ocultar elementos padrão do Streamlit */
+    header, footer, #MainMenu, .stDeployButton {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+    
+    section[data-testid="stSidebar"] {display: none !important;}
+    
+    /* Zerar TODOS os paddings e margens do Streamlit */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    .stApp {
+        background: #000000;
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        height: 100vh !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Container principal - sem padding, sem margem */
+    .main, section.main {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+    
+    .block-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+    
+    /* Remover gaps e espaços dos elementos internos */
+    div[data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+        background: transparent !important;
+    }
+    
+    div[data-testid="column"] {
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    
+    /* Remover retangulo cinza do stMarkdown */
     .stMarkdown > div {
         background: transparent !important;
         padding: 0 !important;
@@ -126,88 +178,38 @@ def check_password() -> bool:
         box-shadow: none !important;
     }
     
-    /* Remover TODOS os elementos vazios do Streamlit */
+    /* Elementos vazios */
     .element-container:empty,
-    .stMarkdown:empty,
-    div[data-testid="stVerticalBlock"] > div:empty {
+    .stMarkdown:empty {
         display: none !important;
         height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
     }
     
-    /* Forçar fundo transparente em containers do Streamlit */
-    div[data-testid="stVerticalBlock"],
-    div[data-testid="column"],
-    .block-container {
-        background: transparent !important;
-    }
-    .stDeployButton {display: none;}
-    
-    /* Eliminar skeleton/placeholder do Streamlit */
-    .element-container:empty {display: none !important;}
-    .stMarkdown:empty {display: none !important;}
-    div[data-testid="stVerticalBlock"] > div:empty {display: none !important;}
-    div[data-testid="stVerticalBlock"] > div[style*="height"] {
-        height: 0 !important;
-        min-height: 0 !important;
+    /* Remover padding do appViewContainer */
+    div[data-testid="stAppViewContainer"] {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
-    /* Remover TODOS os espaços e elementos brancos do topo */
-    .block-container {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Forçar remoção de qualquer elemento branco/vazio */
-    .stApp > header {
-        display: none !important;
-    }
-    
-    div[data-testid="stAppViewContainer"] > section:first-child {
-        padding-top: 0 !important;
-    }
-    
-    section[data-testid="stSidebar"] {display: none !important;}
-    
-    /* Background PRICETAX 2.0 - Preto Profundo com Gradiente Radial */
-    .stApp {
-        background: #000000;
-        background: radial-gradient(circle at top right, #1A1A1A 0%, #000000 100%);
-        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    
-    /* =========================================================
-       LAYOUT SPLIT SCREEN - PRICETAX 3.0
-       Lado esquerdo: Proposta de valor + Features + Social Proof
-       Lado direito: Formulário de login
-    ========================================================= */
-    
-    /* Forçar scroll para o topo */
-    .stApp {
-        overflow-y: auto !important;
-    }
-    
-    .block-container {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        max-width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+    div[data-testid="stAppViewContainer"] > section {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
     /* Coluna esquerda - Proposta de valor */
     .login-left {
         background: linear-gradient(145deg, #111111 0%, #0A0A0A 60%, #1A1200 100%);
-        min-height: 100vh;
-        padding: 3rem 3rem 3rem 3.5rem;
+        height: 100vh;
+        padding: 1.5rem 2rem 1.5rem 2.5rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
         border-right: 1px solid rgba(255, 221, 0, 0.08);
         position: relative;
-        overflow: hidden;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
     
     /* Efeito de brilho sutil no fundo esquerdo */
@@ -235,7 +237,7 @@ def check_password() -> bool:
     
     /* Logo container */
     .logo-container {
-        margin-bottom: 2.5rem;
+        margin-bottom: 1.25rem;
     }
     
     .logo-container img {
@@ -246,10 +248,10 @@ def check_password() -> bool:
     
     /* Headline principal */
     .login-headline {
-        font-size: 2.4rem;
+        font-size: 2rem;
         font-weight: 800;
         line-height: 1.2;
-        margin-bottom: 1rem;
+        margin-bottom: 0.6rem;
         font-family: 'Poppins', sans-serif;
         color: #FFFFFF;
     }
@@ -261,10 +263,10 @@ def check_password() -> bool:
     /* Subtítulo */
     .login-subtitle {
         color: #AAAAAA;
-        font-size: 1rem;
+        font-size: 0.875rem;
         font-weight: 400;
-        margin-bottom: 2.5rem;
-        line-height: 1.7;
+        margin-bottom: 1.25rem;
+        line-height: 1.6;
         font-family: 'Poppins', sans-serif;
         max-width: 420px;
     }
@@ -273,15 +275,15 @@ def check_password() -> bool:
     .feature-list {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 2.5rem;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
     }
     
     .feature-item {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        padding: 0.875rem 1.25rem;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
         background: rgba(255, 221, 0, 0.04);
         border: 1px solid rgba(255, 221, 0, 0.1);
         border-radius: 10px;
@@ -357,11 +359,13 @@ def check_password() -> bool:
     /* Coluna direita - Formulário */
     .login-right {
         background: #0D0D0D;
-        min-height: 100vh;
-        padding: 3rem 3rem 3rem 3.5rem;
+        height: 100vh;
+        padding: 1.5rem 2.5rem 1.5rem 2rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
     
     /* Título do formulário */
@@ -377,7 +381,7 @@ def check_password() -> bool:
         color: #777777;
         font-size: 0.875rem;
         font-weight: 400;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         font-family: 'Poppins', sans-serif;
     }
     
