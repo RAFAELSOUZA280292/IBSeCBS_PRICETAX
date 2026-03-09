@@ -81,19 +81,63 @@ def check_password() -> bool:
     except FileNotFoundError:
         pass
 
-    # Faixa de logos parceiros em base64
-    parceiros_html = ''
-    try:
-        with open("logos_parceiros.png", "rb") as _f:
-            _parceiros_data = _b64.b64encode(_f.read()).decode()
-        parceiros_html = (
-            '<div class="partners-bar">'
-            '<img src="data:image/png;base64,' + _parceiros_data + '" '
-            'alt="Parceiros PRICETAX" style="max-width:100%;height:auto;">'
-            '</div>'
-        )
-    except FileNotFoundError:
-        pass
+    # Faixa de logos parceiros em HTML puro — sem imagem, sem corte
+    # padding-right: 70px garante que o botao Manage App do Streamlit
+    # nunca sobreponha o ultimo logo (TGH Club)
+    parceiros_html = (
+        '<div class="partners-bar">'
+        '<div class="partners-inner">'
+
+        # Logo 1: PriceTax
+        '<div class="partner-logo">'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:-0.5px;">'
+        'Price</span><span style="color:#FFDD00;font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:700;">Ta</span>'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:700;">x</span>'
+        '</div>'
+
+        # Divider
+        '<div class="partner-divider"></div>'
+
+        # Logo 2: Formação em Reforma Tributária
+        '<div class="partner-logo" style="text-align:center;line-height:1.2;">'
+        '<span style="color:#FFDD00;font-family:Poppins,sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;display:block;">Formação em</span>'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;display:block;">Reforma</span>'
+        '<span style="color:#FFDD00;font-family:Poppins,sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;display:block;">Tributária</span>'
+        '<span style="color:#aaa;font-family:Poppins,sans-serif;font-size:0.55rem;font-weight:400;display:block;">Ronaldo Dias Oliveira</span>'
+        '</div>'
+
+        # Divider
+        '<div class="partner-divider"></div>'
+
+        # Logo 3: TintoX
+        '<div class="partner-logo">'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:700;">tint</span>'
+        '<span style="color:#FFDD00;font-family:Poppins,sans-serif;font-size:1.05rem;font-weight:700;">x</span>'
+        '</div>'
+
+        # Divider
+        '<div class="partner-divider"></div>'
+
+        # Logo 4: IBPTQ LA
+        '<div class="partner-logo" style="text-align:center;">'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:-0.5px;">IBPT</span>'
+        '<span style="color:#FFDD00;font-family:Poppins,sans-serif;font-size:1.1rem;font-weight:800;">Q</span>'
+        '<span style="color:#fff;font-family:Poppins,sans-serif;font-size:1.1rem;font-weight:800;"> LA</span>'
+        '<span style="color:#888;font-family:Poppins,sans-serif;font-size:0.5rem;font-weight:400;display:block;letter-spacing:1.5px;text-transform:uppercase;">Business, Tax &amp; Education</span>'
+        '</div>'
+
+        # Divider
+        '<div class="partner-divider"></div>'
+
+        # Logo 5: TGH Club
+        '<div class="partner-logo" style="text-align:center;">'
+        '<span style="color:#ccc;font-family:Georgia,serif;font-size:1.2rem;font-weight:700;letter-spacing:2px;">TGH</span>'
+        '<span style="color:#aaa;font-family:Georgia,serif;font-size:0.9rem;font-style:italic;display:block;margin-top:-4px;">Club</span>'
+        '</div>'
+
+        '</div>'  # partners-inner
+        '</div>'  # partners-bar
+    )
 
     # ------------------------------------------------------------------
     # Mensagem de erro (se houver)
@@ -232,26 +276,37 @@ html, body, .stApp { background: #000 !important; margin: 0 !important; padding:
     border-top: 1px solid rgba(255,255,255,0.07); font-family: 'Poppins', sans-serif;
 }
 
-/* Faixa de parceiros */
+/* Faixa de parceiros em HTML puro — sem imagem, sem corte */
 .partners-bar {
     position: fixed;
     bottom: 0; left: 0;
-    /* 100vw: a imagem tem padding extra na direita para cobrir o botao Manage App */
     width: 100vw;
     background: #40444D;
-    display: block;
-    padding: 0;
     z-index: 1001;
-    line-height: 0;
-    overflow: hidden;
+    box-sizing: border-box;
+    /* padding-right: 70px reserva espaco para o botao Manage App */
+    padding: 0 70px 0 0;
 }
-.partners-bar img {
+.partners-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 72px;
+    padding: 0 2rem;
+    box-sizing: border-box;
     width: 100%;
-    height: auto;
-    display: block;
-    max-height: 90px;
-    object-fit: cover;
-    object-position: left center;
+}
+.partner-logo {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    white-space: nowrap;
+}
+.partner-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
 }
 
 /* ===== WIDGETS STREAMLIT ACIMA DO OVERLAY =====
