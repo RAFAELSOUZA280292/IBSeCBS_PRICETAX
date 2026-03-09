@@ -1493,7 +1493,7 @@ with st.sidebar:
     # CALCULADORA DE PREÇOS — abre em nova aba
     st.markdown('<div style="font-size: 0.65rem; font-weight: 700; color: #FFDD00; margin-bottom: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">Calculadora</div>', unsafe_allow_html=True)
     st.markdown(
-        '<a href="https://pricetax.com.br/calculadora-de-precos" target="_blank" '
+        '<a href="https://pricetax.com.br/calculadora-de-precos-copy" target="_blank" '
         'style="display:block;width:100%;padding:0.45rem 0.75rem;background:#1A1A1A;'
         'color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:6px;'
         'font-size:0.82rem;font-weight:600;text-decoration:none;text-align:center;'
