@@ -246,5 +246,13 @@
     "data_cadastro": "2026-02-12",
     "data_vencimento": "2027-02-15",
     "observacoes": "Consultoria Estratégica Tributária - Plano TGH CLUB (vencimento 15/02/2027)"
+  },
+  "operacional@ibptlatax.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "PARTNER",
+    "data_cadastro": "2026-03-10",
+    "data_vencimento": null,
+    "observacoes": "IBPT LA - Operacional - Plano PARTNER (sem vencimento)"
   }
 }
