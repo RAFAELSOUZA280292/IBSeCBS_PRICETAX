@@ -100,7 +100,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "clebergomesoliveira@hotmail.com": {
@@ -108,7 +108,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "contdiniz@hotmail.com": {
@@ -116,7 +116,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "miriam.assis@micontconsultoria.com.br": {
@@ -124,7 +124,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "amarildo@suporttcontabil.com.br": {
@@ -132,7 +132,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "jrenan942@gmail.com": {
@@ -140,7 +140,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "lourivaljr010@gmail.com": {
@@ -148,7 +148,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "oliverio@chagascontabil.com.br": {
@@ -156,7 +156,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "edivaniaecc@hotmail.com": {
@@ -164,7 +164,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "sidneyamarante.servicos@gmail.com": {
@@ -172,7 +172,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "batista@batistacontabilidade.com.br": {
@@ -180,7 +180,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "germana_benedetti@hotmail.com": {
@@ -188,7 +188,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "dinailton@dsantoscontabil.com.br": {
@@ -196,7 +196,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "luizvieiracont@gmail.com": {
@@ -204,7 +204,7 @@
     "tipo": "cliente",
     "plano": "MENSAL",
     "data_cadastro": "2026-02-12",
-    "data_vencimento": "2026-03-14",
+    "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Vencimento em 30 dias"
   },
   "willian@barrocoadv.com.br": {
@@ -254,5 +254,61 @@
     "data_cadastro": "2026-03-10",
     "data_vencimento": null,
     "observacoes": "IBPT LA - Operacional - Plano PARTNER (sem vencimento)"
+  },
+  "sidneynas@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "portalcontabilidade2020@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "fiel.office@uol.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "ac.acs2003@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "rosa@gruporcconsultoria.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "marcio.souzalopes@hotmail.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "dalvavaranis@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-02-12",
+    "data_vencimento": "2026-04-18",
+    "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
   }
 }
