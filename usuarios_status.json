@@ -310,5 +310,53 @@
     "data_cadastro": "2026-02-12",
     "data_vencimento": "2026-04-18",
     "observacoes": "Plano MENSAL - Renovado até 18/04/2026"
+  },
+  "robertakoide@gmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
+  },
+  "karina@mzmcontabilidade.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
+  },
+  "si_beatriz@hotmail.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
+  },
+  "pierre@mouramacae.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
+  },
+  "agiilcont@outlook.com": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
+  },
+  "diretoria@centralcontabilidaderp.com.br": {
+    "status": "ativo",
+    "tipo": "cliente",
+    "plano": "MENSAL",
+    "data_cadastro": "2026-03-17",
+    "data_vencimento": "2026-04-20",
+    "observacoes": "Plano MENSAL - Vencimento 20/04/2026"
   }
 }
