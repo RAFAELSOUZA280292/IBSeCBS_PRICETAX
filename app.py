@@ -3432,68 +3432,202 @@ elif pagina == "Ranking de Saídas SPED":
                     df_tipi_mini = df_tipi[cols_tipi_merge].copy()
                     df_total = df_total.merge(df_tipi_mini, on="NCM_DIG", how="left")
 
-                    # Calcular alíquotas e cClassTrib baseado em BDBENEF
+                    # =========================================================
+                    # ENRIQUECIMENTO TRIBUTÁRIO: cClassTrib, IBS/CBS, Base Legal
+                    # =========================================================
+                    # Alíquotas de referência (ano-teste 2026, LC 214/2025)
+                    IBS_UF_REF   = 0.10   # 0,10% IBS Estadual (ano-teste)
+                    IBS_MUN_REF  = 0.025  # 0,025% IBS Municipal (ano-teste)
+                    CBS_REF      = 0.90   # 0,90% CBS (ano-teste)
+
+                    # Mapeamento de regime → base legal (LC 214/2025)
+                    BASE_LEGAL_MAP = {
+                        "ALIQ_ZERO_CESTA_BASICA_NACIONAL": "LC 214/2025, Anexo I — Cesta Básica Nacional (alíquota zero)",
+                        "RED_60_ESSENCIALIDADE": "LC 214/2025, Art. 21, § 1º — Redução de 60% (saúde, educação, essenciais)",
+                        "RED_60": "LC 214/2025, Art. 21, § 1º — Redução de 60%",
+                        "RED_30": "LC 214/2025, Art. 21, § 2º — Redução de 30% (Cesta Estendida)",
+                        "TRIBUTACAO_PADRAO": "LC 214/2025, Art. 20 — Tributação integral (alíquota cheia)",
+                    }
+
                     def processar_linha(row):
-                        ncm = row.get("NCM_DIG")
+                        """Enriquece cada linha do SPED com cClassTrib, alíquotas IBS/CBS e base legal."""
+                        ncm  = row.get("NCM_DIG")
                         cfop = row.get("CFOP")
-                        
-                        # Padrão
-                        regime = "TRIBUTACAO_PADRAO"
-                        ibs_uf = 0.10
-                        cbs = 0.90
-                        
-                        # Consultar benefícios
+
+                        # Valores padrão (tributação integral)
+                        regime          = "TRIBUTACAO_PADRAO"
+                        ibs_uf          = IBS_UF_REF
+                        ibs_mun         = IBS_MUN_REF
+                        cbs             = CBS_REF
+                        reducao_pct     = 0
+                        anexo_beneficio = ""
+                        descr_beneficio = "Tributação integral — sem benefício fiscal identificado"
+
+                        # Consultar base de benefícios fiscais (BDBENEF)
                         if BENEFICIOS_ENGINE and ncm:
                             try:
                                 beneficios = consulta_ncm(BENEFICIOS_ENGINE, str(ncm))
                                 if beneficios['total_enquadramentos'] > 0:
-                                    enq = beneficios['enquadramentos'][0]
-                                    reducao = enq['reducao_aliquota']
-                                    
+                                    enq             = beneficios['enquadramentos'][0]
+                                    reducao         = enq['reducao_aliquota']       # int: 60 ou 100
+                                    anexo_beneficio = enq.get('anexo', '')
+                                    descr_beneficio = enq.get('descricao_anexo', '')
+                                    reducao_pct     = reducao
+
+                                    fator = (100 - reducao) / 100
+                                    ibs_uf  = round(IBS_UF_REF  * fator, 6)
+                                    ibs_mun = round(IBS_MUN_REF * fator, 6)
+                                    cbs     = round(CBS_REF     * fator, 6)
+
                                     if reducao == 100:
-                                        ibs_uf, cbs = 0.0, 0.0
                                         regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
                                     elif reducao == 60:
-                                        ibs_uf, cbs = 0.04, 0.36
-                                        regime = "RED_60_ESSENCIALIDADE"
+                                        # Incluir anexo no regime para mapeamento correto de cClassTrib
+                                        regime = f"RED_60_{anexo_beneficio}" if anexo_beneficio else "RED_60_ESSENCIALIDADE"
                                     else:
-                                        fator = (100 - reducao) / 100
-                                        ibs_uf, cbs = 0.10 * fator, 0.90 * fator
                                         regime = f"RED_{int(reducao)}"
-                            except:
+                            except Exception:
                                 pass
-                        
-                        # Calcular cClassTrib
-                        code, _ = guess_cclasstrib(cst="", cfop=cfop, regime_iva=regime)
-                        
-                        return pd.Series({
-                            'REGIME_IVA': regime,
-                            'IBS_UF': ibs_uf,
-                            'CBS': cbs,
-                            'TOTAL_IVA': ibs_uf + cbs,
-                            'CCLASSTRIB_SUGERIDO': code
-                        })
-                    
-                    df_total[["REGIME_IVA", "IBS_UF", "CBS", "TOTAL_IVA", "CCLASSTRIB_SUGERIDO"]] = df_total.apply(processar_linha, axis=1)
 
-                    # Formata valores
+                        # Determinar cClassTrib com lógica de priorização (CFOP remessa > NCM)
+                        code, msg_cclas = guess_cclasstrib(cst="", cfop=cfop, regime_iva=regime)
+
+                        # Base legal: usar mapa ou fallback genérico
+                        base_legal = BASE_LEGAL_MAP.get(
+                            regime,
+                            BASE_LEGAL_MAP.get(regime.split("_")[0] + "_" + regime.split("_")[1] if "_" in regime else regime,
+                            "LC 214/2025 — Consulte o regime específico")
+                        )
+                        # Enriquecer base legal com anexo quando disponível
+                        if anexo_beneficio and "Anexo" not in base_legal:
+                            base_legal = f"{base_legal} ({anexo_beneficio})"
+
+                        total_ibs = round(ibs_uf + ibs_mun, 6)
+                        total_iva = round(total_ibs + cbs, 6)
+
+                        return pd.Series({
+                            'CCLASSTRIB_SUGERIDO'  : code,
+                            'REGIME_IVA'           : regime,
+                            'REDUCAO_PCT'          : reducao_pct,
+                            'ANEXO_BENEFICIO'      : anexo_beneficio,
+                            'DESCRICAO_BENEFICIO'  : descr_beneficio,
+                            'IBS_UF_PCT'           : ibs_uf,
+                            'IBS_MUN_PCT'          : ibs_mun,
+                            'TOTAL_IBS_PCT'        : total_ibs,
+                            'CBS_PCT'              : cbs,
+                            'TOTAL_IVA_PCT'        : total_iva,
+                            'BASE_LEGAL'           : base_legal,
+                        })
+
+                    # Aplicar enriquecimento linha a linha
+                    cols_enrich = [
+                        'CCLASSTRIB_SUGERIDO', 'REGIME_IVA', 'REDUCAO_PCT',
+                        'ANEXO_BENEFICIO', 'DESCRICAO_BENEFICIO',
+                        'IBS_UF_PCT', 'IBS_MUN_PCT', 'TOTAL_IBS_PCT',
+                        'CBS_PCT', 'TOTAL_IVA_PCT', 'BASE_LEGAL'
+                    ]
+                    df_total[cols_enrich] = df_total.apply(processar_linha, axis=1)
+
+                    # Formata valores monetários (manter numérico para Excel; formatar só para tela)
+                    df_total["VALOR_TOTAL_VENDAS_NUM"] = df_total["VALOR_TOTAL_VENDAS"]  # cópia numérica para Excel
                     df_total["VALOR_TOTAL_VENDAS"] = df_total["VALOR_TOTAL_VENDAS"].apply(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                st.success(f"Processamento concluído! Total de {len(df_total)} linhas consolidadas.")
-                
-                st.markdown("### Ranking de Vendas")
-                st.dataframe(df_total, use_container_width=True, height=600)
+                # ─── Exibição em tela ─────────────────────────────────────────
+                st.success(f"Processamento concluído! **{len(df_total)} linhas** consolidadas.")
 
-                # Download
+                # KPIs resumo
+                if 'CCLASSTRIB_SUGERIDO' in df_total.columns:
+                    total_com_beneficio = (df_total['REDUCAO_PCT'] > 0).sum()
+                    total_aliq_zero     = (df_total['REDUCAO_PCT'] == 100).sum()
+                    total_red60         = (df_total['REDUCAO_PCT'] == 60).sum()
+                    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+                    kpi1.metric("Total de linhas", len(df_total))
+                    kpi2.metric("Com benefício fiscal", total_com_beneficio)
+                    kpi3.metric("Alíquota zero (Cesta Básica)", total_aliq_zero)
+                    kpi4.metric("Redução 60%", total_red60)
+
+                # Colunas para exibição em tela (ordem lógica)
+                cols_tela = [c for c in [
+                    "ARQUIVO", "NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS",
+                    "CCLASSTRIB_SUGERIDO", "REGIME_IVA", "REDUCAO_PCT",
+                    "IBS_UF_PCT", "IBS_MUN_PCT", "TOTAL_IBS_PCT", "CBS_PCT", "TOTAL_IVA_PCT",
+                    "ANEXO_BENEFICIO", "DESCRICAO_BENEFICIO", "BASE_LEGAL",
+                    "NCM_DESCRICAO"
+                ] if c in df_total.columns]
+
+                st.markdown("### Ranking de Vendas — IBS/CBS/cClassTrib")
+                st.dataframe(
+                    df_total[cols_tela],
+                    use_container_width=True,
+                    height=600,
+                    column_config={
+                        "CCLASSTRIB_SUGERIDO" : st.column_config.TextColumn("cClassTrib", width="small"),
+                        "REGIME_IVA"          : st.column_config.TextColumn("Regime IVA"),
+                        "REDUCAO_PCT"         : st.column_config.NumberColumn("Redução (%)", format="%d%%"),
+                        "IBS_UF_PCT"          : st.column_config.NumberColumn("IBS UF (%)", format="%.4f%%"),
+                        "IBS_MUN_PCT"         : st.column_config.NumberColumn("IBS Mun (%)", format="%.4f%%"),
+                        "TOTAL_IBS_PCT"       : st.column_config.NumberColumn("Total IBS (%)", format="%.4f%%"),
+                        "CBS_PCT"             : st.column_config.NumberColumn("CBS (%)", format="%.4f%%"),
+                        "TOTAL_IVA_PCT"       : st.column_config.NumberColumn("Total IVA (%)", format="%.4f%%"),
+                        "ANEXO_BENEFICIO"     : st.column_config.TextColumn("Anexo LC 214"),
+                        "DESCRICAO_BENEFICIO" : st.column_config.TextColumn("Descrição do Benefício"),
+                        "BASE_LEGAL"          : st.column_config.TextColumn("Base Legal", width="large"),
+                        "VALOR_TOTAL_VENDAS"  : st.column_config.TextColumn("Valor Total Vendas"),
+                    }
+                )
+
+                # ─── Exportação Excel (estruturada, com abas) ─────────────────
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                    df_total.to_excel(writer, index=False, sheet_name="Ranking")
+                    # Aba 1: Dados completos para uso em ERP/BI
+                    cols_excel = [c for c in [
+                        "ARQUIVO", "NCM", "NCM_DESCRICAO", "DESCRICAO", "CFOP",
+                        "VALOR_TOTAL_VENDAS_NUM",
+                        "CCLASSTRIB_SUGERIDO", "REGIME_IVA", "REDUCAO_PCT",
+                        "IBS_UF_PCT", "IBS_MUN_PCT", "TOTAL_IBS_PCT",
+                        "CBS_PCT", "TOTAL_IVA_PCT",
+                        "ANEXO_BENEFICIO", "DESCRICAO_BENEFICIO", "BASE_LEGAL"
+                    ] if c in df_total.columns]
+                    df_excel = df_total[cols_excel].copy()
+                    df_excel.rename(columns={
+                        "VALOR_TOTAL_VENDAS_NUM" : "VALOR_TOTAL_VENDAS (R$)",
+                        "CCLASSTRIB_SUGERIDO"    : "cClassTrib",
+                        "REGIME_IVA"             : "Regime IVA",
+                        "REDUCAO_PCT"            : "Redução (%)",
+                        "IBS_UF_PCT"             : "IBS UF (%)",
+                        "IBS_MUN_PCT"            : "IBS Municipal (%)",
+                        "TOTAL_IBS_PCT"          : "Total IBS (%)",
+                        "CBS_PCT"                : "CBS (%)",
+                        "TOTAL_IVA_PCT"          : "Total IVA (%)",
+                        "ANEXO_BENEFICIO"        : "Anexo LC 214/2025",
+                        "DESCRICAO_BENEFICIO"    : "Descrição do Benefício",
+                        "BASE_LEGAL"             : "Base Legal",
+                    }, inplace=True)
+                    df_excel.to_excel(writer, index=False, sheet_name="Ranking IBS-CBS")
+
+                    # Aba 2: Resumo por Regime IVA
+                    if 'REGIME_IVA' in df_total.columns and 'VALOR_TOTAL_VENDAS_NUM' in df_total.columns:
+                        df_resumo = (
+                            df_total.groupby(['REGIME_IVA', 'CCLASSTRIB_SUGERIDO', 'BASE_LEGAL'], dropna=False)
+                            .agg(
+                                QTD_LINHAS=("NCM", "count"),
+                                VALOR_TOTAL=("VALOR_TOTAL_VENDAS_NUM", "sum"),
+                                IBS_UF_PCT=("IBS_UF_PCT", "first"),
+                                IBS_MUN_PCT=("IBS_MUN_PCT", "first"),
+                                CBS_PCT=("CBS_PCT", "first"),
+                                TOTAL_IVA_PCT=("TOTAL_IVA_PCT", "first"),
+                            )
+                            .reset_index()
+                            .sort_values("VALOR_TOTAL", ascending=False)
+                        )
+                        df_resumo.to_excel(writer, index=False, sheet_name="Resumo por Regime")
+
                 buffer.seek(0)
 
                 st.download_button(
-                    label="Download Excel",
+                    label="📥 Download Excel — Ranking IBS/CBS/cClassTrib",
                     data=buffer,
                     file_name="ranking_vendas_ibscbs.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
