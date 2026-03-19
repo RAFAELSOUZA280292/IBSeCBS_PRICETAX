@@ -1,6 +1,13 @@
-# Mapeamento correto de títulos dos blocos da LC 214/2025
-# Total: 32 blocos
-# Versão: Títulos resumidos para melhor usabilidade
+"""
+Arquivo de mapeamento de dados para a LC 214/2025.
+
+Contém os dicionários `BLOCOS_TITULOS` (resumidos) e `BLOCOS_TITULOS_COMPLETOS`
+que mapeiam os 32 blocos de artigos da lei para seus respectivos títulos,
+usados na navegação e exibição de conteúdo da legislação.
+
+Autor: RDI
+Data: 17/03/2026
+"""
 
 BLOCOS_TITULOS = {
     1: "Disposições Preliminares",

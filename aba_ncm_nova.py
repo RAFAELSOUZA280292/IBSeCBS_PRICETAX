@@ -1,3 +1,16 @@
+"""
+Módulo da aba 'Consulta Inteligente de Tributação IBS/CBS' do app PRICETAX.
+
+Responsável por:
+- Interface para consulta de tributação por NCM, CFOP ou descrição de produto.
+- Exibição de dados de tributação (IBS/CBS, PIS/COFINS, IPI, ICMS).
+- Análise de impacto da Reforma Tributária.
+- Geração de parecer em PDF com IA.
+
+Autor: RDI
+Data: 17/03/2026
+"""
+
 # =============================================================================
 # ABA 1 - CONSULTA NCM (VERSÃO REFATORADA COM BUSCA FLEXÍVEL)
 # =============================================================================

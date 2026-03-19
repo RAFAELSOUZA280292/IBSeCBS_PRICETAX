@@ -1,3 +1,15 @@
+"""
+Módulo da aba 'Navegador LC 214/2025' do app PRICETAX.
+
+Responsável por:
+- Interface de navegação pelos 32 blocos de artigos da LC 214/2025.
+- Exibição do conteúdo dos artigos de cada bloco.
+- Busca por palavra-chave dentro do texto da lei.
+
+Autor: RDI
+Data: 17/03/2026
+"""
+
 import streamlit as st
 import json
 import os

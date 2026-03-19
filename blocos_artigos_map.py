@@ -1,5 +1,13 @@
-# Mapeamento correto de artigos dos blocos da LC 214/2025
-# Total: 32 blocos
+"""
+Arquivo de mapeamento de dados para a LC 214/2025.
+
+Contém o dicionário `BLOCOS_ARTIGOS` que mapeia os 32 blocos de artigos
+da lei para seus respectivos intervalos, usado na navegação e exibição
+de conteúdo da legislação.
+
+Autor: RDI
+Data: 17/03/2026
+"""
 
 BLOCOS_ARTIGOS = {
     1: "1º AO 4º",

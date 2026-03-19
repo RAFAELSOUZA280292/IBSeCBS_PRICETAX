@@ -1,10 +1,13 @@
-# =============================================================================
-# MAPEAMENTO AUTOMÁTICO: cClassTrib por Anexo e % de Redução
-# =============================================================================
-# Fonte: classificacao_tributaria.xlsx
-# Gerado automaticamente a partir da fonte oficial
-# Este arquivo é a FONTE DA VERDADE para mapeamento de cClassTrib
-# =============================================================================
+"""
+Arquivo de mapeamento de dados para o cClassTrib.
+
+Contém o dicionário `CCLASSTRIB_MAP_BY_ANEXO` e a função `get_cclasstrib_by_anexo`
+para mapear a combinação de Anexo da LC 214/2025 e percentual de redução
+para o código cClassTrib correspondente.
+
+Autor: RDI
+Data: 17/03/2026
+"""
 
 """
 Mapeamento de cClassTrib baseado em:

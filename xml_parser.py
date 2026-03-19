@@ -1,3 +1,15 @@
+"""
+Módulo de parsing de arquivos XML de NF-e.
+
+Responsável por:
+- Extrair dados de identificação, emitente, destinatário, produtos e totais de um XML de NF-e.
+- Estruturar os dados em um dicionário Python para fácil manipulação.
+- Lidar com namespaces e diferentes estruturas de XML, incluindo os novos campos da Reforma Tributária (IBS/CBS).
+
+Autor: RDI
+Data: 17/03/2026
+"""
+
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Any, Optional
 import re
