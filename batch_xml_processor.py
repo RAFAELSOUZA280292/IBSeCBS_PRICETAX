@@ -1,12 +1,41 @@
 """
-Processamento em Lote de XMLs NFe
-==================================
+batch_xml_processor.py
+======================
+Processamento em Lote de XMLs NFe — PRICETAX
 
-Módulo para processar até 500 XMLs simultaneamente com validação completa,
-geração de relatório Excel profissional e integração com data_collector (espião).
+Responsabilidades deste módulo:
+    1. Validar e processar até 500 XMLs de NFe simultaneamente.
+    2. Enriquecer cada item com cClassTrib, alíquotas IBS/CBS e base legal
+       via motor tributário (calcular_tributacao_completa + BeneficiosFiscaisEngine).
+    3. Identificar NCMs ambíguos (mais de um cClassTrib possível conforme
+       cclasstrib_mapping.py) e sinalizá-los com flag requer_revisao_manual=True.
+    4. Gerar relatório Excel profissional com 4 abas:
+       - Resumo: estatísticas gerais + NCMs ambíguos identificados
+       - Validacao: lista de todos os XMLs com status (CONFORME/DIVERGENTE/ERRO)
+       - Divergencias: apenas XMLs com problemas
+       - Dados Completos: detalhamento por item com DUPLICACAO DE LINHAS para
+         NCMs ambíguos (uma linha por cClassTrib possível) e formatacao visual
+         diferenciada (laranja=ambíguo, verde=único).
+
+Lógica de duplicação de linhas (NCMs ambíguos):
+    - NCM ambíguo: gera N linhas (uma por cClassTrib possível) com coluna
+      'Tipo Linha' = 'OPCAO X DE N' e fundo laranja no Excel.
+    - NCM único: gera 1 linha com 'Tipo Linha' = 'UNICO' e fundo verde.
+    - O usuário deve excluir as linhas que não se aplicam antes de importar
+      no sistema fiscal.
+
+Dependencias principais:
+    - calcular_tributacao.py  : calcular_tributacao_completa()
+    - tributacao.py           : guess_cclasstrib(), get_class_info_by_code()
+    - beneficios_fiscais.py   : BeneficiosFiscaisEngine, consulta_ncm, init_engine
+    - cclasstrib_mapping.py   : get_opcoes_cclasstrib_por_ncm(), ncm_tem_multiplos_cclasstrib()
+    - xml_parser.py           : parse_nfe_xml()
+    - data_collector.py       : save_nfe_data()
+    - BDBENEF_PRICETAX_2026.xlsx : planilha de benefícios fiscais
 
 Autor: PRICETAX
 Data: 06/02/2026
+Atualizado: 20/03/2026 — Duplicação de linhas para NCMs ambíguos + correção de imports
 """
 
 import os
@@ -25,13 +54,45 @@ logger = get_logger(__name__)
 from xml_parser import parse_nfe_xml
 from data_collector import save_nfe_data
 
-# Importar motor tributário
+# ---------------------------------------------------------------------------
+# Importar motor tributário IBS/CBS
+# ---------------------------------------------------------------------------
+# calcular_tributacao_completa: função centralizada de cálculo (calcular_tributacao.py)
+# guess_cclasstrib / get_class_info_by_code: funções de classificação (tributacao.py)
+# BeneficiosFiscaisEngine / consulta_ncm: motor de benefícios fiscais (beneficios_fiscais.py)
+# init_engine: inicializador do engine com caminho da planilha
+# ---------------------------------------------------------------------------
 try:
-    from tributacao import calcular_tributacao_completa
-    from cclasstrib_mapping import guess_cclasstrib, get_class_info_by_code
-    from beneficios_fiscais import BeneficiosFiscaisEngine, consulta_ncm
-    _BENEFICIOS_ENGINE = BeneficiosFiscaisEngine()
-    TRIB_DISPONIVEL = True
+    from calcular_tributacao import calcular_tributacao_completa  # modulo correto
+    from tributacao import guess_cclasstrib, get_class_info_by_code
+    from beneficios_fiscais import BeneficiosFiscaisEngine, consulta_ncm, init_engine
+    import os as _os
+    from pathlib import Path as _Path
+
+    # Localizar a planilha de benefícios fiscais (mesmo caminho usado pelo app.py)
+    _planilha_paths = [
+        _Path("BDBENEF_PRICETAX_2026.xlsx"),
+        _Path(_os.getcwd()) / "BDBENEF_PRICETAX_2026.xlsx",
+    ]
+    try:
+        _planilha_paths.append(_Path(__file__).parent / "BDBENEF_PRICETAX_2026.xlsx")
+    except Exception:
+        pass
+
+    _planilha_encontrada = None
+    for _p in _planilha_paths:
+        if _p.exists():
+            _planilha_encontrada = str(_p)
+            break
+
+    if _planilha_encontrada:
+        _BENEFICIOS_ENGINE = init_engine(_planilha_encontrada)
+        TRIB_DISPONIVEL = True
+        logger.info(f"Motor tributário inicializado com planilha: {_planilha_encontrada}")
+    else:
+        logger.warning("Planilha BDBENEF_PRICETAX_2026.xlsx não encontrada. Motor tributário desabilitado.")
+        _BENEFICIOS_ENGINE = None
+        TRIB_DISPONIVEL = False
 except Exception as _e:
     logger.warning(f"Motor tributário não disponível: {_e}")
     TRIB_DISPONIVEL = False
@@ -40,15 +101,41 @@ except Exception as _e:
 
 def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
     """
-    Enriquece um item com cClassTrib, alíquotas reais IBS/CBS e base legal.
-    
+    Enriquece um item de NFe com dados tributários IBS/CBS completos.
+
+    Fluxo interno:
+        1. Limpa o NCM (remove não-dígitos).
+        2. Consulta cclasstrib_mapping.get_opcoes_cclasstrib_por_ncm() para
+           verificar se o NCM possui mais de um cClassTrib possível.
+           Se sim, sinaliza requer_revisao_manual=True e monta opcoes_cclasstrib.
+        3. Chama calcular_tributacao_completa() com o BeneficiosFiscaisEngine
+           para obter regime, alíquotas e cClassTrib sugerido.
+        4. Extrai base legal e anexo do primeiro enquadramento de benefício.
+        5. Em caso de falha (motor indisponível ou exceção), retorna fallback
+           com alíquota padrão 1,025% (IBS 0,125% + CBS 0,9%).
+
     Args:
-        ncm: Código NCM do item
-        cfop: CFOP da operação
-        
+        ncm  : Código NCM do produto (8 dígitos, pode conter pontos/hífens).
+        cfop : CFOP da operação fiscal (ex: '5405', '6655').
+
     Returns:
-        Dict com cClassTrib, alíquotas, regime e base legal
+        Dict com as seguintes chaves:
+            cclasstrib_code      : str  — código cClassTrib sugerido (ex: '620001')
+            cclasstrib_msg       : str  — descrição do cClassTrib
+            regime               : str  — regime IVA (ex: 'MONOFASICO', 'RED_60_ESSENCIALIDADE')
+            reducao_pct          : int  — percentual de redução de base (0, 30 ou 60)
+            ibs_uf               : float — alíquota IBS estadual (%)
+            ibs_mun              : float — alíquota IBS municipal (%)
+            cbs                  : float — alíquota CBS (%)
+            total_iva            : float — alíquota total IVA (%)
+            anexo                : str  — anexo da LC 214/2025 (ex: 'ANEXO IV')
+            descricao_beneficio  : str  — descrição do benefício fiscal
+            base_legal           : str  — artigo da LC 214/2025
+            requer_revisao_manual: bool — True se NCM tem múltiplos cClassTribs
+            opcoes_cclasstrib    : str  — opções separadas por ' | ' (se ambíguo)
     """
+    # Fallback seguro: alíquota padrão LC 214/2025 (ano-teste 2026)
+    # IBS UF: 0,10% | IBS Municipal: 0,025% | CBS: 0,90% | Total: 1,025%
     fallback = {
         'cclasstrib_code': '000001',
         'cclasstrib_msg': 'Operação tributada integralmente',
@@ -62,22 +149,31 @@ def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
         'descricao_beneficio': '',
         'base_legal': 'LC 214/2025 — Alíquota padrão'
     }
-    
+
+    # Se o motor tributário não está disponível (planilha não encontrada),
+    # retorna o fallback imediatamente sem tentar calcular.
     if not TRIB_DISPONIVEL:
         fallback['requer_revisao_manual'] = False
         fallback['opcoes_cclasstrib'] = ''
         return fallback
-    
+
     try:
         import re
         from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm
+
+        # Passo 1: Normalizar NCM (remover pontos, hífens e espaços)
         ncm_clean = re.sub(r'\D+', '', ncm)
-        
-        # Verificar se NCM tem múltiplos cClassTribs possíveis
+
+        # Passo 2: Verificar ambiguidade de cClassTrib para este NCM
+        # NCMs ambíguos são aqueles com mais de uma classificação tributária possível
+        # conforme a LC 214/2025 (ex: gasolina pode ser 620001, 620004, 620005 ou 620006
+        # dependendo do percentual de EAC e da posição na cadeia de distribuição).
         opcoes = get_opcoes_cclasstrib_por_ncm(ncm_clean)
         requer_revisao = len(opcoes) > 1
+        # Montar string de opções para exibição no Excel (coluna 'opcoes_cclasstrib')
         opcoes_str = ' | '.join([f"{op['code']}: {op['situacao']}" for op in opcoes]) if requer_revisao else ''
-        
+
+        # Passo 3: Calcular tributação completa via motor PRICETAX
         resultado = calcular_tributacao_completa(
             ncm=ncm_clean,
             cfop=cfop,
@@ -86,8 +182,9 @@ def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
             guess_cclasstrib_func=guess_cclasstrib,
             get_class_info_func=get_class_info_by_code,
         )
-        
-        # Extrair base legal do benefício
+
+        # Passo 4: Extrair base legal e anexo do primeiro enquadramento de benefício
+        # (quando há múltiplos enquadramentos, usa o de maior prioridade = índice 0)
         base_legal = 'LC 214/2025 — Alíquota padrão'
         anexo = ''
         descricao_beneficio = ''
@@ -475,11 +572,43 @@ def generate_summary_stats(resultados: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def _build_dados_completos_expandidos(resultados: List[Dict[str, Any]]) -> List[Dict]:
     """
-    Constrói lista de linhas para a aba 'Dados Completos'.
-    NCMs ambíguos geram UMA LINHA POR OPCAO de cClassTrib.
-    NCMs únicos geram uma única linha com alerta de tratamento único.
+    Constrói a lista de linhas para a aba 'Dados Completos' do Excel.
+
+    LOGICA CENTRAL DE DUPLICACAO DE LINHAS:
+    ----------------------------------------
+    Para cada item de cada XML processado:
+
+    a) NCM AMBIGUO (len(opcoes) > 1):
+       Gera N linhas — uma por cClassTrib possível.
+       Cada linha recebe:
+         - 'ALERTA'     : mensagem de atencao com NCM e quantidade de opcoes
+         - 'Tipo Linha' : 'OPCAO X DE N' (ex: 'OPCAO 1 DE 4')
+         - 'cClassTrib' : codigo da opcao especifica desta linha
+         - 'Descricao cClassTrib': descricao oficial da opcao
+         - 'Situacao Operacao'  : criterio de distincao (ex: 'EAC acima do minimo')
+         - 'Base Legal cClassTrib': artigo da LC 214/2025
+       O usuario deve manter apenas a linha correta e excluir as demais.
+
+    b) NCM UNICO (len(opcoes) <= 1):
+       Gera 1 linha com:
+         - 'ALERTA'     : 'TRATAMENTO UNICO: NCM possui classificacao tributaria definida.'
+         - 'Tipo Linha' : 'UNICO'
+         - cClassTrib e descricao do processamento normal
+
+    NCMs ambíguos mapeados (cclasstrib_mapping.py):
+        27101259 — Gasolina (4 opcoes: 620001, 620004, 620005, 620006)
+        27101921 — Diesel   (2 opcoes: 620001, 620006)
+        84212990 — Filtros medicos Anexo IV (2 opcoes: 200030, 200005)
+
+    Args:
+        resultados: Lista de dicts retornados por process_single_xml() ou process_batch().
+
+    Returns:
+        Lista de dicts prontos para pd.DataFrame(), com colunas 'ALERTA' e 'Tipo Linha'
+        como primeiras colunas.
     """
     import re as _re
+    # Importar com fallback seguro caso cclasstrib_mapping nao esteja disponivel
     try:
         from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm as _get_opts
     except ImportError:
@@ -488,8 +617,11 @@ def _build_dados_completos_expandidos(resultados: List[Dict[str, Any]]) -> List[
     linhas = []
     for r in resultados:
         for val in r['validacoes']:
+            # Normalizar NCM: remover pontos, hifens e espacos
             ncm_clean = _re.sub(r'\D+', '', str(val.get('ncm', '')))
+            # Consultar opcoes de cClassTrib para este NCM
             opcoes = _get_opts(ncm_clean)
+            # NCM e ambiguo se houver mais de uma opcao de classificacao tributaria
             ambiguo = len(opcoes) > 1
 
             base = {
@@ -561,11 +693,28 @@ def _aplicar_formatacao_excel(writer, sheet_name: str, df: pd.DataFrame,
                                col_alerta: str = 'ALERTA',
                                col_tipo: str = 'Tipo Linha') -> None:
     """
-    Aplica formatacao visual profissional na aba de dados completos:
-    - Linhas de NCM ambiguo: fundo laranja claro + texto vermelho escuro
-    - Linhas de tratamento unico: fundo verde claro
-    - Cabecalho: fundo preto + texto amarelo PRICETAX
-    - Coluna ALERTA: negrito + borda
+    Aplica formatacao visual profissional (openpyxl) na aba 'Dados Completos'.
+
+    Paleta de cores PRICETAX:
+        Cabecalho   : fundo #1A1A1A (preto) + texto #FFDD00 (amarelo PRICETAX)
+        NCM ambiguo : fundo #FFFFF3CD (laranja claro) + texto #7B3F00 (marrom)
+                      Coluna ALERTA: fundo #FFC107 (ambar) + texto negrito
+        NCM unico   : fundo #E8F5E9 (verde claro) + texto #1B5E20 (verde escuro)
+                      Coluna ALERTA: fundo #4CAF50 (verde) + texto negrito
+
+    Recursos aplicados:
+        - Cabecalho fixo (freeze_panes = 'A2')
+        - Filtro automatico em todas as colunas
+        - Quebra de texto (wrap_text=True) para legibilidade
+        - Borda fina em todas as celulas
+        - Largura de coluna ajustada automaticamente (max 60 caracteres)
+
+    Args:
+        writer     : pd.ExcelWriter com engine='openpyxl' ainda aberto.
+        sheet_name : Nome da aba a formatar (deve existir em writer.sheets).
+        df         : DataFrame que foi escrito na aba (usado para calcular larguras).
+        col_alerta : Nome da coluna de alertas (padrao: 'ALERTA').
+        col_tipo   : Nome da coluna de tipo de linha (padrao: 'Tipo Linha').
     """
     from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
     from openpyxl.utils import get_column_letter

@@ -10,6 +10,7 @@ Data: 08/02/2026
 """
 
 import logging
+import logging.handlers
 import sys
 from pathlib import Path
 
