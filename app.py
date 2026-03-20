@@ -2362,42 +2362,98 @@ elif pagina == "Consulta NCM":
                 
                 # =============================================================================
                 # SELEÇÃO DE cClassTrib QUANDO NCM TEM MÚLTIPLAS OPÇÕES
+                # (Cards visuais — mesmo padrão dos benefícios fiscais)
                 # =============================================================================
                 opcoes_ncm = get_opcoes_cclasstrib_por_ncm(ncm_fmt)
                 cclasstrib_ncm_selecionado = None
-                
+
+                # Chave de session_state para guardar a opção selecionada
+                _key_ncm_sel = f"cclasstrib_ncm_idx_{ncm_fmt}"
+                if _key_ncm_sel not in st.session_state:
+                    st.session_state[_key_ncm_sel] = 0  # padrão: primeira opção
+
                 if len(opcoes_ncm) > 1:
-                    st.markdown("### ⚠️ Este NCM possui múltiplos cClassTribs possíveis")
-                    st.warning(
-                        f"O NCM **{ncm_fmt}** pode ter **{len(opcoes_ncm)} classificações tributárias diferentes** "
-                        "dependendo da situação da operação. Selecione a que se aplica ao seu caso:"
+                    st.markdown(
+                        f"""
+                        <div style="margin-top:1.5rem; margin-bottom:0.5rem;">
+                            <h3 style="color:{COLOR_GOLD}; font-size:1.1rem; margin:0;">
+                                ⚠️ Este NCM possui múltiplos cClassTribs possíveis
+                            </h3>
+                            <p style="color:#AAAAAA; font-size:0.9rem; margin:0.3rem 0 0 0;">
+                                Selecione a situação da operação para determinar o cClassTrib correto:
+                            </p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
-                    
-                    opcoes_labels = []
-                    for op in opcoes_ncm:
-                        opcoes_labels.append(
-                            f"**{op['code']}** — {op['descricao']} | {op['situacao']}"
+
+                    # Mapear regime para cor do badge
+                    def _cor_regime(regime_str):
+                        r = (regime_str or "").upper()
+                        if "MONOFASICO" in r or "MONOF" in r:
+                            return "#F59E0B", "MONOFÁSICO"
+                        if "ALIQ_ZERO" in r or "ZERO" in r:
+                            return "#10B981", "ALÍQUOTA ZERO"
+                        if "RED_60" in r or "60" in r:
+                            return "#3B82F6", "REDUÇÃO 60%"
+                        if "RED_30" in r or "30" in r:
+                            return "#8B5CF6", "REDUÇÃO 30%"
+                        return "#6B7280", "TRIBUTAÇÃO PADRÃO"
+
+                    for _i, op in enumerate(opcoes_ncm):
+                        _cor, _badge_txt = _cor_regime(op.get('regime', ''))
+                        _selecionado = (st.session_state[_key_ncm_sel] == _i)
+                        _borda = COLOR_GOLD if _selecionado else _cor
+                        _bg = "#2a2a00" if _selecionado else "#1E1E1E"
+
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background: {_bg};
+                                border-left: 4px solid {_borda};
+                                border-radius: 6px;
+                                padding: 0.9rem 1rem;
+                                margin: 0.5rem 0;
+                            ">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                                    <div style="font-size:1rem; font-weight:700; color:{COLOR_GOLD};">
+                                        cClassTrib {op['code']}
+                                    </div>
+                                    <div style="background:{_cor}; color:white; padding:0.2rem 0.7rem; border-radius:4px; font-size:0.78rem; font-weight:600;">
+                                        {_badge_txt}
+                                    </div>
+                                </div>
+                                <div style="font-size:0.9rem; color:#E5E7EB; margin-bottom:0.2rem;">
+                                    {op['descricao']}
+                                </div>
+                                <div style="font-size:0.82rem; color:#AAAAAA;">
+                                    {op['situacao']}
+                                </div>
+                                <div style="font-size:0.78rem; color:#6B7280; margin-top:0.3rem;">
+                                    {op['base_legal']}
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
                         )
-                    
-                    selecao_ncm = st.radio(
-                        "Selecione a situação da operação:",
-                        opcoes_labels,
-                        key=f"cclasstrib_ncm_selector_{ncm_fmt}"
-                    )
-                    idx_ncm = opcoes_labels.index(selecao_ncm)
-                    cclasstrib_ncm_selecionado = opcoes_ncm[idx_ncm]
-                    
-                    # Sobrescrever o cClassTrib calculado com o selecionado pelo usuário
+                        if st.button(
+                            f"{'Selecionado' if _selecionado else 'Selecionar'} — {op['code']}",
+                            key=f"btn_cclas_{ncm_fmt}_{_i}",
+                            type="primary" if _selecionado else "secondary",
+                            use_container_width=True,
+                        ):
+                            st.session_state[_key_ncm_sel] = _i
+                            st.rerun()
+
+                    # Aplicar a opção selecionada
+                    cclasstrib_ncm_selecionado = opcoes_ncm[st.session_state[_key_ncm_sel]]
                     cclastrib_venda_code = cclasstrib_ncm_selecionado['code']
                     cclastrib_venda_msg = cclasstrib_ncm_selecionado['situacao']
                     cclastrib_code = cclastrib_venda_code
                     class_info_venda = get_class_info_by_code(cclastrib_venda_code)
                     class_info = class_info_venda
-                    
-                    # Exibir base legal da opção selecionada
-                    st.info(f"📋 **Base Legal:** {cclasstrib_ncm_selecionado['base_legal']}")
                     st.markdown("---")
-                
+
                 elif len(opcoes_ncm) == 1:
                     # NCM com apenas uma opção mapeada — usar automaticamente
                     cclasstrib_ncm_selecionado = opcoes_ncm[0]
@@ -4126,28 +4182,90 @@ elif pagina == "Análise XML NF-e":
                         st.markdown("---")
                         
                         # SELEÇÃO DE cClassTrib QUANDO NCM TEM MÚLTIPLAS OPÇÕES (XML UNITÁRIO)
+                        # Cards visuais — mesmo padrão do módulo NCM único
                         opcoes_ncm_xml = get_opcoes_cclasstrib_por_ncm(ncm_clean)
+                        _key_xml_sel = f"cclasstrib_xml_idx_{ncm_clean}_{idx}"
+                        if _key_xml_sel not in st.session_state:
+                            st.session_state[_key_xml_sel] = 0
+
                         if len(opcoes_ncm_xml) > 1:
-                            st.warning(
-                                f"⚠️ O NCM **{ncm_clean}** possui **{len(opcoes_ncm_xml)} cClassTribs possíveis**. "
-                                "Selecione a situação da operação:"
+                            st.markdown(
+                                f"""
+                                <div style="margin-top:1rem; margin-bottom:0.5rem;">
+                                    <h4 style="color:{COLOR_GOLD}; font-size:1rem; margin:0;">
+                                        ⚠️ NCM {ncm_clean} — Múltiplos cClassTribs possíveis
+                                    </h4>
+                                    <p style="color:#AAAAAA; font-size:0.85rem; margin:0.2rem 0 0 0;">
+                                        Selecione a situação da operação:
+                                    </p>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
                             )
-                            opcoes_labels_xml = []
-                            for op in opcoes_ncm_xml:
-                                opcoes_labels_xml.append(
-                                    f"{op['code']} — {op['situacao']}"
+
+                            def _cor_regime_xml(regime_str):
+                                r = (regime_str or "").upper()
+                                if "MONOFASICO" in r or "MONOF" in r:
+                                    return "#F59E0B", "MONOFÁSICO"
+                                if "ALIQ_ZERO" in r or "ZERO" in r:
+                                    return "#10B981", "ALÍQUOTA ZERO"
+                                if "RED_60" in r or "60" in r:
+                                    return "#3B82F6", "REDUÇÃO 60%"
+                                if "RED_30" in r or "30" in r:
+                                    return "#8B5CF6", "REDUÇÃO 30%"
+                                return "#6B7280", "TRIBUTAÇÃO PADRÃO"
+
+                            for _xi, op in enumerate(opcoes_ncm_xml):
+                                _xcor, _xbadge = _cor_regime_xml(op.get('regime', ''))
+                                _xsel = (st.session_state[_key_xml_sel] == _xi)
+                                _xborda = COLOR_GOLD if _xsel else _xcor
+                                _xbg = "#2a2a00" if _xsel else "#1E1E1E"
+
+                                st.markdown(
+                                    f"""
+                                    <div style="
+                                        background: {_xbg};
+                                        border-left: 4px solid {_xborda};
+                                        border-radius: 6px;
+                                        padding: 0.7rem 0.9rem;
+                                        margin: 0.4rem 0;
+                                    ">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+                                            <div style="font-size:0.95rem; font-weight:700; color:{COLOR_GOLD};">
+                                                cClassTrib {op['code']}
+                                            </div>
+                                            <div style="background:{_xcor}; color:white; padding:0.15rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:600;">
+                                                {_xbadge}
+                                            </div>
+                                        </div>
+                                        <div style="font-size:0.85rem; color:#E5E7EB; margin-bottom:0.15rem;">
+                                            {op['descricao']}
+                                        </div>
+                                        <div style="font-size:0.78rem; color:#AAAAAA;">
+                                            {op['situacao']}
+                                        </div>
+                                        <div style="font-size:0.72rem; color:#6B7280; margin-top:0.2rem;">
+                                            {op['base_legal']}
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
                                 )
-                            selecao_xml = st.radio(
-                                "Situação da operação:",
-                                opcoes_labels_xml,
-                                key=f"cclasstrib_xml_selector_{ncm_clean}_{idx}"
-                            )
-                            idx_xml = opcoes_labels_xml.index(selecao_xml)
-                            op_selecionada = opcoes_ncm_xml[idx_xml]
+                                if st.button(
+                                    f"{'Selecionado' if _xsel else 'Selecionar'} — {op['code']}",
+                                    key=f"btn_xml_cclas_{ncm_clean}_{idx}_{_xi}",
+                                    type="primary" if _xsel else "secondary",
+                                    use_container_width=True,
+                                ):
+                                    st.session_state[_key_xml_sel] = _xi
+                                    st.rerun()
+
+                            op_selecionada = opcoes_ncm_xml[st.session_state[_key_xml_sel]]
                             cclastrib_code = op_selecionada['code']
                             cclastrib_msg = op_selecionada['situacao']
                             class_info = get_class_info_by_code(cclastrib_code)
-                            st.info(f"📋 **Base Legal:** {op_selecionada['base_legal']}")
+                            st.markdown("---")
+
                         elif len(opcoes_ncm_xml) == 1:
                             op_unica = opcoes_ncm_xml[0]
                             cclastrib_code = op_unica['code']
