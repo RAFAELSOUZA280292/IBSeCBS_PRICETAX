@@ -640,18 +640,83 @@ def render_aba_batch_xml():
                                 'CBS Dif (R$)': f"R$ {item['diff_cbs']:.2f}"
                             })
             
-            # Alerta de revisão manual
-            total_revisao_manual = sum(
-                1 for r in resultados
-                for val in r.get('validacoes', [])
-                if val.get('requer_revisao_manual')
-            )
-            if total_revisao_manual > 0:
-                st.warning(
-                    f"⚠️ **{total_revisao_manual} item(ns) requerem revisão manual** — "
-                    f"NCMs com múltiplos cClassTribs possíveis. "
-                    f"Verifique a coluna 'Revisão Manual' e 'Opções cClassTrib' nas tabelas e no Excel."
+            # =================================================================
+            # PAINEL DE ALERTAS: NCMs AMBIGUOS E TRATAMENTO UNICO
+            # =================================================================
+            import re as _re
+            try:
+                from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm as _get_opts_ui
+            except ImportError:
+                def _get_opts_ui(ncm): return []
+
+            # Mapear NCMs ambiguos presentes no lote
+            ncms_ambiguos_lote = {}  # ncm -> {'opcoes': [...], 'qtd_itens': int, 'descricao': str}
+            for r in resultados:
+                for val in r.get('validacoes', []):
+                    ncm_c = _re.sub(r'\D+', '', str(val.get('ncm', '')))
+                    opts = _get_opts_ui(ncm_c)
+                    if len(opts) > 1:
+                        if ncm_c not in ncms_ambiguos_lote:
+                            ncms_ambiguos_lote[ncm_c] = {
+                                'opcoes': opts,
+                                'qtd_itens': 0,
+                                'descricao': val.get('descricao', '')
+                            }
+                        ncms_ambiguos_lote[ncm_c]['qtd_itens'] += 1
+
+            if ncms_ambiguos_lote:
+                total_itens_amb = sum(v['qtd_itens'] for v in ncms_ambiguos_lote.values())
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: #1A1200;
+                        border-left: 5px solid #FFDD00;
+                        border-radius: 6px;
+                        padding: 1.2rem 1.5rem;
+                        margin: 1rem 0;
+                    ">
+                        <div style="font-size:1.05rem; font-weight:700; color:#FFDD00; margin-bottom:0.4rem;">
+                            ATENCAO &mdash; {len(ncms_ambiguos_lote)} NCM(s) com Multiplos cClassTribs Possiveis
+                        </div>
+                        <div style="font-size:0.9rem; color:#E5E7EB;">
+                            <strong>{total_itens_amb} itens</strong> do lote possuem NCMs com mais de uma
+                            classificacao tributaria possivel. O Excel exportado apresenta
+                            <strong>uma linha por opcao</strong> para cada um desses itens,
+                            permitindo que voce identifique e selecione a classificacao correta
+                            conforme a situacao da operacao.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
+
+                for ncm_c, info in ncms_ambiguos_lote.items():
+                    with st.expander(
+                        f"NCM {ncm_c} — {info['qtd_itens']} item(ns) — {len(info['opcoes'])} cClassTribs possiveis",
+                        expanded=False
+                    ):
+                        st.markdown(
+                            f"<p style='color:#AAAAAA; font-size:0.85rem; margin-bottom:0.5rem;'>"
+                            f"Produto: {info['descricao']}</p>",
+                            unsafe_allow_html=True
+                        )
+                        import pandas as pd
+                        df_opts = pd.DataFrame([
+                            {
+                                'Opcao': f"{i+1} de {len(info['opcoes'])}",
+                                'cClassTrib': op['code'],
+                                'Descricao': op['descricao'],
+                                'Situacao da Operacao': op['situacao'],
+                                'Base Legal': op['base_legal'],
+                            }
+                            for i, op in enumerate(info['opcoes'])
+                        ])
+                        st.dataframe(df_opts, use_container_width=True, hide_index=True)
+                        st.caption(
+                            "No Excel exportado (aba 'Dados Completos'), cada opcao acima "
+                            "aparece como uma linha separada com fundo laranja. "
+                            "Identifique a correta e exclua as demais antes de importar no seu sistema."
+                        )
 
             # Tabs para conformes e divergentes
             tab1, tab2 = st.tabs([f"Itens Conformes ({len(itens_conformes_lista)})", f"ATENÇÃO: Itens Divergentes ({len(itens_divergentes_lista)})"])
@@ -708,12 +773,16 @@ def render_aba_batch_xml():
                     border-radius: 4px;
                     margin-top: 1rem;
                 ">
-                    <strong style="color: {COLOR_GOLD};">Conteúdo do Relatório Excel</strong><br><br>
+                    <strong style="color: {COLOR_GOLD};">Conteudo do Relatorio Excel</strong><br><br>
                     <ul style="color: {COLOR_TEXT_MUTED}; font-size: 0.9rem; margin: 0;">
-                        <li><strong>Aba "Resumo":</strong> Estatísticas gerais do processamento</li>
-                        <li><strong>Aba "Validação":</strong> Lista completa de todos os XMLs processados</li>
-                        <li><strong>Aba "Divergências":</strong> Apenas XMLs com problemas detectados</li>
-                        <li><strong>Aba "Dados Completos":</strong> Detalhamento item por item com validação IBS/CBS</li>
+                        <li><strong>Aba &ldquo;Resumo&rdquo;:</strong> Estatisticas gerais + lista de NCMs com multiplos cClassTribs identificados no lote</li>
+                        <li><strong>Aba &ldquo;Validacao&rdquo;:</strong> Lista completa de todos os XMLs processados com status</li>
+                        <li><strong>Aba &ldquo;Divergencias&rdquo;:</strong> Apenas XMLs com problemas detectados</li>
+                        <li><strong>Aba &ldquo;Dados Completos&rdquo;:</strong> Detalhamento item por item &mdash;
+                            <span style="color:#FFDD00;">NCMs ambiguos geram uma linha por cClassTrib possivel</span>
+                            (fundo laranja) e NCMs unicos geram uma linha com confirmacao de tratamento unico (fundo verde).
+                            Exclua as linhas que nao se aplicam antes de importar no seu sistema.
+                        </li>
                     </ul>
                 </div>
                 """,

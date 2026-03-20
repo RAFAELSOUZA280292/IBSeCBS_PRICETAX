@@ -473,9 +473,185 @@ def generate_summary_stats(resultados: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _build_dados_completos_expandidos(resultados: List[Dict[str, Any]]) -> List[Dict]:
+    """
+    Constrói lista de linhas para a aba 'Dados Completos'.
+    NCMs ambíguos geram UMA LINHA POR OPCAO de cClassTrib.
+    NCMs únicos geram uma única linha com alerta de tratamento único.
+    """
+    import re as _re
+    try:
+        from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm as _get_opts
+    except ImportError:
+        def _get_opts(ncm): return []
+
+    linhas = []
+    for r in resultados:
+        for val in r['validacoes']:
+            ncm_clean = _re.sub(r'\D+', '', str(val.get('ncm', '')))
+            opcoes = _get_opts(ncm_clean)
+            ambiguo = len(opcoes) > 1
+
+            base = {
+                'Arquivo': r['arquivo'],
+                'Chave Acesso': r['chave_acesso'],
+                'Emitente': r['emitente_razao'],
+                'Destinatário': r['destinatario_razao'],
+                'Item': val['item'],
+                'NCM': val['ncm'],
+                'CFOP': val['cfop'],
+                'Descrição': val['descricao'],
+                'Valor Item (R$)': val['valor'],
+                'Base Líquida (R$)': val['base_liquida'],
+                'Regime IVA': val.get('regime', ''),
+                'Redução (%)': val.get('reducao_pct', 0),
+                'IBS UF (%)': val.get('ibs_uf_pct', 0.10),
+                'IBS Municipal (%)': val.get('ibs_mun_pct', 0.025),
+                'CBS (%)': val.get('cbs_pct', 0.90),
+                'Total IVA (%)': val.get('total_iva_pct', 1.025),
+                'Anexo LC 214/2025': val.get('anexo_lc214', ''),
+                'Benefício Fiscal': val.get('descricao_beneficio', ''),
+                'Base Legal': val.get('base_legal', 'LC 214/2025'),
+                'IBS XML (R$)': val['ibs_xml'],
+                'IBS Esperado (R$)': val['ibs_esperado'],
+                'Dif. IBS (R$)': val['diff_ibs'],
+                'CBS XML (R$)': val['cbs_xml'],
+                'CBS Esperado (R$)': val['cbs_esperado'],
+                'Dif. CBS (R$)': val['diff_cbs'],
+                'Status Validação': val['status'],
+            }
+
+            if ambiguo:
+                # Uma linha por opcao de cClassTrib
+                for i, op in enumerate(opcoes, 1):
+                    linha = dict(base)
+                    linha['ALERTA'] = f'ATENCAO: NCM {ncm_clean} possui {len(opcoes)} cClassTribs possiveis. Selecione a opcao correta para a sua operacao.'
+                    linha['Tipo Linha'] = f'OPCAO {i} DE {len(opcoes)}'
+                    linha['cClassTrib'] = op['code']
+                    linha['Descricao cClassTrib'] = op['descricao']
+                    linha['Situacao Operacao'] = op['situacao']
+                    linha['Base Legal cClassTrib'] = op['base_legal']
+                    linhas.append(linha)
+            else:
+                # Linha unica com alerta de tratamento unico
+                linha = dict(base)
+                linha['ALERTA'] = 'TRATAMENTO UNICO: NCM possui classificacao tributaria definida.'
+                linha['Tipo Linha'] = 'UNICO'
+                linha['cClassTrib'] = val.get('cclasstrib', '')
+                linha['Descricao cClassTrib'] = val.get('cclasstrib_msg', '')
+                linha['Situacao Operacao'] = ''
+                linha['Base Legal cClassTrib'] = val.get('base_legal', 'LC 214/2025')
+                linhas.append(linha)
+
+    # Reordenar colunas: ALERTA e Tipo Linha primeiro
+    col_order = [
+        'ALERTA', 'Tipo Linha', 'Arquivo', 'Chave Acesso', 'Emitente', 'Destinatario',
+        'Item', 'NCM', 'CFOP', 'Descricao', 'Valor Item (R$)', 'Base Liquida (R$)',
+        'cClassTrib', 'Descricao cClassTrib', 'Situacao Operacao', 'Base Legal cClassTrib',
+        'Regime IVA', 'Reducao (%)', 'IBS UF (%)', 'IBS Municipal (%)', 'CBS (%)',
+        'Total IVA (%)', 'Anexo LC 214/2025', 'Beneficio Fiscal', 'Base Legal',
+        'IBS XML (R$)', 'IBS Esperado (R$)', 'Dif. IBS (R$)',
+        'CBS XML (R$)', 'CBS Esperado (R$)', 'Dif. CBS (R$)', 'Status Validacao'
+    ]
+    # Usar as chaves reais (com acento) que foram definidas no dict base
+    return linhas
+
+
+def _aplicar_formatacao_excel(writer, sheet_name: str, df: pd.DataFrame,
+                               col_alerta: str = 'ALERTA',
+                               col_tipo: str = 'Tipo Linha') -> None:
+    """
+    Aplica formatacao visual profissional na aba de dados completos:
+    - Linhas de NCM ambiguo: fundo laranja claro + texto vermelho escuro
+    - Linhas de tratamento unico: fundo verde claro
+    - Cabecalho: fundo preto + texto amarelo PRICETAX
+    - Coluna ALERTA: negrito + borda
+    """
+    from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    ws = writer.sheets[sheet_name]
+
+    # Cores
+    COR_HEADER_BG    = 'FF1A1A1A'  # preto
+    COR_HEADER_FG    = 'FFFFDD00'  # amarelo PRICETAX
+    COR_AMBIGUO_BG   = 'FFFFF3CD'  # laranja muito claro (aviso)
+    COR_AMBIGUO_FG   = 'FF7B3F00'  # marrom escuro
+    COR_UNICO_BG     = 'FFE8F5E9'  # verde muito claro
+    COR_UNICO_FG     = 'FF1B5E20'  # verde escuro
+    COR_ALERTA_BG    = 'FFFFC107'  # amarelo ambar (alerta ambiguo)
+    COR_ALERTA_UNICO = 'FF4CAF50'  # verde (alerta unico)
+
+    fill_header    = PatternFill('solid', fgColor=COR_HEADER_BG)
+    font_header    = Font(bold=True, color=COR_HEADER_FG, size=10)
+    fill_ambiguo   = PatternFill('solid', fgColor=COR_AMBIGUO_BG)
+    font_ambiguo   = Font(color=COR_AMBIGUO_FG, size=9)
+    fill_unico     = PatternFill('solid', fgColor=COR_UNICO_BG)
+    font_unico     = Font(color=COR_UNICO_FG, size=9)
+    fill_alerta_a  = PatternFill('solid', fgColor=COR_ALERTA_BG)
+    fill_alerta_u  = PatternFill('solid', fgColor=COR_ALERTA_UNICO)
+    font_alerta    = Font(bold=True, size=9)
+    align_wrap     = Alignment(wrap_text=True, vertical='top')
+    thin_border    = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # Identificar indices das colunas ALERTA e Tipo Linha
+    cols = list(df.columns)
+    idx_alerta = cols.index(col_alerta) + 1 if col_alerta in cols else None
+    idx_tipo   = cols.index(col_tipo) + 1 if col_tipo in cols else None
+
+    # Formatar cabecalho (linha 1)
+    for cell in ws[1]:
+        cell.fill = fill_header
+        cell.font = font_header
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = thin_border
+
+    # Formatar linhas de dados
+    for row_idx, row in enumerate(ws.iter_rows(min_row=2), start=2):
+        tipo_val = ''
+        if idx_tipo:
+            tipo_val = str(ws.cell(row=row_idx, column=idx_tipo).value or '')
+
+        is_ambiguo = 'OPCAO' in tipo_val
+        fill_row  = fill_ambiguo if is_ambiguo else fill_unico
+        font_row  = font_ambiguo if is_ambiguo else font_unico
+
+        for cell in row:
+            cell.fill = fill_row
+            cell.font = font_row
+            cell.alignment = align_wrap
+            cell.border = thin_border
+
+        # Coluna ALERTA: formatacao especial
+        if idx_alerta:
+            cell_alerta = ws.cell(row=row_idx, column=idx_alerta)
+            cell_alerta.fill = fill_alerta_a if is_ambiguo else fill_alerta_u
+            cell_alerta.font = Font(bold=True, size=9,
+                                    color='FF7B3F00' if is_ambiguo else 'FF1B5E20')
+
+    # Ajustar largura das colunas
+    for col_idx, col in enumerate(df.columns, 1):
+        max_len = max(
+            len(str(col)),
+            df[col].astype(str).str.len().max() if len(df) > 0 else 0
+        )
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_len + 4, 60)
+
+    # Congelar cabecalho
+    ws.freeze_panes = 'A2'
+
+    # Filtro automatico
+    ws.auto_filter.ref = ws.dimensions
+
+
 def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
     """
-    Gera relatório Excel profissional com 4 abas.
+    Gera relatorio Excel profissional com 4 abas.
+    - Aba 'Dados Completos': NCMs ambiguos duplicam linhas (uma por cClassTrib possivel)
+      com formatacao visual diferenciada e alerta na coluna ALERTA.
     
     Returns:
         BytesIO com arquivo Excel
@@ -483,12 +659,31 @@ def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
     output = BytesIO()
     
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        # ----------------------------------------------------------------
         # ABA 1: RESUMO
+        # ----------------------------------------------------------------
         stats = generate_summary_stats(resultados)
+
+        # Contar NCMs ambiguos no lote
+        import re as _re
+        try:
+            from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm as _get_opts
+        except ImportError:
+            def _get_opts(ncm): return []
+
+        ncms_ambiguos = set()
+        itens_ambiguos = 0
+        for r in resultados:
+            for val in r.get('validacoes', []):
+                ncm_c = _re.sub(r'\D+', '', str(val.get('ncm', '')))
+                if len(_get_opts(ncm_c)) > 1:
+                    ncms_ambiguos.add(ncm_c)
+                    itens_ambiguos += 1
+
         df_resumo = pd.DataFrame([
             ['Total de XMLs Processados', stats['total_xmls']],
             ['XMLs Conformes', stats['xmls_conformes']],
-            ['XMLs com Divergências', stats['xmls_divergentes']],
+            ['XMLs com Divergencias', stats['xmls_divergentes']],
             ['XMLs com Erros', stats['xmls_erros']],
             ['% Conformidade', f"{stats['percentual_conformes']:.2f}%"],
             ['', ''],
@@ -496,13 +691,36 @@ def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
             ['Itens Conformes', stats['itens_conformes']],
             ['Itens Divergentes', stats['itens_divergentes']],
             ['', ''],
+            ['NCMs com Multiplos cClassTribs (Revisao Manual)', len(ncms_ambiguos)],
+            ['Itens que Requerem Revisao Manual', itens_ambiguos],
+            ['NCMs Ambiguos Identificados', ', '.join(sorted(ncms_ambiguos)) if ncms_ambiguos else 'Nenhum'],
+            ['', ''],
             ['Valor Total (R$)', f"{stats['valor_total']:,.2f}"],
             ['', ''],
             ['Data do Processamento', stats['data_processamento']]
-        ], columns=['Métrica', 'Valor'])
+        ], columns=['Metrica', 'Valor'])
         df_resumo.to_excel(writer, sheet_name='Resumo', index=False)
-        
-        # ABA 2: VALIDAÇÃO (todos os XMLs)
+
+        # Formatar aba Resumo
+        from openpyxl.styles import PatternFill, Font, Alignment
+        ws_res = writer.sheets['Resumo']
+        for cell in ws_res[1]:
+            cell.fill = PatternFill('solid', fgColor='FF1A1A1A')
+            cell.font = Font(bold=True, color='FFFFDD00', size=10)
+        # Destacar linhas de NCMs ambiguos
+        for row in ws_res.iter_rows(min_row=2):
+            val_cell = row[0].value or ''
+            if 'Ambiguo' in str(val_cell) or 'Revisao' in str(val_cell):
+                for cell in row:
+                    cell.fill = PatternFill('solid', fgColor='FFFFF3CD')
+                    cell.font = Font(bold=True, color='FF7B3F00', size=10)
+        ws_res.column_dimensions['A'].width = 50
+        ws_res.column_dimensions['B'].width = 40
+        ws_res.freeze_panes = 'A2'
+
+        # ----------------------------------------------------------------
+        # ABA 2: VALIDACAO (todos os XMLs)
+        # ----------------------------------------------------------------
         df_validacao = pd.DataFrame([{
             'Arquivo': r['arquivo'],
             'Status': r['status'],
@@ -510,75 +728,75 @@ def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
             'Emitente': r['emitente_razao'],
             'CNPJ Emitente': r['emitente_cnpj'],
             'UF Emitente': r['emitente_uf'],
-            'Destinatário': r['destinatario_razao'],
-            'CNPJ Destinatário': r['destinatario_cnpj'],
-            'UF Destinatário': r['destinatario_uf'],
-            'Data Emissão': r['data_emissao'],
+            'Destinatario': r['destinatario_razao'],
+            'CNPJ Destinatario': r['destinatario_cnpj'],
+            'UF Destinatario': r['destinatario_uf'],
+            'Data Emissao': r['data_emissao'],
             'Total Itens': r['total_itens'],
             'Itens Conformes': r['itens_conformes'],
             'Itens Divergentes': r['itens_divergentes'],
             'Valor Total (R$)': r['valor_total_nfe'],
             'Mensagem': r['mensagem']
         } for r in resultados])
-        df_validacao.to_excel(writer, sheet_name='Validação', index=False)
-        
-        # ABA 3: DIVERGÊNCIAS (apenas XMLs com problemas)
-        divergentes = [r for r in resultados if r['status'] in ['DIVERGENTE', 'ERRO']]
-        if divergentes:
+        df_validacao.to_excel(writer, sheet_name='Validacao', index=False)
+
+        ws_val = writer.sheets['Validacao']
+        for cell in ws_val[1]:
+            cell.fill = PatternFill('solid', fgColor='FF1A1A1A')
+            cell.font = Font(bold=True, color='FFFFDD00', size=10)
+        for row in ws_val.iter_rows(min_row=2):
+            status = str(row[1].value or '')
+            if status == 'DIVERGENTE':
+                for cell in row:
+                    cell.fill = PatternFill('solid', fgColor='FFFFF3CD')
+            elif status == 'ERRO':
+                for cell in row:
+                    cell.fill = PatternFill('solid', fgColor='FFFCE4EC')
+            elif status == 'CONFORME':
+                for cell in row:
+                    cell.fill = PatternFill('solid', fgColor='FFE8F5E9')
+        ws_val.freeze_panes = 'A2'
+        ws_val.auto_filter.ref = ws_val.dimensions
+
+        # ----------------------------------------------------------------
+        # ABA 3: DIVERGENCIAS
+        # ----------------------------------------------------------------
+        divergentes_list = [r for r in resultados if r['status'] in ['DIVERGENTE', 'ERRO']]
+        if divergentes_list:
             df_divergencias = pd.DataFrame([{
                 'Arquivo': r['arquivo'],
                 'Status': r['status'],
                 'Chave Acesso': r['chave_acesso'],
                 'Emitente': r['emitente_razao'],
-                'Destinatário': r['destinatario_razao'],
+                'Destinatario': r['destinatario_razao'],
                 'Itens Divergentes': r['itens_divergentes'],
                 'Valor Total (R$)': r['valor_total_nfe'],
                 'Mensagem': r['mensagem']
-            } for r in divergentes])
-            df_divergencias.to_excel(writer, sheet_name='Divergências', index=False)
-        
-        # ABA 4: DADOS COMPLETOS (detalhamento por item)
-        dados_completos = []
-        for r in resultados:
-            for val in r['validacoes']:
-                dados_completos.append({
-                    'Arquivo': r['arquivo'],
-                    'Chave Acesso': r['chave_acesso'],
-                    'Emitente': r['emitente_razao'],
-                    'Destinatário': r['destinatario_razao'],
-                    'Item': val['item'],
-                    'NCM': val['ncm'],
-                    'CFOP': val['cfop'],
-                    'Descrição': val['descricao'],
-                    'Valor Item (R$)': val['valor'],
-                    'Base Líquida (R$)': val['base_liquida'],
-                    # Campos tributários IBS/CBS
-                    'cClassTrib': val.get('cclasstrib', ''),
-                    'Descrição cClassTrib': val.get('cclasstrib_msg', ''),
-                    'Regime IVA': val.get('regime', ''),
-                    'Redução (%)': val.get('reducao_pct', 0),
-                    'IBS UF (%)': val.get('ibs_uf_pct', 0.10),
-                    'IBS Municipal (%)': val.get('ibs_mun_pct', 0.025),
-                    'CBS (%)': val.get('cbs_pct', 0.90),
-                    'Total IVA (%)': val.get('total_iva_pct', 1.025),
-                    'Anexo LC 214/2025': val.get('anexo_lc214', ''),
-                    'Benefício Fiscal': val.get('descricao_beneficio', ''),
-                    'Base Legal': val.get('base_legal', 'LC 214/2025'),
-                    'Requer Revisão Manual': '⚠️ SIM' if val.get('requer_revisao_manual') else 'OK',
-                    'Opções cClassTrib': val.get('opcoes_cclasstrib', ''),
-                    # Validação de valores
-                    'IBS XML (R$)': val['ibs_xml'],
-                    'IBS Esperado (R$)': val['ibs_esperado'],
-                    'Dif. IBS (R$)': val['diff_ibs'],
-                    'CBS XML (R$)': val['cbs_xml'],
-                    'CBS Esperado (R$)': val['cbs_esperado'],
-                    'Dif. CBS (R$)': val['diff_cbs'],
-                    'Status': val['status']
-                })
-        
-        if dados_completos:
-            df_completo = pd.DataFrame(dados_completos)
+            } for r in divergentes_list])
+            df_divergencias.to_excel(writer, sheet_name='Divergencias', index=False)
+            ws_div = writer.sheets['Divergencias']
+            for cell in ws_div[1]:
+                cell.fill = PatternFill('solid', fgColor='FF1A1A1A')
+                cell.font = Font(bold=True, color='FFFFDD00', size=10)
+            ws_div.freeze_panes = 'A2'
+            ws_div.auto_filter.ref = ws_div.dimensions
+
+        # ----------------------------------------------------------------
+        # ABA 4: DADOS COMPLETOS — com duplicacao de linhas para NCMs ambiguos
+        # ----------------------------------------------------------------
+        linhas_expandidas = _build_dados_completos_expandidos(resultados)
+
+        if linhas_expandidas:
+            df_completo = pd.DataFrame(linhas_expandidas)
+
+            # Garantir que colunas ALERTA e Tipo Linha sejam as primeiras
+            cols_priority = ['ALERTA', 'Tipo Linha']
+            other_cols = [c for c in df_completo.columns if c not in cols_priority]
+            df_completo = df_completo[cols_priority + other_cols]
+
             df_completo.to_excel(writer, sheet_name='Dados Completos', index=False)
+            _aplicar_formatacao_excel(writer, 'Dados Completos', df_completo,
+                                      col_alerta='ALERTA', col_tipo='Tipo Linha')
     
     output.seek(0)
     return output
