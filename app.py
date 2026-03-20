@@ -1473,6 +1473,7 @@ with st.sidebar:
     
     ferramentas = [
         "Consulta NCM",
+        "XClass — Classificador Tributário",
         "Ranking de Saídas SPED",
         "cClassTrib",
         "Download CFOP x cClassTrib",
@@ -3632,6 +3633,33 @@ elif pagina == "Ranking de Saídas SPED":
                     file_name="ranking_vendas_ibscbs.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
+# =============================================================================
+# ABA XCLASS - HUB CENTRAL DE CLASSIFICAÇÃO TRIBUTÁRIA
+# =============================================================================
+
+elif pagina == "XClass — Classificador Tributário":
+    from aba_xclass import render_aba_xclass
+    from cclasstrib_mapping import guess_cclasstrib
+    from beneficios_fiscais import consulta_ncm as _consulta_ncm_xclass
+
+    def _buscar_ncm_xclass(ncm_dig: str):
+        """Busca descrição de um NCM na base TIPI carregada em df."""
+        try:
+            row = df.loc[df["NCM_DIG"] == ncm_dig]
+            if not row.empty:
+                return row.iloc[0]
+        except Exception:
+            pass
+        return None
+
+    render_aba_xclass(
+        beneficios_engine=engine,
+        guess_cclasstrib_fn=guess_cclasstrib,
+        consulta_ncm_fn=_consulta_ncm_xclass,
+        buscar_ncm_fn=_buscar_ncm_xclass,
+        process_sped_fn=process_sped_file,
+    )
 
 # =============================================================================
 # ABA 3 - CONSULTA CCLASSTRIB
