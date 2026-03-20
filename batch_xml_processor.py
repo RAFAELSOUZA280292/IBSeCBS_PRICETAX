@@ -64,11 +64,20 @@ def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
     }
     
     if not TRIB_DISPONIVEL:
+        fallback['requer_revisao_manual'] = False
+        fallback['opcoes_cclasstrib'] = ''
         return fallback
     
     try:
         import re
+        from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm
         ncm_clean = re.sub(r'\D+', '', ncm)
+        
+        # Verificar se NCM tem múltiplos cClassTribs possíveis
+        opcoes = get_opcoes_cclasstrib_por_ncm(ncm_clean)
+        requer_revisao = len(opcoes) > 1
+        opcoes_str = ' | '.join([f"{op['code']}: {op['situacao']}" for op in opcoes]) if requer_revisao else ''
+        
         resultado = calcular_tributacao_completa(
             ncm=ncm_clean,
             cfop=cfop,
@@ -101,7 +110,9 @@ def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
             'total_iva': resultado.get('total_iva', 1.025),
             'anexo': anexo,
             'descricao_beneficio': descricao_beneficio,
-            'base_legal': base_legal
+            'base_legal': base_legal,
+            'requer_revisao_manual': requer_revisao,
+            'opcoes_cclasstrib': opcoes_str
         }
     except Exception as e:
         logger.warning(f"Erro ao enriquecer NCM {ncm}: {e}")
@@ -371,7 +382,9 @@ def process_single_xml(xml_path: str, save_to_collector: bool = True) -> Dict[st
                 'total_iva_pct': trib['total_iva'],
                 'anexo_lc214': trib['anexo'],
                 'descricao_beneficio': trib['descricao_beneficio'],
-                'base_legal': trib['base_legal']
+                'base_legal': trib['base_legal'],
+                'requer_revisao_manual': trib.get('requer_revisao_manual', False),
+                'opcoes_cclasstrib': trib.get('opcoes_cclasstrib', '')
             })
         
         resultado['itens_conformes'] = itens_conformes
@@ -551,6 +564,8 @@ def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
                     'Anexo LC 214/2025': val.get('anexo_lc214', ''),
                     'Benefício Fiscal': val.get('descricao_beneficio', ''),
                     'Base Legal': val.get('base_legal', 'LC 214/2025'),
+                    'Requer Revisão Manual': '⚠️ SIM' if val.get('requer_revisao_manual') else 'OK',
+                    'Opções cClassTrib': val.get('opcoes_cclasstrib', ''),
                     # Validação de valores
                     'IBS XML (R$)': val['ibs_xml'],
                     'IBS Esperado (R$)': val['ibs_esperado'],

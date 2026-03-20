@@ -128,6 +128,222 @@ def get_cclasstrib_by_anexo(reducao: int, anexo: str, descricao: str = "") -> tu
     return "", f"Mapeamento não encontrado para Redução {reducao}% + {anexo}"
 
 
+# =============================================================================
+# MAPEAMENTO POR NCM: NCMs com múltiplos cClassTribs possíveis
+# Estrutura: NCM -> lista de opções, cada opção tem:
+#   - code: código cClassTrib
+#   - descricao: descrição do produto/situação
+#   - base_legal: artigo da LC 214/2025
+#   - ambiguo: True se o NCM tem múltiplos códigos possíveis
+# =============================================================================
+
+NCM_MULTI_CCLASSTRIB_MAP = {
+    # -------------------------------------------------------------------------
+    # NCM 27101259 - Gasolina e suas correntes / Misturas EAC
+    # Monofásico - múltiplos cClassTribs dependendo da situação
+    # -------------------------------------------------------------------------
+    "27101259": [
+        {
+            "code": "620001",
+            "descricao": "Gasolina e suas correntes",
+            "situacao": "Tributação monofásica padrão sobre combustíveis",
+            "base_legal": "Art. 172 e Art. 179, I da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+        {
+            "code": "620004",
+            "descricao": "Mistura de EAC com gasolina A em percentual SUPERIOR ao obrigatório",
+            "situacao": "Percentual de álcool etílico anidro combustível (EAC) acima do mínimo legal",
+            "base_legal": "Art. 179 da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+        {
+            "code": "620005",
+            "descricao": "Mistura de EAC com gasolina A em percentual INFERIOR ao obrigatório",
+            "situacao": "Percentual de álcool etílico anidro combustível (EAC) abaixo do mínimo legal",
+            "base_legal": "Art. 179 da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+        {
+            "code": "620006",
+            "descricao": "Tributação monofásica sobre combustíveis cobrada anteriormente",
+            "situacao": "Operação downstream — tributo já recolhido na etapa anterior da cadeia",
+            "base_legal": "Art. 180 da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+    ],
+
+    # -------------------------------------------------------------------------
+    # NCM 27101921 - Óleo diesel e suas correntes
+    # Monofásico - 2 situações possíveis
+    # -------------------------------------------------------------------------
+    "27101921": [
+        {
+            "code": "620001",
+            "descricao": "Óleo diesel e suas correntes",
+            "situacao": "Tributação monofásica padrão sobre combustíveis",
+            "base_legal": "Art. 172 e Art. 179, I da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+        {
+            "code": "620006",
+            "descricao": "Tributação monofásica sobre combustíveis cobrada anteriormente",
+            "situacao": "Operação downstream — tributo já recolhido na etapa anterior da cadeia",
+            "base_legal": "Art. 180 da LC 214/2025",
+            "regime": "MONOFASICO_COMBUSTIVEL",
+        },
+    ],
+
+    # -------------------------------------------------------------------------
+    # NCM 84212990 - Filtros médicos (dispositivos do Anexo IV)
+    # 2 cClassTribs dependendo do DESTINATÁRIO
+    # -------------------------------------------------------------------------
+    "84212990": [
+        {
+            "code": "200030",
+            "descricao": "Dispositivos médicos do Anexo IV — venda para mercado geral",
+            "situacao": "Destinatário é empresa privada ou pessoa física (mercado geral)",
+            "base_legal": "Art. 131 da LC 214/2025 — Anexo IV",
+            "regime": "RED_60_DISPOSITIVOS_MEDICOS",
+            "produtos": [
+                "Filtro de linha arterial e venoso",
+                "Filtro de sangue arterial e venoso para recirculação",
+                "Filtro para cardioplegia",
+            ],
+        },
+        {
+            "code": "200005",
+            "descricao": "Dispositivos médicos do Anexo IV — venda para órgão público ou entidade imune",
+            "situacao": "Destinatário é órgão da administração pública direta, autarquia, fundação pública ou entidade de saúde imune",
+            "base_legal": "Art. 144 da LC 214/2025 — Anexo IV",
+            "regime": "ALIQ_ZERO_DISPOSITIVOS_MEDICOS_PUBLICO",
+            "produtos": [
+                "Filtro de linha arterial e venoso",
+                "Filtro de sangue arterial e venoso para recirculação",
+                "Filtro para cardioplegia",
+            ],
+        },
+    ],
+
+    # -------------------------------------------------------------------------
+    # NCMs com tributação integral padrão (000001) — sem ambiguidade
+    # -------------------------------------------------------------------------
+    "27101932": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+    "76169900": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+    "84138100": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+    "84212300": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+    "84219999": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+    "84818099": [
+        {
+            "code": "000001",
+            "descricao": "Tributação integral pelo IBS e CBS",
+            "situacao": "Operação tributada integralmente, sem benefício fiscal",
+            "base_legal": "LC 214/2025 — alíquota padrão",
+            "regime": "TRIBUTACAO_PADRAO",
+        },
+    ],
+}
+
+
+def get_opcoes_cclasstrib_por_ncm(ncm: str) -> list:
+    """
+    Retorna lista de opções de cClassTrib para um NCM.
+    
+    Se o NCM tiver múltiplas opções, retorna todas para o usuário escolher.
+    Se tiver apenas uma opção, retorna lista com um elemento.
+    Se não estiver mapeado, retorna lista vazia.
+    
+    Args:
+        ncm: Código NCM (8 dígitos)
+        
+    Returns:
+        Lista de dicts com code, descricao, situacao, base_legal, regime
+    """
+    import re
+    ncm_clean = re.sub(r'\D+', '', str(ncm)).zfill(8)[:8]
+    return NCM_MULTI_CCLASSTRIB_MAP.get(ncm_clean, [])
+
+
+def ncm_tem_multiplos_cclasstrib(ncm: str) -> bool:
+    """
+    Verifica se um NCM tem múltiplos cClassTribs possíveis.
+    
+    Args:
+        ncm: Código NCM (8 dígitos)
+        
+    Returns:
+        True se houver mais de uma opção de cClassTrib para o NCM
+    """
+    opcoes = get_opcoes_cclasstrib_por_ncm(ncm)
+    return len(opcoes) > 1
+
+
+def get_cclasstrib_padrao_por_ncm(ncm: str) -> tuple:
+    """
+    Retorna o cClassTrib padrão (primeira opção) para um NCM.
+    Usado no processamento em lote quando não há interação com o usuário.
+    
+    Args:
+        ncm: Código NCM (8 dígitos)
+        
+    Returns:
+        tuple: (code, descricao, base_legal, ambiguo)
+        - ambiguo=True indica que o NCM tem múltiplas opções e requer revisão manual
+    """
+    opcoes = get_opcoes_cclasstrib_por_ncm(ncm)
+    if not opcoes:
+        return None, None, None, False
+    
+    primeira = opcoes[0]
+    ambiguo = len(opcoes) > 1
+    return (
+        primeira['code'],
+        primeira['descricao'],
+        primeira['base_legal'],
+        ambiguo
+    )
+
+
 def validate_cclasstrib(code: str, cclasstrib_index: dict) -> bool:
     """
     Valida se um cClassTrib existe no índice oficial.

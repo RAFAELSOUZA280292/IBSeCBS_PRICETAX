@@ -595,6 +595,9 @@ def render_aba_batch_xml():
                 if resultado['status'] in ['CONFORME', 'DIVERGENTE']:
                     # Iterar sobre todas as validações
                     for item in resultado.get('validacoes', []):
+                        revisao_flag = '⚠️ SIM' if item.get('requer_revisao_manual') else 'OK'
+                        opcoes_str = item.get('opcoes_cclasstrib', '')
+
                         if item['status'] == 'CONFORME':
                             itens_conformes_lista.append({
                                 'NFe': os.path.basename(resultado['arquivo']),
@@ -602,7 +605,9 @@ def render_aba_batch_xml():
                                 'NCM': item['ncm'],
                                 'CFOP': item.get('cfop', ''),
                                 'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                                'Revisão Manual': revisao_flag,
                                 'cClassTrib': item.get('cclasstrib', ''),
+                                'Opções cClassTrib': opcoes_str,
                                 'Regime IVA': item.get('regime', ''),
                                 'IBS UF (%)': f"{item.get('ibs_uf_pct', 0.10):.3f}%",
                                 'IBS Mun (%)': f"{item.get('ibs_mun_pct', 0.025):.3f}%",
@@ -621,7 +626,9 @@ def render_aba_batch_xml():
                                 'NCM': item['ncm'],
                                 'CFOP': item.get('cfop', ''),
                                 'Descrição': item['descricao'][:50] + '...' if len(item['descricao']) > 50 else item['descricao'],
+                                'Revisão Manual': revisao_flag,
                                 'cClassTrib': item.get('cclasstrib', ''),
+                                'Opções cClassTrib': opcoes_str,
                                 'Regime IVA': item.get('regime', ''),
                                 'IBS UF (%)': f"{item.get('ibs_uf_pct', 0.10):.3f}%",
                                 'CBS (%)': f"{item.get('cbs_pct', 0.90):.3f}%",
@@ -633,6 +640,19 @@ def render_aba_batch_xml():
                                 'CBS Dif (R$)': f"R$ {item['diff_cbs']:.2f}"
                             })
             
+            # Alerta de revisão manual
+            total_revisao_manual = sum(
+                1 for r in resultados
+                for val in r.get('validacoes', [])
+                if val.get('requer_revisao_manual')
+            )
+            if total_revisao_manual > 0:
+                st.warning(
+                    f"⚠️ **{total_revisao_manual} item(ns) requerem revisão manual** — "
+                    f"NCMs com múltiplos cClassTribs possíveis. "
+                    f"Verifique a coluna 'Revisão Manual' e 'Opções cClassTrib' nas tabelas e no Excel."
+                )
+
             # Tabs para conformes e divergentes
             tab1, tab2 = st.tabs([f"Itens Conformes ({len(itens_conformes_lista)})", f"ATENÇÃO: Itens Divergentes ({len(itens_divergentes_lista)})"])
             

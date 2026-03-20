@@ -1085,7 +1085,7 @@ def guess_cclasstrib(cst: Any, cfop: Any, regime_iva: str) -> tuple[str, str]:
     # 2.2) Redução de alíquota (usar mapeamento oficial)
     if "RED_" in regime_iva_upper or "ALIQ_ZERO" in regime_iva_upper:
         # Importar função de mapeamento
-        from cclasstrib_mapping import get_cclasstrib_by_anexo
+        from cclasstrib_mapping import get_cclasstrib_by_anexo, get_opcoes_cclasstrib_por_ncm, ncm_tem_multiplos_cclasstrib, get_cclasstrib_padrao_por_ncm
         # Extrair % de redução (re já importado globalmente no topo do arquivo)
         reducao_match = re.search(r'RED_(\d+)', regime_iva_upper)
         if reducao_match:
@@ -2346,6 +2346,53 @@ elif pagina == "Consulta NCM":
                 )
                 
                 # =============================================================================
+                # SELEÇÃO DE cClassTrib QUANDO NCM TEM MÚLTIPLAS OPÇÕES
+                # =============================================================================
+                opcoes_ncm = get_opcoes_cclasstrib_por_ncm(ncm_fmt)
+                cclasstrib_ncm_selecionado = None
+                
+                if len(opcoes_ncm) > 1:
+                    st.markdown("### ⚠️ Este NCM possui múltiplos cClassTribs possíveis")
+                    st.warning(
+                        f"O NCM **{ncm_fmt}** pode ter **{len(opcoes_ncm)} classificações tributárias diferentes** "
+                        "dependendo da situação da operação. Selecione a que se aplica ao seu caso:"
+                    )
+                    
+                    opcoes_labels = []
+                    for op in opcoes_ncm:
+                        opcoes_labels.append(
+                            f"**{op['code']}** — {op['descricao']} | {op['situacao']}"
+                        )
+                    
+                    selecao_ncm = st.radio(
+                        "Selecione a situação da operação:",
+                        opcoes_labels,
+                        key=f"cclasstrib_ncm_selector_{ncm_fmt}"
+                    )
+                    idx_ncm = opcoes_labels.index(selecao_ncm)
+                    cclasstrib_ncm_selecionado = opcoes_ncm[idx_ncm]
+                    
+                    # Sobrescrever o cClassTrib calculado com o selecionado pelo usuário
+                    cclastrib_venda_code = cclasstrib_ncm_selecionado['code']
+                    cclastrib_venda_msg = cclasstrib_ncm_selecionado['situacao']
+                    cclastrib_code = cclastrib_venda_code
+                    class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                    class_info = class_info_venda
+                    
+                    # Exibir base legal da opção selecionada
+                    st.info(f"📋 **Base Legal:** {cclasstrib_ncm_selecionado['base_legal']}")
+                    st.markdown("---")
+                
+                elif len(opcoes_ncm) == 1:
+                    # NCM com apenas uma opção mapeada — usar automaticamente
+                    cclasstrib_ncm_selecionado = opcoes_ncm[0]
+                    cclastrib_venda_code = cclasstrib_ncm_selecionado['code']
+                    cclastrib_venda_msg = cclasstrib_ncm_selecionado['situacao']
+                    cclastrib_code = cclastrib_venda_code
+                    class_info_venda = get_class_info_by_code(cclastrib_venda_code)
+                    class_info = class_info_venda
+
+                # =============================================================================
                 # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
                 # =============================================================================
                 beneficio_selecionado = None  # Inicializar antes do bloco
@@ -3489,6 +3536,19 @@ elif pagina == "Ranking de Saídas SPED":
                             except Exception:
                                 pass
 
+                        # Verificar se NCM tem múltiplos cClassTribs possíveis
+                        requer_revisao = False
+                        opcoes_cclasstrib_str = ''
+                        if ncm:
+                            try:
+                                from cclasstrib_mapping import get_opcoes_cclasstrib_por_ncm
+                                opcoes_multi = get_opcoes_cclasstrib_por_ncm(str(ncm))
+                                if len(opcoes_multi) > 1:
+                                    requer_revisao = True
+                                    opcoes_cclasstrib_str = ' | '.join([f"{op['code']}: {op['situacao']}" for op in opcoes_multi])
+                            except Exception:
+                                pass
+
                         # Determinar cClassTrib com lógica de priorização (CFOP remessa > NCM)
                         code, msg_cclas = guess_cclasstrib(cst="", cfop=cfop, regime_iva=regime)
 
@@ -3506,17 +3566,19 @@ elif pagina == "Ranking de Saídas SPED":
                         total_iva = round(total_ibs + cbs, 6)
 
                         return pd.Series({
-                            'CCLASSTRIB_SUGERIDO'  : code,
-                            'REGIME_IVA'           : regime,
-                            'REDUCAO_PCT'          : reducao_pct,
-                            'ANEXO_BENEFICIO'      : anexo_beneficio,
-                            'DESCRICAO_BENEFICIO'  : descr_beneficio,
-                            'IBS_UF_PCT'           : ibs_uf,
-                            'IBS_MUN_PCT'          : ibs_mun,
-                            'TOTAL_IBS_PCT'        : total_ibs,
-                            'CBS_PCT'              : cbs,
-                            'TOTAL_IVA_PCT'        : total_iva,
-                            'BASE_LEGAL'           : base_legal,
+                            'CCLASSTRIB_SUGERIDO'     : code,
+                            'REGIME_IVA'              : regime,
+                            'REDUCAO_PCT'             : reducao_pct,
+                            'ANEXO_BENEFICIO'         : anexo_beneficio,
+                            'DESCRICAO_BENEFICIO'     : descr_beneficio,
+                            'IBS_UF_PCT'              : ibs_uf,
+                            'IBS_MUN_PCT'             : ibs_mun,
+                            'TOTAL_IBS_PCT'           : total_ibs,
+                            'CBS_PCT'                 : cbs,
+                            'TOTAL_IVA_PCT'           : total_iva,
+                            'BASE_LEGAL'              : base_legal,
+                            'REQUER_REVISAO_MANUAL'   : '⚠️ SIM' if requer_revisao else 'OK',
+                            'OPCOES_CCLASSTRIB'       : opcoes_cclasstrib_str,
                         })
 
                     # Aplicar enriquecimento linha a linha
@@ -3524,7 +3586,8 @@ elif pagina == "Ranking de Saídas SPED":
                         'CCLASSTRIB_SUGERIDO', 'REGIME_IVA', 'REDUCAO_PCT',
                         'ANEXO_BENEFICIO', 'DESCRICAO_BENEFICIO',
                         'IBS_UF_PCT', 'IBS_MUN_PCT', 'TOTAL_IBS_PCT',
-                        'CBS_PCT', 'TOTAL_IVA_PCT', 'BASE_LEGAL'
+                        'CBS_PCT', 'TOTAL_IVA_PCT', 'BASE_LEGAL',
+                        'REQUER_REVISAO_MANUAL', 'OPCOES_CCLASSTRIB'
                     ]
                     df_total[cols_enrich] = df_total.apply(processar_linha, axis=1)
 
@@ -3548,9 +3611,16 @@ elif pagina == "Ranking de Saídas SPED":
                     kpi3.metric("Alíquota zero (Cesta Básica)", total_aliq_zero)
                     kpi4.metric("Redução 60%", total_red60)
 
+                # KPI de revisão manual
+                if 'REQUER_REVISAO_MANUAL' in df_total.columns:
+                    total_revisao = (df_total['REQUER_REVISAO_MANUAL'] == '⚠️ SIM').sum()
+                    if total_revisao > 0:
+                        st.warning(f"⚠️ **{total_revisao} linha(s) requerem revisão manual** — NCMs com múltiplos cClassTribs possíveis. Verifique a coluna 'Revisão Manual' e 'Opções cClassTrib' no Excel.")
+
                 # Colunas para exibição em tela (ordem lógica)
                 cols_tela = [c for c in [
                     "ARQUIVO", "NCM", "DESCRICAO", "CFOP", "VALOR_TOTAL_VENDAS",
+                    "REQUER_REVISAO_MANUAL",
                     "CCLASSTRIB_SUGERIDO", "REGIME_IVA", "REDUCAO_PCT",
                     "IBS_UF_PCT", "IBS_MUN_PCT", "TOTAL_IBS_PCT", "CBS_PCT", "TOTAL_IVA_PCT",
                     "ANEXO_BENEFICIO", "DESCRICAO_BENEFICIO", "BASE_LEGAL",
@@ -3585,6 +3655,7 @@ elif pagina == "Ranking de Saídas SPED":
                     cols_excel = [c for c in [
                         "ARQUIVO", "NCM", "NCM_DESCRICAO", "DESCRICAO", "CFOP",
                         "VALOR_TOTAL_VENDAS_NUM",
+                        "REQUER_REVISAO_MANUAL", "OPCOES_CCLASSTRIB",
                         "CCLASSTRIB_SUGERIDO", "REGIME_IVA", "REDUCAO_PCT",
                         "IBS_UF_PCT", "IBS_MUN_PCT", "TOTAL_IBS_PCT",
                         "CBS_PCT", "TOTAL_IVA_PCT",
@@ -3592,18 +3663,20 @@ elif pagina == "Ranking de Saídas SPED":
                     ] if c in df_total.columns]
                     df_excel = df_total[cols_excel].copy()
                     df_excel.rename(columns={
-                        "VALOR_TOTAL_VENDAS_NUM" : "VALOR_TOTAL_VENDAS (R$)",
-                        "CCLASSTRIB_SUGERIDO"    : "cClassTrib",
-                        "REGIME_IVA"             : "Regime IVA",
-                        "REDUCAO_PCT"            : "Redução (%)",
-                        "IBS_UF_PCT"             : "IBS UF (%)",
-                        "IBS_MUN_PCT"            : "IBS Municipal (%)",
-                        "TOTAL_IBS_PCT"          : "Total IBS (%)",
-                        "CBS_PCT"                : "CBS (%)",
-                        "TOTAL_IVA_PCT"          : "Total IVA (%)",
-                        "ANEXO_BENEFICIO"        : "Anexo LC 214/2025",
-                        "DESCRICAO_BENEFICIO"    : "Descrição do Benefício",
-                        "BASE_LEGAL"             : "Base Legal",
+                        "VALOR_TOTAL_VENDAS_NUM"  : "VALOR_TOTAL_VENDAS (R$)",
+                        "REQUER_REVISAO_MANUAL"   : "Revisão Manual",
+                        "OPCOES_CCLASSTRIB"       : "Opções cClassTrib",
+                        "CCLASSTRIB_SUGERIDO"     : "cClassTrib",
+                        "REGIME_IVA"              : "Regime IVA",
+                        "REDUCAO_PCT"             : "Redução (%)",
+                        "IBS_UF_PCT"              : "IBS UF (%)",
+                        "IBS_MUN_PCT"             : "IBS Municipal (%)",
+                        "TOTAL_IBS_PCT"           : "Total IBS (%)",
+                        "CBS_PCT"                 : "CBS (%)",
+                        "TOTAL_IVA_PCT"           : "Total IVA (%)",
+                        "ANEXO_BENEFICIO"         : "Anexo LC 214/2025",
+                        "DESCRICAO_BENEFICIO"     : "Descrição do Benefício",
+                        "BASE_LEGAL"              : "Base Legal",
                     }, inplace=True)
                     df_excel.to_excel(writer, index=False, sheet_name="Ranking IBS-CBS")
 
@@ -4036,6 +4109,35 @@ elif pagina == "Análise XML NF-e":
                             beneficios_info = None
                         
                         st.markdown("---")
+                        
+                        # SELEÇÃO DE cClassTrib QUANDO NCM TEM MÚLTIPLAS OPÇÕES (XML UNITÁRIO)
+                        opcoes_ncm_xml = get_opcoes_cclasstrib_por_ncm(ncm_clean)
+                        if len(opcoes_ncm_xml) > 1:
+                            st.warning(
+                                f"⚠️ O NCM **{ncm_clean}** possui **{len(opcoes_ncm_xml)} cClassTribs possíveis**. "
+                                "Selecione a situação da operação:"
+                            )
+                            opcoes_labels_xml = []
+                            for op in opcoes_ncm_xml:
+                                opcoes_labels_xml.append(
+                                    f"{op['code']} — {op['situacao']}"
+                                )
+                            selecao_xml = st.radio(
+                                "Situação da operação:",
+                                opcoes_labels_xml,
+                                key=f"cclasstrib_xml_selector_{ncm_clean}_{idx}"
+                            )
+                            idx_xml = opcoes_labels_xml.index(selecao_xml)
+                            op_selecionada = opcoes_ncm_xml[idx_xml]
+                            cclastrib_code = op_selecionada['code']
+                            cclastrib_msg = op_selecionada['situacao']
+                            class_info = get_class_info_by_code(cclastrib_code)
+                            st.info(f"📋 **Base Legal:** {op_selecionada['base_legal']}")
+                        elif len(opcoes_ncm_xml) == 1:
+                            op_unica = opcoes_ncm_xml[0]
+                            cclastrib_code = op_unica['code']
+                            cclastrib_msg = op_unica['situacao']
+                            class_info = get_class_info_by_code(cclastrib_code)
                         
                         # EXIBIR BENEFÍCIOS FISCAIS (SE HOUVER)
                         if beneficios_info and beneficios_info['total_enquadramentos'] > 0:
