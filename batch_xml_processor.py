@@ -25,6 +25,88 @@ logger = get_logger(__name__)
 from xml_parser import parse_nfe_xml
 from data_collector import save_nfe_data
 
+# Importar motor tributário
+try:
+    from tributacao import calcular_tributacao_completa
+    from cclasstrib_mapping import guess_cclasstrib, get_class_info_by_code
+    from beneficios_fiscais import BeneficiosFiscaisEngine, consulta_ncm
+    _BENEFICIOS_ENGINE = BeneficiosFiscaisEngine()
+    TRIB_DISPONIVEL = True
+except Exception as _e:
+    logger.warning(f"Motor tributário não disponível: {_e}")
+    TRIB_DISPONIVEL = False
+    _BENEFICIOS_ENGINE = None
+
+
+def enriquecer_item_tributario(ncm: str, cfop: str) -> dict:
+    """
+    Enriquece um item com cClassTrib, alíquotas reais IBS/CBS e base legal.
+    
+    Args:
+        ncm: Código NCM do item
+        cfop: CFOP da operação
+        
+    Returns:
+        Dict com cClassTrib, alíquotas, regime e base legal
+    """
+    fallback = {
+        'cclasstrib_code': '000001',
+        'cclasstrib_msg': 'Operação tributada integralmente',
+        'regime': 'TRIBUTACAO_PADRAO',
+        'reducao_pct': 0,
+        'ibs_uf': 0.10,
+        'ibs_mun': 0.025,
+        'cbs': 0.90,
+        'total_iva': 1.025,
+        'anexo': '',
+        'descricao_beneficio': '',
+        'base_legal': 'LC 214/2025 — Alíquota padrão'
+    }
+    
+    if not TRIB_DISPONIVEL:
+        return fallback
+    
+    try:
+        import re
+        ncm_clean = re.sub(r'\D+', '', ncm)
+        resultado = calcular_tributacao_completa(
+            ncm=ncm_clean,
+            cfop=cfop,
+            beneficios_engine=_BENEFICIOS_ENGINE,
+            consulta_ncm_func=consulta_ncm,
+            guess_cclasstrib_func=guess_cclasstrib,
+            get_class_info_func=get_class_info_by_code,
+        )
+        
+        # Extrair base legal do benefício
+        base_legal = 'LC 214/2025 — Alíquota padrão'
+        anexo = ''
+        descricao_beneficio = ''
+        if resultado.get('beneficios') and resultado['beneficios'].get('total_enquadramentos', 0) > 0:
+            enqs = resultado['beneficios']['enquadramentos']
+            if enqs:
+                e = enqs[0]
+                anexo = e.get('anexo', '')
+                descricao_beneficio = e.get('descricao_anexo', '')
+                base_legal = e.get('base_legal', f'LC 214/2025 — {anexo}')
+        
+        return {
+            'cclasstrib_code': resultado.get('cclasstrib_code', '000001'),
+            'cclasstrib_msg': resultado.get('cclasstrib_msg', '')[:120],
+            'regime': resultado.get('regime', 'TRIBUTACAO_PADRAO'),
+            'reducao_pct': resultado.get('reducao_pct', 0),
+            'ibs_uf': resultado.get('ibs_uf', 0.10),
+            'ibs_mun': resultado.get('ibs_mun', 0.025),
+            'cbs': resultado.get('cbs', 0.90),
+            'total_iva': resultado.get('total_iva', 1.025),
+            'anexo': anexo,
+            'descricao_beneficio': descricao_beneficio,
+            'base_legal': base_legal
+        }
+    except Exception as e:
+        logger.warning(f"Erro ao enriquecer NCM {ncm}: {e}")
+        return fallback
+
 
 def extract_zip_to_temp(zip_file) -> Tuple[str, List[str]]:
     """
@@ -101,7 +183,7 @@ def validate_xml_structure(xml_path: str) -> Dict[str, Any]:
 
 def calculate_expected_ibs_cbs(item: Dict[str, Any]) -> Dict[str, float]:
     """
-    Calcula IBS/CBS esperados com base líquida (2026).
+    Calcula IBS/CBS esperados com base líquida (2026) e alíquotas reais por NCM.
     
     Args:
         item: Dicionário com dados do item
@@ -122,9 +204,14 @@ def calculate_expected_ibs_cbs(item: Dict[str, Any]) -> Dict[str, float]:
     # Base líquida (2026): vProd + vFrete + vSeg + vOutro - vDesc - ICMS - PIS - COFINS
     base_liquida = vprod + vfrete + vseg + voutro - vdesc - vicms - vpis - vcofins
     
-    # Alíquotas padrão 2026
-    aliq_ibs = 0.10  # 0,1%
-    aliq_cbs = 0.90  # 0,9%
+    # Enriquecer com alíquotas reais por NCM+CFOP
+    trib = item.get('_tributario', None)
+    if trib:
+        aliq_ibs = trib['ibs_uf'] + trib['ibs_mun']
+        aliq_cbs = trib['cbs']
+    else:
+        aliq_ibs = 0.10 + 0.025  # 0,125% padrão
+        aliq_cbs = 0.90  # 0,9%
     
     # Calcular valores esperados
     vibs_esperado = base_liquida * (aliq_ibs / 100)
@@ -242,7 +329,14 @@ def process_single_xml(xml_path: str, save_to_collector: bool = True) -> Dict[st
         for idx, item in enumerate(dados['itens'], 1):
             valor_total += item.get('valor_total', 0.0)
             
-            # Validar IBS/CBS
+            # Enriquecer item com cClassTrib, alíquotas reais e base legal
+            trib = enriquecer_item_tributario(
+                ncm=item.get('ncm', ''),
+                cfop=item.get('cfop', '')
+            )
+            item['_tributario'] = trib  # Injetar no item para uso em calculate_expected_ibs_cbs
+            
+            # Validar IBS/CBS com alíquotas reais
             validacao_item = validate_ibs_cbs(item)
             
             if validacao_item['ibs_ok'] and validacao_item['cbs_ok']:
@@ -265,7 +359,19 @@ def process_single_xml(xml_path: str, save_to_collector: bool = True) -> Dict[st
                 'cbs_xml': validacao_item['vcbs_xml'],
                 'cbs_esperado': validacao_item['vcbs_esperado'],
                 'diff_cbs': validacao_item['diff_cbs'],
-                'base_liquida': validacao_item['base_liquida']
+                'base_liquida': validacao_item['base_liquida'],
+                # Campos tributários enriquecidos
+                'cclasstrib': trib['cclasstrib_code'],
+                'cclasstrib_msg': trib['cclasstrib_msg'],
+                'regime': trib['regime'],
+                'reducao_pct': trib['reducao_pct'],
+                'ibs_uf_pct': trib['ibs_uf'],
+                'ibs_mun_pct': trib['ibs_mun'],
+                'cbs_pct': trib['cbs'],
+                'total_iva_pct': trib['total_iva'],
+                'anexo_lc214': trib['anexo'],
+                'descricao_beneficio': trib['descricao_beneficio'],
+                'base_legal': trib['base_legal']
             })
         
         resultado['itens_conformes'] = itens_conformes
@@ -433,6 +539,19 @@ def generate_excel_report(resultados: List[Dict[str, Any]]) -> BytesIO:
                     'Descrição': val['descricao'],
                     'Valor Item (R$)': val['valor'],
                     'Base Líquida (R$)': val['base_liquida'],
+                    # Campos tributários IBS/CBS
+                    'cClassTrib': val.get('cclasstrib', ''),
+                    'Descrição cClassTrib': val.get('cclasstrib_msg', ''),
+                    'Regime IVA': val.get('regime', ''),
+                    'Redução (%)': val.get('reducao_pct', 0),
+                    'IBS UF (%)': val.get('ibs_uf_pct', 0.10),
+                    'IBS Municipal (%)': val.get('ibs_mun_pct', 0.025),
+                    'CBS (%)': val.get('cbs_pct', 0.90),
+                    'Total IVA (%)': val.get('total_iva_pct', 1.025),
+                    'Anexo LC 214/2025': val.get('anexo_lc214', ''),
+                    'Benefício Fiscal': val.get('descricao_beneficio', ''),
+                    'Base Legal': val.get('base_legal', 'LC 214/2025'),
+                    # Validação de valores
                     'IBS XML (R$)': val['ibs_xml'],
                     'IBS Esperado (R$)': val['ibs_esperado'],
                     'Dif. IBS (R$)': val['diff_ibs'],
