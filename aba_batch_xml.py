@@ -570,8 +570,8 @@ def render_aba_batch_xml():
                         # Configurar layout do gráfico (sintaxe compatível Python 3.13)
                         fig_fornecedores.update_layout(
                             title={'text': 'Top 5 Fornecedores com Divergências (por Valor Total)', 'font': {'size': 18, 'color': COLOR_GOLD, 'family': 'Arial Black'}},
-                            xaxis={'title': 'Fornecedor', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
-                            yaxis={'title': 'Valor Total (R$)', 'titlefont': {'color': COLOR_TEXT_MAIN}, 'tickfont': {'color': COLOR_TEXT_MAIN}, 'gridcolor': COLOR_BORDER},
+                            xaxis=dict(title='Fornecedor', title_font=dict(color=COLOR_TEXT_MAIN), tickfont=dict(color=COLOR_TEXT_MAIN), gridcolor=COLOR_BORDER),
+                            yaxis=dict(title='Valor Total (R$)', title_font=dict(color=COLOR_TEXT_MAIN), tickfont=dict(color=COLOR_TEXT_MAIN), gridcolor=COLOR_BORDER),
                             paper_bgcolor=COLOR_CARD_BG,
                             plot_bgcolor=COLOR_CARD_BG,
                             font={'color': COLOR_TEXT_MAIN},
