@@ -42,6 +42,21 @@ except ImportError as e:
     print(f"ATENÇÃO: Módulo de benefícios fiscais não disponível: {e}")
     BENEFICIOS_DISPONIVEL = False
 
+# Importar mapeamento multi-cClassTrib por NCM
+try:
+    from cclasstrib_mapping import (
+        get_opcoes_cclasstrib_por_ncm,
+        ncm_tem_multiplos_cclasstrib,
+        get_cclasstrib_padrao_por_ncm,
+        get_cclasstrib_by_anexo,
+    )
+except ImportError as e:
+    print(f"ATENÇÃO: cclasstrib_mapping não disponível: {e}")
+    def get_opcoes_cclasstrib_por_ncm(ncm): return []
+    def ncm_tem_multiplos_cclasstrib(ncm): return False
+    def get_cclasstrib_padrao_por_ncm(ncm): return None, None, None, False
+    def get_cclasstrib_by_anexo(reducao, anexo, descricao=""): return "", ""
+
 # Importar função centralizada de cálculo
 try:
     from calcular_tributacao import calcular_tributacao_completa
