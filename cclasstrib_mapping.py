@@ -226,6 +226,27 @@ NCM_MULTI_CCLASSTRIB_MAP = {
     ],
 
     # -------------------------------------------------------------------------
+    # NCM 31052000 - Fertilizantes (adubos) - Anexo IX / Diferimento
+    # 2 cClassTribs: insumo agropecário (200038) ou diferimento (515001)
+    # -------------------------------------------------------------------------
+    "31052000": [
+        {
+            "code": "200038",
+            "descricao": "Fertilizantes (adubos) — Insumo agropecário do Anexo IX",
+            "situacao": "Fornecimento dos insumos agropecários e aquícolas relacionados no Anexo IX da LC 214/2025, em conformidade com as definições e demais requisitos da legislação específica",
+            "base_legal": "LC 214/2025, Anexo IX — Art. 138",
+            "regime": "INSUMO_AGROPECUARIO_ANEXO_IX",
+        },
+        {
+            "code": "515001",
+            "descricao": "Fertilizantes (adubos) — Diferimento (insumo agropecário)",
+            "situacao": "Operações, sujeitas a diferimento, com insumos agropecários e aquícolas, observado o art. 138 da LC 214, de 2025",
+            "base_legal": "LC 214/2025, Art. 138 — Diferimento",
+            "regime": "DIFERIMENTO_INSUMO_AGROPECUARIO",
+        },
+    ],
+
+    # -------------------------------------------------------------------------
     # NCMs com tributação integral padrão (000001) — sem ambiguidade
     # -------------------------------------------------------------------------
     "27101932": [
