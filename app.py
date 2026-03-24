@@ -1489,6 +1489,7 @@ with st.sidebar:
     ferramentas = [
         "Consulta NCM",
         "Ranking de Saídas SPED",
+        "EFD Contribuições",
         "cClassTrib",
         "Download CFOP x cClassTrib",
         "Análise XML NF-e",
@@ -3776,6 +3777,20 @@ elif pagina == "Ranking de Saídas SPED":
                     file_name="ranking_vendas_ibscbs.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
+# =============================================================================
+# ABA EFD CONTRIBUIÇÕES
+# =============================================================================
+
+elif pagina == "EFD Contribuições":
+    try:
+        from aba_efd_contribuicoes import render_aba_efd_contribuicoes
+        render_aba_efd_contribuicoes(
+            beneficios_engine=BENEFICIOS_ENGINE,
+            consulta_ncm_fn=consulta_ncm,
+        )
+    except Exception as _efd_err:
+        st.error(f"Erro ao carregar módulo EFD Contribuições: {_efd_err}")
 
 # =============================================================================
 # ABA 3 - CONSULTA CCLASSTRIB
