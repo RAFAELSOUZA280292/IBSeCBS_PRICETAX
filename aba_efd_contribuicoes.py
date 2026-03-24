@@ -437,10 +437,13 @@ def enriquecer_cclasstrib(itens: List[Dict], beneficios_engine, consulta_ncm_fn)
                         ibs_mun = round(IBS_MUN_REF * fator, 6)
                         cbs     = round(CBS_REF     * fator, 6)
 
+                        # Normalizar anexo: "ANEXO IX" → "ANEXO_IX" (engine retorna com espaço)
+                        anexo_norm = anexo_beneficio.replace(' ', '_') if anexo_beneficio else ''
+
                         if reducao == 100:
                             regime = "ALIQ_ZERO_CESTA_BASICA"
                         elif reducao == 60:
-                            regime = f"RED_60_{anexo_beneficio}" if anexo_beneficio else "RED_60_ESSENCIALIDADE"
+                            regime = f"RED_60_{anexo_norm}" if anexo_norm else "RED_60_ESSENCIALIDADE"
                         else:
                             regime = f"RED_{int(reducao)}"
 

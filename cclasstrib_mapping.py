@@ -85,6 +85,10 @@ def get_cclasstrib_by_anexo(reducao: int, anexo: str, descricao: str = "") -> tu
         >>> get_cclasstrib_by_anexo(60, "ANEXO_XI", "segurança cibernética")
         ("200044", "Anexo XI - Segurança da Informação/Cibernética")
     """
+    # Normalizar formato do anexo: "ANEXO IX" → "ANEXO_IX" (engine retorna com espaço)
+    if anexo and ' ' in anexo:
+        anexo = anexo.replace(' ', '_')
+
     # Caso especial: ANEXO XI tem 2 cClassTribs
     if anexo == "ANEXO_XI" and descricao:
         desc_lower = descricao.lower()

@@ -3598,11 +3598,14 @@ elif pagina == "Ranking de Saídas SPED":
                                     ibs_mun = round(IBS_MUN_REF * fator, 6)
                                     cbs     = round(CBS_REF     * fator, 6)
 
+                                    # Normalizar anexo: "ANEXO IX" → "ANEXO_IX" (engine retorna com espaço)
+                                    anexo_norm = anexo_beneficio.replace(' ', '_') if anexo_beneficio else ''
+
                                     if reducao == 100:
                                         regime = "ALIQ_ZERO_CESTA_BASICA_NACIONAL"
                                     elif reducao == 60:
                                         # Incluir anexo no regime para mapeamento correto de cClassTrib
-                                        regime = f"RED_60_{anexo_beneficio}" if anexo_beneficio else "RED_60_ESSENCIALIDADE"
+                                        regime = f"RED_60_{anexo_norm}" if anexo_norm else "RED_60_ESSENCIALIDADE"
                                     else:
                                         regime = f"RED_{int(reducao)}"
                             except Exception:
