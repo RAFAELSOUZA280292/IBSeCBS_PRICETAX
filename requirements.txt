@@ -1,9 +1,1 @@
 streamlit
-pandas
-altair
-openpyxl
-gspread
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-plotly
